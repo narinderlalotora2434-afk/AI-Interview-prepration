@@ -82,9 +82,9 @@ router.post('/login', async (req: Request, res: Response): Promise<void> => {
     );
 
     res.json({ token, user: { id: user.id, email: user.email, name: user.name, role: user.role } });
-  } catch (error) {
+  } catch (error: any) {
     console.error(error);
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: error.message || 'Internal server error' });
   }
 });
 
