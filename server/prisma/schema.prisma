@@ -1,0 +1,301 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String      @id @default(auto()) @map("_id") @db.ObjectId
+  email         String      @unique
+  passwordHash  String?     // Nullable for OAuth users
+  name          String?
+  role          String      @default("USER")
+  profilePic    String?     // Base64 string or URL
+  interviews    Interview[]
+  resumes       Resume[]
+  analytics     Analytics?
+  aptitudeAttempts   AptitudeAttempt[]
+  codingSubmissions  CodeSubmission[]
+  solvedProblems     UserSolvedProblem[]
+  contestSubmissions ContestSubmission[]
+  codingPlaylists    CodingPlaylist[]
+  resetPasswordToken String?
+  resetPasswordExpires DateTime?
+  userProgresses     UserProgress[]
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime    @updatedAt
+}
+
+
+model Interview {
+  id          String      @id @default(auto()) @map("_id") @db.ObjectId
+  userId      String      @db.ObjectId
+  user        User        @relation(fields: [userId], references: [id])
+  type        String // e.g., "MOCK", "CODING"
+  score       Int?
+  feedback    String?
+  questions   Question[]
+  createdAt   DateTime    @default(now())
+}
+
+
+model Question {
+  id             String      @id @default(auto()) @map("_id") @db.ObjectId
+  interviewId      String      @db.ObjectId
+  interview      Interview @relation(fields: [interviewId], references: [id])
+  content        String
+  expectedAnswer String?
+  answers        Answer[]
+}
+
+model Answer {
+  id          String      @id @default(auto()) @map("_id") @db.ObjectId
+  questionId      String      @db.ObjectId
+  question    Question @relation(fields: [questionId], references: [id])
+  content     String
+  score       Int?
+  feedback    String?
+}
+
+model Resume {
+  id          String      @id @default(auto()) @map("_id") @db.ObjectId
+  userId      String      @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id])
+  content   String   // Parsed text or PDF URL
+  atsScore  Int?
+  feedback  String?
+  createdAt DateTime @default(now())
+}
+
+model Analytics {
+  id                  String      @id @default(auto()) @map("_id") @db.ObjectId
+  userId      String      @unique @db.ObjectId
+  user                User   @relation(fields: [userId], references: [id])
+  mockInterviewCount  Int      @default(0)
+  codingRoundCount    Int      @default(0)
+  avgScore            Float    @default(0.0)
+  xp                  Int      @default(0)
+  streak              Int      @default(0)
+  lastActive          DateTime @default(now())
+  badges              String   @default("[]") // JSON string of badge IDs
+}
+
+model DailyChallenge {
+  id                 String      @id @default(auto()) @map("_id") @db.ObjectId
+  date               DateTime @unique @default(now())
+  codingProblem      String   // JSON string
+  techQuestion       String
+  behavioralQuestion String
+}
+
+// --- Aptitude Module Models ---
+
+model AptitudeQuestion {
+  id            String      @id @default(auto()) @map("_id") @db.ObjectId
+  category      String   // e.g., "Quantitative Aptitude", "Logical Reasoning"
+  difficulty    String   // "Beginner", "Intermediate", "Advanced"
+  topic         String   // e.g., "Time and Work", "Syllogism"
+  type          String   @default("MCQ") // "MCQ", "NUMERICAL"
+  questionText  String
+  options       String   // JSON string array
+  correctAnswer String
+  explanation   String?
+  createdAt     DateTime @default(now())
+}
+
+model AptitudeAttempt {
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId         String      @db.ObjectId
+  user           User     @relation(fields: [userId], references: [id])
+  category       String
+  difficulty     String
+  score          Float    @default(0.0)
+  totalQuestions Int
+  correctAnswers Int      @default(0)
+  wrongAnswers   Int      @default(0)
+  skipped        Int      @default(0)
+  timeTaken      Int      // in seconds
+  details        String   // JSON string of user answers and time per question
+  aiFeedback     String?  // JSON string or text for AI analysis
+  createdAt      DateTime @default(now())
+}
+
+// --- Coding Arena Models ---
+
+model CodingProblem {
+  id              String            @id @default(auto()) @map("_id") @db.ObjectId
+  title           String
+  slug            String            @unique
+  description     String
+  difficulty      String            // "Easy", "Medium", "Hard"
+  category        String
+  tags            String            // JSON string of tags (e.g., "Array, Two Pointers")
+  companies       String            // JSON string of companies
+  examples        String            // JSON string of examples [{input, output, explanation}]
+  constraints     String            // JSON string array
+  hints           String            // JSON string array
+  editorial       String?
+  starterCode     String            // JSON string map of language -> starter code
+  acceptanceRate  Float             @default(0.0)
+  totalSubmissions Int            @default(0)
+  testCases       TestCase[]
+  submissions     CodeSubmission[]
+  solvedBy        UserSolvedProblem[]
+  playlistIds     String[]          @db.ObjectId
+  playlists       CodingPlaylist[]  @relation("PlaylistProblems", fields: [playlistIds], references: [id])
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+}
+
+model TestCase {
+  id              String      @id @default(auto()) @map("_id") @db.ObjectId
+  problemId      String      @db.ObjectId
+  problem         CodingProblem  @relation(fields: [problemId], references: [id])
+  input           String
+  expectedOutput  String
+  isHidden        Boolean        @default(false)
+}
+
+model CodeSubmission {
+  id              String      @id @default(auto()) @map("_id") @db.ObjectId
+  userId      String      @db.ObjectId
+  user            User           @relation(fields: [userId], references: [id])
+  problemId      String      @db.ObjectId
+  problem         CodingProblem  @relation(fields: [problemId], references: [id])
+  code            String
+  language        String
+  status          String         // "Accepted", "Wrong Answer", "Time Limit Exceeded", etc.
+  runtime         Float?         // in ms
+  memory          Float?         // in MB
+  runtimePercentile Float?
+  memoryPercentile  Float?
+  failedTestCase  String?        // JSON of failed test case if any
+  aiFeedback      String?
+  createdAt       DateTime       @default(now())
+}
+
+model UserSolvedProblem {
+  id              String      @id @default(auto()) @map("_id") @db.ObjectId
+  userId      String      @db.ObjectId
+  user            User           @relation(fields: [userId], references: [id])
+  problemId      String      @db.ObjectId
+  problem         CodingProblem  @relation(fields: [problemId], references: [id])
+  status          String         // "Attempted", "Solved"
+  solvedAt        DateTime?
+  createdAt       DateTime       @default(now())
+
+  @@unique([userId, problemId])
+}
+
+model Contest {
+  id              String      @id @default(auto()) @map("_id") @db.ObjectId
+  title           String
+  description     String
+  startTime       DateTime
+  endTime         DateTime
+  problems        String         // JSON string array of problem IDs
+  submissions     ContestSubmission[]
+  createdAt       DateTime       @default(now())
+}
+
+model ContestSubmission {
+  id              String      @id @default(auto()) @map("_id") @db.ObjectId
+  contestId      String      @db.ObjectId
+  contest         Contest        @relation(fields: [contestId], references: [id])
+  userId      String      @db.ObjectId
+  user            User           @relation(fields: [userId], references: [id])
+  score           Int            @default(0)
+  finishTime      DateTime
+  createdAt       DateTime       @default(now())
+}
+
+model CodingPlaylist {
+  id              String      @id @default(auto()) @map("_id") @db.ObjectId
+  userId      String      @db.ObjectId
+  user            User           @relation(fields: [userId], references: [id])
+  name            String
+  isPublic        Boolean        @default(false)
+  problemIds      String[]       @db.ObjectId
+  problems        CodingProblem[] @relation("PlaylistProblems", fields: [problemIds], references: [id])
+  createdAt       DateTime       @default(now())
+}
+
+// --- Placement Roadmap Models ---
+
+model Branch {
+  id              String      @id @default(auto()) @map("_id") @db.ObjectId
+  name            String         @unique
+  slug            String         @unique
+  description     String
+  iconName        String
+  topRecruiters   String         // JSON string array
+  salaryRange     String
+  difficulty      String
+  roadmaps        Roadmap[]
+  createdAt       DateTime       @default(now())
+}
+
+model Roadmap {
+  id              String      @id @default(auto()) @map("_id") @db.ObjectId
+  branchId      String      @db.ObjectId
+  branch          Branch         @relation(fields: [branchId], references: [id])
+  title           String
+  description     String
+  modules         RoadmapModule[]
+  companyTracks   CompanyTrack[]
+  createdAt       DateTime       @default(now())
+}
+
+model RoadmapModule {
+  id              String      @id @default(auto()) @map("_id") @db.ObjectId
+  roadmapId      String      @db.ObjectId
+  roadmap         Roadmap        @relation(fields: [roadmapId], references: [id])
+  title           String
+  orderIndex      Int
+  topics          Topic[]
+}
+
+model Topic {
+  id              String      @id @default(auto()) @map("_id") @db.ObjectId
+  moduleId      String      @db.ObjectId
+  module          RoadmapModule  @relation(fields: [moduleId], references: [id])
+  title           String
+  description     String
+  resources       LearningResource[]
+  userProgress    UserProgress[]
+  orderIndex      Int
+}
+
+model LearningResource {
+  id              String      @id @default(auto()) @map("_id") @db.ObjectId
+  topicId      String      @db.ObjectId
+  topic           Topic          @relation(fields: [topicId], references: [id])
+  title           String
+  type            String         // "Video", "Article", "Practice", "Book"
+  url             String
+}
+
+model CompanyTrack {
+  id              String      @id @default(auto()) @map("_id") @db.ObjectId
+  roadmapId      String      @db.ObjectId
+  roadmap         Roadmap        @relation(fields: [roadmapId], references: [id])
+  companyName     String
+  logoUrl         String?
+  topics          String         // JSON string of focus topics
+  interviewRounds String         // JSON string array
+  createdAt       DateTime       @default(now())
+}
+
+model UserProgress {
+  id              String      @id @default(auto()) @map("_id") @db.ObjectId
+  userId      String      @db.ObjectId
+  user            User           @relation(fields: [userId], references: [id])
+  topicId      String      @db.ObjectId
+  topic           Topic          @relation(fields: [topicId], references: [id])
+  status          String         // "Pending", "In Progress", "Completed"
+  completedAt     DateTime?
+  @@unique([userId, topicId])
+}
