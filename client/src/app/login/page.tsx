@@ -32,7 +32,8 @@ export default function LoginPage() {
       localStorage.setItem("user", JSON.stringify(data.user));
       router.push("/dashboard");
     } catch (err: any) {
-      setError(err.message);
+      console.error("Login Error:", err);
+      setError(`Connection Error: ${err.message || "Please check if you are connected to the internet and using HTTPS."}`);
     } finally {
       setLoading(false);
     }
