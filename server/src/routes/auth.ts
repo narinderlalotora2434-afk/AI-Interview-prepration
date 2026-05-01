@@ -49,9 +49,9 @@ router.post('/register', async (req: Request, res: Response): Promise<void> => {
     });
 
     res.status(201).json({ message: 'User created successfully', userId: user.id });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Internal server error' });
+  } catch (error: any) {
+    console.error("Register Error:", error);
+    res.status(500).json({ error: `Registration failed: ${error.message || 'Server Error'}` });
   }
 });
 
@@ -83,8 +83,8 @@ router.post('/login', async (req: Request, res: Response): Promise<void> => {
 
     res.json({ token, user: { id: user.id, email: user.email, name: user.name, role: user.role } });
   } catch (error: any) {
-    console.error(error);
-    res.status(500).json({ error: error.message || 'Internal server error' });
+    console.error("Login Error:", error);
+    res.status(500).json({ error: `Login failed: ${error.message || 'Server Error'}` });
   }
 });
 
