@@ -48,7 +48,7 @@ export default function DashboardPage() {
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (token) {
-      fetch("http://localhost:5000/api/challenges/daily", {
+      fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/challenges/daily`, {
         headers: { "Authorization": `Bearer ${token}` },
       })
         .then(res => res.json())
@@ -78,7 +78,7 @@ export default function DashboardPage() {
       return;
     }
 
-    fetch("http://localhost:5000/api/user/dashboard", {
+    fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/user/dashboard`, {
       headers: { "Authorization": `Bearer ${token}` },
     })
       .then((res) => {

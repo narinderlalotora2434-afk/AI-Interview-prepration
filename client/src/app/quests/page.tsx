@@ -34,7 +34,7 @@ export default function QuestsPage() {
       return;
     }
 
-    fetch("http://localhost:5000/api/challenges/daily", {
+    fetch(`${process.env.NEXT_PUBLIC_API_URL || `${process.env.NEXT_PUBLIC_API_URL || '${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}'}`}/api/challenges/daily` , {
       headers: { "Authorization": `Bearer ${token}` },
     })
       .then(res => {

@@ -51,10 +51,10 @@ export default function AptitudeDashboard() {
     }
 
     Promise.all([
-      fetch("http://localhost:5000/api/aptitude/history", {
+      fetch(`${process.env.NEXT_PUBLIC_API_URL || `${process.env.NEXT_PUBLIC_API_URL || '${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}'}`}/api/aptitude/history` , {
         headers: { "Authorization": `Bearer ${token}` }
       }).then(res => res.json()),
-      fetch("http://localhost:5000/api/aptitude/leaderboard", {
+      fetch(`${process.env.NEXT_PUBLIC_API_URL || `${process.env.NEXT_PUBLIC_API_URL || '${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}'}`}/api/aptitude/leaderboard` , {
         headers: { "Authorization": `Bearer ${token}` }
       }).then(res => res.json())
     ])

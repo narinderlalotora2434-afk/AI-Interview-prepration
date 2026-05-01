@@ -37,7 +37,7 @@ function TestContent() {
       return;
     }
 
-    fetch(`http://localhost:5000/api/aptitude/questions/${encodeURIComponent(category)}?difficulty=${difficulty}`, {
+    fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/aptitude/questions/${encodeURIComponent(category)}?difficulty=${difficulty}`, {
       headers: { "Authorization": `Bearer ${token}` }
     })
       .then(res => res.json())
@@ -89,7 +89,7 @@ function TestContent() {
     const token = localStorage.getItem("token");
     
     try {
-      const res = await fetch("http://localhost:5000/api/aptitude/submit", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/aptitude/submit`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
