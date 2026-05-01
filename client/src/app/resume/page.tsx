@@ -46,7 +46,7 @@ export default function ResumePage() {
     formData.append("resume", file);
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || `${process.env.NEXT_PUBLIC_API_URL || '${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}'}`}/api/resume/analyze` , {
+      const res = await fetch(`https://ai-interview-prepration-2-nadp.onrender.com/api/resume/analyze`  , {
         method: "POST",
         headers: { "Authorization": `Bearer ${token}` },
         body: formData,

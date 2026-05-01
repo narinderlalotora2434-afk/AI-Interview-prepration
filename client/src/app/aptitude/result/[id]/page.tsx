@@ -32,7 +32,7 @@ export default function ResultPage() {
       return;
     }
 
-    fetch(`${process.env.NEXT_PUBLIC_API_URL || `${process.env.NEXT_PUBLIC_API_URL || '${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}'}`}/api/aptitude/history/${id}`, {
+    fetch(`https://ai-interview-prepration-2-nadp.onrender.com/api/aptitude/history/${id}` , {
       headers: { "Authorization": `Bearer ${token}` }
     })
       .then(res => res.json())

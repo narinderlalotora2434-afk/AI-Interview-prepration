@@ -62,7 +62,7 @@ export default function InterviewPage() {
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (token) {
-      fetch(`${process.env.NEXT_PUBLIC_API_URL || `${process.env.NEXT_PUBLIC_API_URL || '${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}'}`}/api/user/dashboard` , {
+      fetch(`https://ai-interview-prepration-2-nadp.onrender.com/api/user/dashboard`  , {
         headers: { "Authorization": `Bearer ${token}` },
       })
         .then(res => res.json())
@@ -82,7 +82,7 @@ export default function InterviewPage() {
     setLoading(true);
     const token = localStorage.getItem("token");
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || `${process.env.NEXT_PUBLIC_API_URL || '${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}'}`}/api/interview/generate` , {
+      const res = await fetch(`https://ai-interview-prepration-2-nadp.onrender.com/api/interview/generate`  , {
         method: "POST",
         headers: { 
           "Content-Type": "application/json",
@@ -122,7 +122,7 @@ export default function InterviewPage() {
     setLoading(true);
     const token = localStorage.getItem("token");
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || `${process.env.NEXT_PUBLIC_API_URL || '${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}'}`}/api/interview/${interview.id}/evaluate`, {
+      const res = await fetch(`https://ai-interview-prepration-2-nadp.onrender.com/api/interview/${interview.id}/evaluate` , {
         method: "POST",
         headers: { 
           "Content-Type": "application/json",

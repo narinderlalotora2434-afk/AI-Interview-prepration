@@ -24,7 +24,7 @@ export default function CodingArenaDashboard() {
       return;
     }
 
-    fetch(`${process.env.NEXT_PUBLIC_API_URL || `${process.env.NEXT_PUBLIC_API_URL || '${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}'}`}/api/coding/problems?difficulty=${difficulty}&category=${encodeURIComponent(category)}`, {
+    fetch(`https://ai-interview-prepration-2-nadp.onrender.com/api/coding/problems?difficulty=${difficulty}&category=${encodeURIComponent(category)}` , {
       headers: { "Authorization": `Bearer ${token}` }
     })
       .then(res => res.json())

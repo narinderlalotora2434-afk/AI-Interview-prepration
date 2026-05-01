@@ -48,7 +48,7 @@ export default function DashboardPage() {
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (token) {
-      fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/challenges/daily`, {
+      fetch(`${process.env.NEXT_PUBLIC_API_URL || `https://ai-interview-prepration-2-nadp.onrender.com/api/challenges/daily` , {
         headers: { "Authorization": `Bearer ${token}` },
       })
         .then(res => res.json())
@@ -78,7 +78,7 @@ export default function DashboardPage() {
       return;
     }
 
-    fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/user/dashboard`, {
+    fetch(`${process.env.NEXT_PUBLIC_API_URL || `https://ai-interview-prepration-2-nadp.onrender.com/api/user/dashboard` , {
       headers: { "Authorization": `Bearer ${token}` },
     })
       .then((res) => {

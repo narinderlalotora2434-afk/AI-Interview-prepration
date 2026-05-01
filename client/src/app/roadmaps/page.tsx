@@ -37,7 +37,7 @@ export default function RoadmapsDashboard() {
       return;
     }
 
-    fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/roadmaps/branches`, {
+    fetch(`${process.env.NEXT_PUBLIC_API_URL || `https://ai-interview-prepration-2-nadp.onrender.com/api/roadmaps/branches` , {
       headers: { "Authorization": `Bearer ${token}` }
     })
       .then(res => res.json())

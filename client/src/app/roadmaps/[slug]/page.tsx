@@ -37,7 +37,7 @@ export default function BranchRoadmapPage() {
     if (!slug) return;
 
     Promise.all([
-      fetch(`${process.env.NEXT_PUBLIC_API_URL || `${process.env.NEXT_PUBLIC_API_URL || '${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}'}`}/api/roadmaps/branches/${slug}`, {
+      fetch(`https://ai-interview-prepration-2-nadp.onrender.com/api/roadmaps/branches/${slug}` , {
         headers: { "Authorization": `Bearer ${token}` }
       }).then(res => res.json()),
       // We will fetch progress after we get the branchId to avoid complex nested fetches
@@ -51,7 +51,7 @@ export default function BranchRoadmapPage() {
           setExpandedModules({ [branchData.roadmaps[0].modules[0].id]: true });
         }
 
-        return fetch(`${process.env.NEXT_PUBLIC_API_URL || `${process.env.NEXT_PUBLIC_API_URL || '${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}'}`}/api/roadmaps/progress/${branchData.id}`, {
+        return fetch(`https://ai-interview-prepration-2-nadp.onrender.com/api/roadmaps/progress/${branchData.id}` , {
           headers: { "Authorization": `Bearer ${token}` }
         }).then(res => res.json());
       })
@@ -79,7 +79,7 @@ export default function BranchRoadmapPage() {
     });
 
     try {
-      await fetch(`${process.env.NEXT_PUBLIC_API_URL || `${process.env.NEXT_PUBLIC_API_URL || '${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}'}`}/api/roadmaps/progress` , {
+      await fetch(`https://ai-interview-prepration-2-nadp.onrender.com/api/roadmaps/progress`  , {
         method: "POST",
         headers: { 
           "Content-Type": "application/json",
