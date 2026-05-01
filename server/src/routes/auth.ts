@@ -156,7 +156,7 @@ router.post('/forgot-password', async (req: Request, res: Response): Promise<voi
     res.json({ message: 'If that email exists, we have sent a reset link to it.' });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: error.message || 'Internal server error' });
   }
 });
 
@@ -204,7 +204,7 @@ router.post('/reset-password', async (req: Request, res: Response): Promise<void
     res.json({ message: 'Password has been successfully reset' });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: error.message || 'Internal server error' });
   }
 });
 

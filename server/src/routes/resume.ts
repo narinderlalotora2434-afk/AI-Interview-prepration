@@ -97,7 +97,7 @@ router.post('/analyze', authenticateToken, upload.single('resume'), async (req: 
     res.json({ message: 'Analysis complete', resume });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: error.message || 'Internal server error' });
   }
 });
 

@@ -60,7 +60,7 @@ router.get('/dashboard', authenticateToken, async (req: AuthRequest, res: Respon
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: error.message || 'Internal server error' });
   }
 });
 
@@ -83,7 +83,7 @@ router.post('/update-profile', authenticateToken, async (req: AuthRequest, res: 
     res.json(updatedUser);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: error.message || 'Internal server error' });
   }
 });
 
