@@ -36,7 +36,7 @@ export default function ProfilePage() {
       return;
     }
 
-    fetch(`https://ai-interview-prepration-2-nadp.onrender.com/api/user/dashboard`  , {
+    fetch("https://ai-interview-prepration-2-nadp.onrender.com/api/user/dashboard", {
       headers: { "Authorization": `Bearer ${token}` },
     })
       .then(res => res.json())
@@ -56,7 +56,7 @@ export default function ProfilePage() {
       const token = localStorage.getItem("token");
       
       try {
-        const res = await fetch(`https://ai-interview-prepration-2-nadp.onrender.com/api/user/update-profile`  , {
+        const res = await fetch("https://ai-interview-prepration-2-nadp.onrender.com/api/user/update-profile", {
           method: "POST",
           headers: { 
             "Content-Type": "application/json",

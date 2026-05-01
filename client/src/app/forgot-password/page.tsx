@@ -17,7 +17,7 @@ export default function ForgotPasswordPage() {
     setMessage("");
 
     try {
-      const res = await fetch(`https://ai-interview-prepration-2-nadp.onrender.com/api/auth/forgot-password`  , {
+      const res = await fetch("https://ai-interview-prepration-2-nadp.onrender.com/api/auth/forgot-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),

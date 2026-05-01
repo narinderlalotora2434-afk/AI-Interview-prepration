@@ -34,7 +34,7 @@ export default function QuestsPage() {
       return;
     }
 
-    fetch(`https://ai-interview-prepration-2-nadp.onrender.com/api/challenges/daily`  , {
+    fetch("https://ai-interview-prepration-2-nadp.onrender.com/api/challenges/daily", {
       headers: { "Authorization": `Bearer ${token}` },
     })
       .then(res => {
