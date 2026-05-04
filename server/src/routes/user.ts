@@ -58,7 +58,7 @@ router.get('/dashboard', authenticateToken, async (req: AuthRequest, res: Respon
       allActivity,
       user
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error(error);
     res.status(500).json({ error: error.message || 'Internal server error' });
   }
@@ -81,7 +81,7 @@ router.post('/update-profile', authenticateToken, async (req: AuthRequest, res: 
     });
 
     res.json(updatedUser);
-  } catch (error) {
+  } catch (error: any) {
     console.error(error);
     res.status(500).json({ error: error.message || 'Internal server error' });
   }

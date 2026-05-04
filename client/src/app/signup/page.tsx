@@ -5,6 +5,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Bot, Mail, Lock, User, ArrowRight, Loader2 } from "lucide-react";
+import { getBaseUrl } from "@/lib/api";
 
 export default function SignupPage() {
   const [name, setName] = useState("");
@@ -20,7 +21,7 @@ export default function SignupPage() {
     setError("");
 
     try {
-      const res = await fetch("https://ai-interview-prepration-2-nadp.onrender.com/api/auth/register", {
+      const res = await fetch(`${getBaseUrl()}/api/auth/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, email, password }),

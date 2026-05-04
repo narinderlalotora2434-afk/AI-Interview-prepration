@@ -5,6 +5,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Bot, Mail, Lock, ArrowRight, Loader2 } from "lucide-react";
+import { getBaseUrl } from "@/lib/api";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -19,7 +20,7 @@ export default function LoginPage() {
     setError("");
 
     try {
-      const res = await fetch(`https://ai-interview-prepration-2-nadp.onrender.com/api/auth/login` , {
+      const res = await fetch(`${getBaseUrl()}/api/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),

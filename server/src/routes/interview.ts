@@ -82,7 +82,7 @@ router.post('/generate', authenticateToken, async (req: AuthRequest, res: Respon
     });
 
     res.status(201).json({ interview });
-  } catch (error) {
+  } catch (error: any) {
     console.error(error);
     res.status(500).json({ error: error.message || 'Internal server error' });
   }
@@ -174,7 +174,7 @@ router.post('/:id/evaluate', authenticateToken, async (req: AuthRequest, res: Re
     }
 
     res.json({ message: 'Evaluation complete', score: avgScore, evaluatedAnswers });
-  } catch (error) {
+  } catch (error: any) {
     console.error(error);
     res.status(500).json({ error: error.message || 'Internal server error' });
   }

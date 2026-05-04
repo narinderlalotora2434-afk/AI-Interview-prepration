@@ -14,8 +14,6 @@ import {
   LogOut,
   Plus,
   Code,
-  Palette,
-  Check,
   Flame,
   Target,
   Trophy,
@@ -29,26 +27,21 @@ import {
   X
 } from "lucide-react";
 
-const THEMES = [
-  { name: "Deep Space", color: "#020617", accent: "indigo" },
-  { name: "Midnight Blue", color: "#0f172a", accent: "blue" },
-  { name: "Dark Forest", color: "#064e3b", accent: "emerald" },
-  { name: "Royal Purple", color: "#2e1065", accent: "purple" },
-  { name: "Bordeaux", color: "#450a0a", accent: "red" },
-];
+
+
+import { getBaseUrl } from "@/lib/api";
 
 export default function DashboardPage() {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [dailyChallenges, setDailyChallenges] = useState<any>(null);
-  const [currentTheme, setCurrentTheme] = useState("#020617");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (token) {
-      fetch("https://ai-interview-prepration-2-nadp.onrender.com/api/challenges/daily", {
+      fetch(`${getBaseUrl()}/api/challenges/daily`, {
         headers: { "Authorization": `Bearer ${token}` },
       })
         .then(res => res.json())
@@ -58,27 +51,13 @@ export default function DashboardPage() {
   }, []);
 
   useEffect(() => {
-    const savedTheme = localStorage.getItem("theme-color");
-    if (savedTheme) {
-      setCurrentTheme(savedTheme);
-      document.documentElement.style.setProperty('--bg-color', savedTheme);
-    }
-  }, []);
-
-  const changeTheme = (color: string) => {
-    setCurrentTheme(color);
-    document.documentElement.style.setProperty('--bg-color', color);
-    localStorage.setItem("theme-color", color);
-  };
-
-  useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) {
       router.push("/login");
       return;
     }
 
-    fetch("https://ai-interview-prepration-2-nadp.onrender.com/api/user/dashboard", {
+    fetch(`${getBaseUrl()}/api/user/dashboard`, {
       headers: { "Authorization": `Bearer ${token}` },
     })
       .then((res) => {
@@ -151,10 +130,10 @@ export default function DashboardPage() {
             { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, color: "" },
             { href: "/quests", label: "Daily Quests", icon: Zap, color: "text-amber-400" },
             { href: "/roadmaps", label: "Placement Roadmaps", icon: MapIcon, color: "" },
-            { href: "/interview", label: "Mock Interview", icon: MessageSquare, color: "" },
-            { href: "/coding", label: "Coding Simulator", icon: Code, color: "" },
-            { href: "/resume", label: "Resume Analyzer", icon: FileText, color: "" },
             { href: "/aptitude", label: "Aptitude Test", icon: Brain, color: "text-pink-400" },
+            { href: "/coding", label: "Coding Simulator", icon: Code, color: "" },
+            { href: "/interview", label: "Mock Interview", icon: MessageSquare, color: "" },
+            { href: "/resume", label: "Resume Analyzer", icon: FileText, color: "" },
             { href: "/profile", label: "Profile", icon: User, color: "text-indigo-400" },
           ].map((item) => (
             <Link 
@@ -314,33 +293,7 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* Themes */}
-          <div className="glass-card p-6 md:p-8 lg:col-span-2">
-            <h2 className="text-lg md:text-xl font-black mb-6 flex items-center gap-2">
-              <Palette className="w-5 h-5 text-indigo-400" />
-              Aesthetics
-            </h2>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 md:gap-4">
-              {THEMES.map((t) => (
-                <button
-                  key={t.name}
-                  onClick={() => changeTheme(t.color)}
-                  className={`group relative p-3 md:p-4 rounded-2xl border transition-all ${currentTheme === t.color ? 'border-indigo-500 bg-white/10' : 'border-white/5 bg-white/5 hover:border-white/20'}`}
-                >
-                  <div 
-                    className="w-full h-8 md:h-12 rounded-lg mb-2 md:mb-3 shadow-inner"
-                    style={{ backgroundColor: t.color }}
-                  />
-                  <div className="text-[8px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest">{t.name}</div>
-                  {currentTheme === t.color && (
-                    <div className="absolute top-1.5 right-1.5 bg-indigo-500 rounded-full p-0.5">
-                      <Check className="w-2.5 h-2.5 md:w-3 md:h-3 text-white" />
-                    </div>
-                  )}
-                </button>
-              ))}
-            </div>
-          </div>
+
         </div>
       </main>
     </div>

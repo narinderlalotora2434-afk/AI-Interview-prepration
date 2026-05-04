@@ -95,7 +95,7 @@ router.post('/analyze', authenticateToken, upload.single('resume'), async (req: 
     await updateGamification(userId, 20);
 
     res.json({ message: 'Analysis complete', resume });
-  } catch (error) {
+  } catch (error: any) {
     console.error(error);
     res.status(500).json({ error: error.message || 'Internal server error' });
   }

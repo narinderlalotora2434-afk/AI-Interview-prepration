@@ -15,6 +15,7 @@ import {
   Award,
   ArrowRight,
   BrainCircuit,
+  Brain,
   Mic,
   MicOff,
   Volume2,
@@ -25,6 +26,7 @@ import {
   User
 } from "lucide-react";
 import { useSpeech } from "@/lib/useSpeech";
+import { getBaseUrl } from "@/lib/api";
 
 export default function InterviewPage() {
   const [step, setStep] = useState<"setup" | "chat" | "result">("setup");
@@ -62,7 +64,7 @@ export default function InterviewPage() {
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (token) {
-      fetch("https://ai-interview-prepration-2-nadp.onrender.com/api/user/dashboard", {
+      fetch(`${getBaseUrl()}/api/user/dashboard`, {
         headers: { "Authorization": `Bearer ${token}` },
       })
         .then(res => res.json())
@@ -82,7 +84,7 @@ export default function InterviewPage() {
     setLoading(true);
     const token = localStorage.getItem("token");
     try {
-      const res = await fetch("https://ai-interview-prepration-2-nadp.onrender.com/api/interview/generate", {
+      const res = await fetch(`${getBaseUrl()}/api/interview/generate`, {
         method: "POST",
         headers: { 
           "Content-Type": "application/json",
@@ -168,13 +170,17 @@ export default function InterviewPage() {
             <MapIcon className="w-5 h-5" />
             Placement Roadmaps
           </Link>
-          <Link href="/interview" className="flex items-center gap-3 px-4 py-3 bg-white/5 text-white rounded-xl font-medium">
-            <MessageSquare className="w-5 h-5" />
-            Mock Interview
+          <Link href="/aptitude" className="flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-white/5 hover:text-white rounded-xl transition-colors">
+            <Brain className="w-5 h-5 text-pink-400" />
+            Aptitude Test
           </Link>
           <Link href="/coding" className="flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-white/5 hover:text-white rounded-xl transition-colors">
             <Code className="w-5 h-5" />
             Coding Simulator
+          </Link>
+          <Link href="/interview" className="flex items-center gap-3 px-4 py-3 bg-white/5 text-white rounded-xl font-medium">
+            <MessageSquare className="w-5 h-5" />
+            Mock Interview
           </Link>
           <Link href="/resume" className="flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-white/5 hover:text-white rounded-xl transition-colors">
             <FileText className="w-5 h-5" />

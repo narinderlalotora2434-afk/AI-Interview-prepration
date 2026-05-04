@@ -20,7 +20,8 @@ import {
   LogOut,
   ChevronRight,
   Target,
-  Camera
+  Camera,
+  Brain
 } from "lucide-react";
 
 export default function ProfilePage() {
@@ -144,13 +145,17 @@ export default function ProfilePage() {
             <MapIcon className="w-5 h-5" />
             Placement Roadmaps
           </Link>
-          <Link href="/interview" className="flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-white/5 hover:text-white rounded-xl transition-colors">
-            <MessageSquare className="w-5 h-5" />
-            Mock Interview
+          <Link href="/aptitude" className="flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-white/5 hover:text-white rounded-xl transition-colors">
+            <Brain className="w-5 h-5 text-pink-400" />
+            Aptitude Test
           </Link>
           <Link href="/coding" className="flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-white/5 hover:text-white rounded-xl transition-colors">
             <Code className="w-5 h-5" />
             Coding Simulator
+          </Link>
+          <Link href="/interview" className="flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-white/5 hover:text-white rounded-xl transition-colors">
+            <MessageSquare className="w-5 h-5" />
+            Mock Interview
           </Link>
           <Link href="/resume" className="flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-white/5 hover:text-white rounded-xl transition-colors">
             <FileText className="w-5 h-5" />

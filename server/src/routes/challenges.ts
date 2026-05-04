@@ -68,7 +68,7 @@ router.get('/daily', authenticateToken, async (req: AuthRequest, res: Response) 
     }
 
     res.json(challenge);
-  } catch (error) {
+  } catch (error: any) {
     console.error(error);
     res.status(500).json({ error: error.message || 'Internal server error' });
   }

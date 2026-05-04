@@ -22,6 +22,8 @@ import {
   X,
   Brain
 } from "lucide-react";
+import { getBaseUrl } from "@/lib/api";
+import { motion } from "framer-motion";
 
 export default function RoadmapsDashboard() {
   const [branches, setBranches] = useState<any[]>([]);
@@ -37,7 +39,7 @@ export default function RoadmapsDashboard() {
       return;
     }
 
-    fetch("https://ai-interview-prepration-2-nadp.onrender.com/api/roadmaps/branches", {
+    fetch(`${getBaseUrl()}/api/roadmaps/branches`, {
       headers: { "Authorization": `Bearer ${token}` }
     })
       .then(res => res.json())
@@ -105,10 +107,10 @@ export default function RoadmapsDashboard() {
             { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, color: "" },
             { href: "/quests", label: "Daily Quests", icon: Zap, color: "text-amber-400" },
             { href: "/roadmaps", label: "Placement Roadmaps", icon: MapIcon, color: "text-indigo-400", active: true },
-            { href: "/interview", label: "Mock Interview", icon: MessageSquare, color: "" },
-            { href: "/coding", label: "Coding Simulator", icon: Code, color: "" },
-            { href: "/resume", label: "Resume Analyzer", icon: FileText, color: "" },
             { href: "/aptitude", label: "Aptitude Test", icon: Brain, color: "text-pink-400" },
+            { href: "/coding", label: "Coding Simulator", icon: Code, color: "" },
+            { href: "/interview", label: "Mock Interview", icon: MessageSquare, color: "" },
+            { href: "/resume", label: "Resume Analyzer", icon: FileText, color: "" },
             { href: "/profile", label: "Profile", icon: User, color: "text-indigo-400" },
           ].map((item) => (
             <Link 
@@ -161,12 +163,6 @@ export default function RoadmapsDashboard() {
                 <div key={i} className="glass-card h-64 animate-pulse rounded-2xl" />
               ))}
             </div>
-          ) : filteredBranches.length === 0 ? (
-            <div className="text-center py-20">
-              <Target className="w-16 h-16 text-slate-600 mx-auto mb-4" />
-              <h3 className="text-xl font-bold text-slate-300">No branches found</h3>
-              <p className="text-slate-500">Try adjusting your search criteria.</p>
-            </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
               {filteredBranches.map((branch) => (
@@ -218,6 +214,51 @@ export default function RoadmapsDashboard() {
                   </div>
                 </Link>
               ))}
+
+              {/* Aptitude Roadmap Card */}
+              <Link href="/roadmaps/aptitude" className="group">
+                <div className="glass-card p-6 rounded-2xl h-full border border-pink-500/30 hover:border-pink-500 hover:bg-white/[0.03] transition-all duration-300 relative overflow-hidden bg-gradient-to-br from-pink-600/5 to-transparent">
+                  
+                  {/* Hover Gradient */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-pink-500/0 via-transparent to-purple-500/0 group-hover:from-pink-500/10 group-hover:to-purple-500/10 transition-colors duration-500" />
+                  
+                  <div className="relative z-10 flex flex-col h-full">
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="w-12 h-12 rounded-xl bg-pink-500/20 flex items-center justify-center border border-pink-500/30 text-pink-400 group-hover:scale-110 transition-transform shadow-[0_0_15px_rgba(236,72,153,0.2)]">
+                        <Brain className="w-6 h-6" />
+                      </div>
+                      <div className="px-3 py-1 bg-pink-500/10 rounded-full border border-pink-500/20 text-xs font-black text-pink-400 uppercase tracking-widest">
+                        Common
+                      </div>
+                    </div>
+
+                    <h3 className="text-xl font-bold text-white mb-2 group-hover:text-pink-300 transition-colors">Aptitude Preparation</h3>
+                    <p className="text-slate-400 text-sm mb-6 flex-1">Master Quantitative, Logical, and Verbal skills required for all major company assessment rounds.</p>
+
+                    <div className="space-y-3 mb-6">
+                      <div>
+                        <div className="text-xs text-slate-500 uppercase font-bold tracking-wider mb-1">Target Exams</div>
+                        <div className="flex flex-wrap gap-2">
+                          {["AMCAT", "eLitmus", "CoCubes", "TCS iQN"].map((comp, i) => (
+                            <span key={i} className="text-xs px-2 py-1 bg-slate-800 text-pink-300/80 rounded border border-pink-500/10 font-medium">{comp}</span>
+                          ))}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-xs text-slate-500 uppercase font-bold tracking-wider mb-1">Focus Areas</div>
+                        <div className="text-sm font-medium text-emerald-400 flex items-center gap-2">
+                          <Target className="w-4 h-4" /> All Company Rounds
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="pt-4 border-t border-white/10 flex items-center justify-between text-pink-400 font-bold group-hover:text-pink-300">
+                      Start Mastery
+                      <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                    </div>
+                  </div>
+                </div>
+              </Link>
             </div>
           )}
         </div>
