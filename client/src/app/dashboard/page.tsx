@@ -24,8 +24,11 @@ import {
   Brain,
   Award,
   Menu,
-  X
+  X,
+  Mic,
+  Sparkles
 } from "lucide-react";
+
 
 
 
@@ -133,6 +136,7 @@ export default function DashboardPage() {
             { href: "/aptitude", label: "Aptitude Test", icon: Brain, color: "text-pink-400" },
             { href: "/coding", label: "Coding Simulator", icon: Code, color: "" },
             { href: "/interview", label: "Mock Interview", icon: MessageSquare, color: "" },
+            { href: "/mock-interview/voice", label: "Voice AI (Beta)", icon: Mic, color: "text-rose-400" },
             { href: "/resume", label: "Resume Analyzer", icon: FileText, color: "" },
             { href: "/profile", label: "Profile", icon: User, color: "text-indigo-400" },
           ].map((item) => (
@@ -217,6 +221,38 @@ export default function DashboardPage() {
             <div className="text-2xl md:text-3xl font-black">{data?.analytics.codingRoundCount}</div>
           </div>
         </div>
+
+        {/* Featured Voice Interview Promo */}
+        <div className="glass-card p-1 md:p-1 mb-8 md:mb-10 overflow-hidden group">
+          <div className="bg-gradient-to-r from-indigo-600/20 via-purple-600/20 to-rose-600/20 p-6 md:p-8 flex flex-col md:flex-row items-center justify-between gap-8 relative">
+            <div className="absolute -right-20 -top-20 w-64 h-64 bg-rose-500/10 blur-[100px] rounded-full group-hover:bg-rose-500/20 transition-all duration-700" />
+            <div className="relative z-10 space-y-4 text-center md:text-left">
+              <div className="inline-flex items-center gap-2 px-3 py-1 bg-rose-500/20 text-rose-400 rounded-full text-[10px] font-black uppercase tracking-widest border border-rose-500/30">
+                <Sparkles className="w-3 h-3" />
+                New Feature
+              </div>
+              <h2 className="text-3xl md:text-4xl font-black text-white leading-tight">
+                Master Your Interviews <br/>
+                <span className="gradient-text">With Voice AI</span>
+              </h2>
+              <p className="text-slate-400 max-w-lg text-sm md:text-base">
+                Go beyond text. Experience real-time, voice-activated mock interviews with instant feedback on your communication and technical skills.
+              </p>
+              <Link href="/mock-interview/voice" className="btn-primary inline-flex items-center gap-2 px-8 py-4 shadow-rose-500/20">
+                Try Voice Interview
+                <Mic className="w-5 h-5" />
+              </Link>
+            </div>
+            <div className="relative hidden lg:block">
+              <div className="w-48 h-48 rounded-full bg-gradient-to-br from-indigo-500 to-rose-500 flex items-center justify-center animate-glow p-1 shadow-2xl">
+                <div className="w-full h-full rounded-full bg-slate-950 flex items-center justify-center">
+                   <Mic className="w-20 h-20 text-white animate-pulse" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
 
         {/* Achievements Section */}
         <div className="glass-card p-6 md:p-8 mb-8 md:mb-10">

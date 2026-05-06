@@ -124,7 +124,8 @@ export default function InterviewPage() {
     setLoading(true);
     const token = localStorage.getItem("token");
     try {
-      const res = await fetch(`https://ai-interview-prepration-2-nadp.onrender.com/api/interview/${interview.id}/evaluate`, {
+      const res = await fetch(`${getBaseUrl()}/api/interview/${interview.id}/evaluate`, {
+
         method: "POST",
         headers: { 
           "Content-Type": "application/json",

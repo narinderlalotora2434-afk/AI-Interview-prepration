@@ -9,6 +9,8 @@ import codingRoutes from './routes/coding';
 import challengeRoutes from './routes/challenges';
 import aptitudeRoutes from './routes/aptitude';
 import roadmapsRoutes from './routes/roadmaps';
+import voiceInterviewRoutes from './routes/voiceInterview';
+
 
 dotenv.config();
 
@@ -28,6 +30,8 @@ app.use('/api/coding', codingRoutes);
 app.use('/api/challenges', challengeRoutes);
 app.use('/api/aptitude', aptitudeRoutes);
 app.use('/api/roadmaps', roadmapsRoutes);
+app.use('/api/voice-interview', voiceInterviewRoutes);
+
 
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', message: 'API is running' });
