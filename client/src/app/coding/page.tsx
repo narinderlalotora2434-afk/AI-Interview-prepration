@@ -1,27 +1,54 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
+import { motion, AnimatePresence } from "framer-motion";
 import { 
   Bot, LayoutDashboard, MessageSquare, FileText, Code, Zap,
   Map as MapIcon, User, LogOut,
-  Search, Filter, ChevronRight, CheckCircle2, Clock, Trophy, Flame, Brain,
-  TrendingUp, Activity, Target, Shield, Star, Globe, Building2, Layers
+  Search, ChevronRight, CheckCircle2, Brain,
+  Target, Shield, Star, Building2,
+  Menu, X, Sparkles, TrendingUp, Trophy, ArrowRight
 } from "lucide-react";
-import { motion } from "framer-motion";
+import { ThemeToggle } from "@/components/ThemeToggle";
+import { getBaseUrl } from "@/lib/api";
+
+interface Problem {
+  id: string;
+  title: string;
+  difficulty: "Easy" | "Medium" | "Hard";
+  category: string;
+  acceptanceRate: number;
+  solved: boolean;
+  company: string[];
+}
 
 export default function CodingArenaDashboard() {
   const router = useRouter();
-  const [problems, setProblems] = useState<any[]>([]);
+  const [problems, setProblems] = useState<Problem[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [difficulty, setDifficulty] = useState("All");
-  const [category, setCategory] = useState("All Topics");
   
   useEffect(() => {
-    // Simulated fetching for the new professional view
-    const mockProblems = [
+    const token = localStorage.getItem("token");
+    if (!token) {
+      router.push("/login");
+      return;
+    }
+
+    const cachedProblems = localStorage.getItem("coding_problems_cache");
+    if (cachedProblems) {
+      try {
+        setProblems(JSON.parse(cachedProblems));
+        setLoading(false);
+      } catch {
+        localStorage.removeItem("coding_problems_cache");
+      }
+    }
+
+    // Mock Problems
+    const mockProblems: Problem[] = [
       { id: "1", title: "Two Sum", difficulty: "Easy", category: "Array", acceptanceRate: 0.48, solved: true, company: ["Google", "Amazon"] },
       { id: "2", title: "Add Two Numbers", difficulty: "Medium", category: "Linked List", acceptanceRate: 0.35, solved: false, company: ["Microsoft", "Adobe"] },
       { id: "3", title: "Median of Two Sorted Arrays", difficulty: "Hard", category: "Divide and Conquer", acceptanceRate: 0.22, solved: false, company: ["Goldman Sachs", "Uber"] },
@@ -31,281 +58,190 @@ export default function CodingArenaDashboard() {
       { id: "7", title: "String to Integer (atoi)", difficulty: "Medium", category: "String", acceptanceRate: 0.28, solved: false, company: ["Google"] },
     ];
     
-    setTimeout(() => {
+    const timer = setTimeout(() => {
       setProblems(mockProblems);
+      localStorage.setItem("coding_problems_cache", JSON.stringify(mockProblems));
       setLoading(false);
-    }, 1000);
-  }, [difficulty, category]);
+    }, 800);
 
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    router.push("/login");
-  };
+    return () => clearTimeout(timer);
+  }, [router]);
 
   const filteredProblems = problems.filter(p => p.title.toLowerCase().includes(search.toLowerCase()));
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] flex flex-col md:flex-row text-slate-300 font-sans relative">
-      {/* Background Gradients */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10">
-        <div className="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] bg-emerald-600/10 rounded-full blur-[120px]" />
-        <div className="absolute bottom-[-10%] left-[-10%] w-[50%] h-[50%] bg-indigo-600/10 rounded-full blur-[120px]" />
-      </div>
+    <div className="min-h-screen bg-background text-foreground selection:bg-primary/30">
+      <div className="absolute inset-0 bg-grid opacity-10 pointer-events-none" />
+      <div className="absolute top-0 left-1/3 w-full max-w-4xl h-64 bg-emerald-500/10 blur-[120px] pointer-events-none" />
 
-      {/* Sidebar */}
-      <aside className="fixed md:sticky top-0 left-0 h-screen w-72 md:w-64 border-r border-white/5 bg-slate-950 p-6 flex flex-col shrink-0 z-50">
-        <Link href="/" className="flex items-center gap-2 mb-10">
-          <div className="bg-emerald-600 p-2 rounded-lg">
-            <Bot className="w-5 h-5 text-white" />
-          </div>
-          <span className="text-xl font-bold tracking-tight text-white">PrepAI</span>
-        </Link>
-        <nav className="space-y-1 flex-1">
-          {[
-            { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, color: "" },
-            { href: "/quests", label: "Daily Quests", icon: Zap, color: "text-amber-400" },
-            { href: "/roadmaps", label: "Placement Roadmaps", icon: MapIcon, color: "text-indigo-400" },
-            { href: "/aptitude", label: "Aptitude Test", icon: Brain, color: "text-pink-400" },
-            { href: "/coding", label: "Coding Simulator", icon: Code, active: true, color: "text-emerald-400" },
-            { href: "/interview", label: "Mock Interview", icon: MessageSquare, color: "" },
-            { href: "/resume", label: "Resume Analyzer", icon: FileText, color: "" },
-            { href: "/profile", label: "Profile", icon: User, color: "text-indigo-400" },
-          ].map((item) => (
-            <Link 
-              key={item.href}
-              href={item.href} 
-              className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${
-                item.active ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'text-slate-400 hover:bg-white/5 hover:text-white'
-              }`}
-            >
-              <item.icon className={`w-5 h-5 ${item.color} shrink-0`} />
-              {item.label}
-            </Link>
-          ))}
-        </nav>
-        <button onClick={handleLogout} className="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-rose-400 transition-colors mt-auto">
-          <LogOut className="w-5 h-5" /> Logout
-        </button>
-      </aside>
-
-      {/* Main Content */}
-      <main className="flex-1 flex flex-col h-screen overflow-y-auto relative p-8">
-        <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
-          <div>
-            <div className="flex items-center gap-3 mb-4">
-              <div className="px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-black uppercase tracking-widest rounded-full">
-                Global Code Arena
-              </div>
-              <div className="flex items-center gap-1.5 text-slate-500 text-[10px] font-bold">
-                <Globe className="w-3 h-3" /> Online: 1,248 Candidates
-              </div>
+      {/* Header */}
+      <header className="relative z-50 h-20 border-b border-border px-8 flex items-center justify-between bg-background/50 backdrop-blur-md">
+        <div className="flex items-center gap-4">
+          <Link href="/dashboard" className="p-2 hover:bg-secondary rounded-lg transition-colors">
+            <LogOut className="w-5 h-5 rotate-180" />
+          </Link>
+          <div className="h-6 w-px bg-border" />
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-emerald-600 flex items-center justify-center shadow-[0_0_15px_rgba(16,185,129,0.4)] text-white">
+              <Code className="w-5 h-5" />
             </div>
-            <h1 className="text-4xl md:text-5xl font-black text-white mb-4 tracking-tighter">Coding Arena</h1>
-            <p className="text-lg text-slate-400 max-w-2xl">Master algorithms, optimize space-time complexity, and dominate technical interview rounds at top tier product companies.</p>
+            <span className="font-bold tracking-tight">Coding Arena</span>
           </div>
-          <div className="flex items-center gap-4 bg-white/5 p-4 rounded-2xl border border-white/5 backdrop-blur-xl">
-             <div className="text-center px-4">
-               <div className="text-2xl font-black text-emerald-400">142</div>
-               <div className="text-[10px] text-slate-500 uppercase tracking-widest font-black">Solved</div>
+        </div>
+        <div className="flex items-center gap-4">
+          <ThemeToggle />
+          <div className="w-10 h-10 rounded-full bg-foreground/10 border border-border flex items-center justify-center font-bold">U</div>
+        </div>
+      </header>
+
+      <main className="relative z-10 p-8 max-w-7xl mx-auto min-h-[calc(100vh-80px)] space-y-12">
+        <header className="flex flex-col md:flex-row md:items-end justify-between gap-8">
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 text-[10px] font-black uppercase tracking-widest">
+              <Zap className="w-4 h-4" /> Competitive Programming
+            </div>
+            <h1 className="text-5xl font-bold tracking-tight">Algorithmic Forge</h1>
+            <p className="text-muted-foreground text-lg max-w-2xl leading-relaxed">Master data structures and algorithms with real-time feedback and company-specific problem sets.</p>
+          </motion.div>
+          
+          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="flex items-center gap-4 glass-card p-6 border-emerald-500/20">
+             <div className="text-center px-6">
+               <div className="text-3xl font-bold text-emerald-500 tracking-tighter">142</div>
+               <div className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Solved</div>
              </div>
-             <div className="w-[1px] h-8 bg-white/10" />
-             <div className="text-center px-4">
-               <div className="text-2xl font-black text-amber-400">12</div>
-               <div className="text-[10px] text-slate-500 uppercase tracking-widest font-black">Streak</div>
+             <div className="w-px h-10 bg-border" />
+             <div className="text-center px-6">
+               <div className="text-3xl font-bold text-primary tracking-tighter">1,845</div>
+               <div className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Rating</div>
              </div>
-             <div className="w-[1px] h-8 bg-white/10" />
-             <div className="text-center px-4">
-               <div className="text-2xl font-black text-indigo-400">1,845</div>
-               <div className="text-[10px] text-slate-500 uppercase tracking-widest font-black">Rating</div>
-             </div>
-          </div>
+          </motion.div>
         </header>
 
-        {/* Filters & Actions */}
-        <div className="flex flex-col xl:flex-row gap-8 mb-12">
+        {/* Content Grid */}
+        <div className="flex flex-col xl:flex-row gap-10">
           <div className="flex-1 space-y-8">
-            <div className="flex flex-col md:flex-row gap-4">
-              <div className="relative flex-1 group">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500 group-focus-within:text-emerald-500 transition-colors" />
-                <input 
-                  type="text" 
-                  placeholder="Search problem title or company tag..." 
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-white focus:outline-none focus:border-emerald-500/50 focus:bg-white/10 transition-all font-medium"
-                />
-              </div>
-              <div className="flex gap-4">
-                <select className="bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-slate-300 outline-none focus:border-emerald-500/50 appearance-none font-bold text-sm">
-                  <option>Difficulty: All</option>
-                  <option>Easy</option>
-                  <option>Medium</option>
-                  <option>Hard</option>
-                </select>
-                <select className="bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-slate-300 outline-none focus:border-emerald-500/50 appearance-none font-bold text-sm">
-                  <option>Topic: All</option>
-                  <option>Arrays</option>
-                  <option>DP</option>
-                  <option>Graphs</option>
-                  <option>Trees</option>
-                </select>
-              </div>
+            <div className="relative group">
+              <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground group-focus-within:text-emerald-500 transition-colors" />
+              <input 
+                type="text" 
+                placeholder="Search algorithms, companies, or categories..." 
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full bg-secondary border border-border rounded-2xl py-5 pl-14 pr-6 text-foreground focus:outline-none focus:border-emerald-500 focus:bg-foreground/5 transition-all font-medium text-lg placeholder:text-muted-foreground"
+              />
             </div>
 
-            {/* Quick Filter Tags */}
-            <div className="flex flex-wrap gap-2">
-              {['Amazon', 'Google', 'Microsoft', 'Uber', 'Goldman Sachs', 'Adobe', 'Striver SDE Sheet', 'Blind 75', 'NeetCode 150'].map((tag) => (
-                <button key={tag} className="px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/5 rounded-xl text-xs font-bold text-slate-400 hover:text-white transition-all">
-                  {tag}
-                </button>
-              ))}
-            </div>
-
-            {/* Problem Table */}
-            <div className="glass-card overflow-hidden border border-white/10">
-              <table className="w-full text-left border-collapse">
+            <div className="glass-card overflow-hidden border-border">
+              <table className="w-full text-left">
                 <thead>
-                  <tr className="bg-white/5 border-b border-white/5 text-[10px] uppercase tracking-widest font-black text-slate-500">
-                    <th className="py-5 px-8">Status</th>
-                    <th className="py-5 px-8">Title</th>
-                    <th className="py-5 px-8 text-center">Difficulty</th>
-                    <th className="py-5 px-8 text-center">Acceptance</th>
-                    <th className="py-5 px-8 text-right">Practice</th>
+                  <tr className="bg-secondary border-b border-border text-[10px] uppercase tracking-widest font-bold text-muted-foreground">
+                    <th className="py-6 px-10">Status</th>
+                    <th className="py-6 px-10">Challenge</th>
+                    <th className="py-6 px-10 text-center">Difficulty</th>
+                    <th className="py-6 px-10 text-right">Action</th>
                   </tr>
                 </thead>
-                <tbody>
-                  {loading ? (
+                <tbody className="divide-y divide-border">
+                  {loading && problems.length === 0 ? (
                     <tr>
-                      <td colSpan={5} className="py-20 text-center">
+                      <td colSpan={4} className="py-32 text-center">
                         <div className="flex flex-col items-center gap-4">
-                          <div className="w-10 h-10 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin" />
-                          <div className="text-slate-500 font-bold tracking-widest text-[10px] uppercase">Syncing Arena Data...</div>
+                          <div className="w-12 h-12 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin shadow-[0_0_15px_rgba(16,185,129,0.3)]" />
+                          <p className="text-muted-foreground font-bold tracking-widest text-[10px] uppercase">Syncing Arena...</p>
                         </div>
                       </td>
                     </tr>
-                  ) : filteredProblems.length === 0 ? (
-                    <tr><td colSpan={5} className="py-20 text-center text-slate-500">No challenges match your query.</td></tr>
-                  ) : (
-                    filteredProblems.map((p, idx) => (
-                      <tr 
-                        key={p.id} 
-                        className="group border-b border-white/[0.03] hover:bg-emerald-500/[0.02] transition-colors cursor-pointer"
-                        onClick={() => router.push(`/coding/problem/${p.id}`)}
-                      >
-                        <td className="py-6 px-8">
-                          {p.solved ? (
-                            <CheckCircle2 className="w-5 h-5 text-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.3)]" />
-                          ) : (
-                            <div className="w-5 h-5 rounded-full border-2 border-white/10 group-hover:border-emerald-500/50 transition-colors" />
-                          )}
-                        </td>
-                        <td className="py-6 px-8">
-                          <div className="flex flex-col gap-1">
-                            <span className="text-lg font-black text-white group-hover:text-emerald-400 transition-colors tracking-tight">
-                              {p.title}
-                            </span>
-                            <div className="flex items-center gap-3">
-                               <span className="text-[10px] font-bold text-slate-500 flex items-center gap-1">
-                                 <Building2 className="w-3 h-3" /> {p.company.join(', ')}
-                               </span>
-                               <span className="text-[10px] font-bold text-slate-500 flex items-center gap-1">
-                                 <Layers className="w-3 h-3" /> {p.category}
-                               </span>
-                            </div>
+                  ) : filteredProblems.map((p, idx) => (
+                    <motion.tr 
+                      key={p.id}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: idx * 0.05 }}
+                      className="group hover:bg-foreground/[0.03] transition-all cursor-pointer"
+                      onClick={() => router.push(`/coding/problem/${p.id}`)}
+                    >
+                      <td className="py-8 px-10">
+                        {p.solved ? (
+                          <div className="w-6 h-6 rounded-lg bg-emerald-500/20 flex items-center justify-center">
+                            <CheckCircle2 className="w-4 h-4 text-emerald-500" />
                           </div>
-                        </td>
-                        <td className="py-6 px-8 text-center">
-                          <span className={`text-[10px] font-black uppercase px-3 py-1 rounded-full border ${
-                            p.difficulty === 'Easy' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
-                            p.difficulty === 'Medium' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
-                            'bg-rose-500/10 text-rose-400 border-rose-500/20'
-                          }`}>
-                            {p.difficulty}
-                          </span>
-                        </td>
-                        <td className="py-6 px-8 text-center">
-                          <div className="flex flex-col items-center gap-1">
-                            <span className="text-sm font-bold text-white tracking-tighter">{Math.round(p.acceptanceRate * 100)}%</span>
-                            <div className="w-16 h-1 bg-white/5 rounded-full overflow-hidden">
-                               <motion.div 
-                                 className="h-full bg-emerald-500"
-                                 initial={{ width: 0 }}
-                                 animate={{ width: `${p.acceptanceRate * 100}%` }}
-                                 transition={{ duration: 1 }}
-                               />
-                            </div>
+                        ) : (
+                          <div className="w-6 h-6 rounded-lg border-2 border-border group-hover:border-emerald-500/50 transition-colors" />
+                        )}
+                      </td>
+                      <td className="py-8 px-10">
+                        <div className="space-y-2">
+                          <span className="text-xl font-bold tracking-tight group-hover:text-emerald-500 transition-colors">{p.title}</span>
+                          <div className="flex items-center gap-3">
+                            {p.company.map(c => (
+                              <span key={c} className="text-[10px] font-bold text-muted-foreground flex items-center gap-1 uppercase tracking-widest px-2 py-0.5 bg-secondary rounded border border-border">
+                                <Building2 className="w-3 h-3 opacity-50" /> {c}
+                              </span>
+                            ))}
                           </div>
-                        </td>
-                        <td className="py-6 px-8 text-right">
-                          <button className="p-3 bg-white/5 rounded-xl text-slate-400 group-hover:bg-emerald-600 group-hover:text-white transition-all shadow-xl active:scale-90">
-                            <ChevronRight className="w-5 h-5" />
-                          </button>
-                        </td>
-                      </tr>
-                    ))
-                  )}
+                        </div>
+                      </td>
+                      <td className="py-8 px-10 text-center">
+                        <span className={`text-[10px] font-bold uppercase px-4 py-1.5 rounded-full border ${
+                          p.difficulty === 'Easy' ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' :
+                          p.difficulty === 'Medium' ? 'bg-amber-500/10 text-amber-500 border-amber-500/20' :
+                          'bg-rose-500/10 text-rose-500 border-rose-500/20'
+                        }`}>
+                          {p.difficulty}
+                        </span>
+                      </td>
+                      <td className="py-8 px-10 text-right">
+                        <button className="w-12 h-12 rounded-xl bg-secondary flex items-center justify-center text-muted-foreground group-hover:bg-emerald-500 group-hover:text-primary-foreground transition-all">
+                          <ChevronRight className="w-6 h-6" />
+                        </button>
+                      </td>
+                    </motion.tr>
+                  ))}
                 </tbody>
               </table>
             </div>
           </div>
 
-          {/* Right Sidebar: Stats & Sheets */}
           <aside className="w-full xl:w-96 space-y-8">
-            {/* Topic Mastery */}
-            <div className="glass-card p-6 border border-white/10 relative overflow-hidden">
-              <h3 className="text-sm font-black text-white uppercase tracking-widest mb-6 flex items-center gap-2">
-                <Target className="w-4 h-4 text-indigo-400" /> Topic Mastery
+            <div className="glass-card p-8">
+              <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-8 flex items-center gap-3">
+                <TrendingUp className="w-4 h-4 text-primary" /> Mastery Progress
               </h3>
-              <div className="space-y-6">
+              <div className="space-y-8">
                 {[
-                  { label: 'Array & Strings', value: 85, color: 'bg-emerald-400' },
-                  { label: 'Dynamic Programming', value: 42, color: 'bg-amber-400' },
-                  { label: 'Graph Theory', value: 15, color: 'bg-rose-400' },
-                  { label: 'Trees & Heaps', value: 64, color: 'bg-indigo-400' },
+                  { label: 'Array & Strings', value: 85, color: 'from-emerald-500 to-teal-500' },
+                  { label: 'Dynamic Programming', value: 42, color: 'from-amber-500 to-orange-500' },
+                  { label: 'Graph Theory', value: 15, color: 'from-rose-500 to-pink-500' },
+                  { label: 'System Design', value: 64, color: 'from-primary to-purple-500' },
                 ].map((topic) => (
-                  <div key={topic.label} className="space-y-2">
-                    <div className="flex justify-between items-center text-[11px] font-bold">
-                      <span className="text-slate-400">{topic.label}</span>
-                      <span className="text-white">{topic.value}%</span>
+                  <div key={topic.label} className="space-y-3">
+                    <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-widest">
+                      <span className="text-muted-foreground">{topic.label}</span>
+                      <span className="text-foreground">{topic.value}%</span>
                     </div>
-                    <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
+                    <div className="h-1.5 bg-secondary rounded-full overflow-hidden border border-border">
                       <motion.div 
-                        className={`h-full ${topic.color}`}
                         initial={{ width: 0 }}
                         animate={{ width: `${topic.value}%` }}
-                        transition={{ duration: 1, ease: 'easeOut' }}
+                        transition={{ duration: 1.5 }}
+                        className={`h-full bg-gradient-to-r ${topic.color} rounded-full`} 
                       />
                     </div>
                   </div>
                 ))}
               </div>
-              <div className="absolute -top-12 -right-12 w-32 h-32 bg-indigo-500/10 rounded-full blur-3xl" />
             </div>
 
-            {/* Preparation Sheets */}
-            <div className="glass-card p-6 border border-white/10">
-              <h3 className="text-sm font-black text-white uppercase tracking-widest mb-6 flex items-center gap-2">
-                <Shield className="w-4 h-4 text-amber-400" /> Curated Sheets
+            <div className="glass-card p-8 bg-gradient-to-br from-primary/10 to-transparent border-primary/20">
+              <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-6 flex items-center gap-3">
+                <Trophy className="w-4 h-4 text-amber-500" /> Recommended Sheets
               </h3>
-              <div className="grid gap-3">
-                {[
-                  { name: 'Striver SDE Sheet', count: 180, solved: 142 },
-                  { name: 'Blind 75', count: 75, solved: 75 },
-                  { name: 'NeetCode 150', count: 150, solved: 45 },
-                  { name: 'Amazon Top 50', count: 50, solved: 12 },
-                ].map((sheet) => (
-                  <div key={sheet.name} className="p-4 bg-white/[0.02] border border-white/5 rounded-xl hover:bg-white/[0.05] transition-all group cursor-pointer">
-                    <div className="flex justify-between items-start mb-2">
-                      <span className="text-xs font-black text-white group-hover:text-amber-400 transition-colors uppercase tracking-tight">{sheet.name}</span>
-                      <Star className={`w-3.5 h-3.5 ${sheet.solved === sheet.count ? 'fill-amber-400 text-amber-400' : 'text-slate-600'}`} />
-                    </div>
-                    <div className="flex items-center gap-3">
-                       <div className="flex-1 h-1 bg-white/5 rounded-full overflow-hidden">
-                         <div className="h-full bg-emerald-500" style={{ width: `${(sheet.solved/sheet.count)*100}%` }} />
-                       </div>
-                       <span className="text-[10px] font-black text-slate-500">{sheet.solved}/{sheet.count}</span>
-                    </div>
-                  </div>
+              <div className="grid gap-4">
+                {['Striver SDE Sheet', 'Blind 75', 'NeetCode 150'].map((sheet) => (
+                  <button key={sheet} className="w-full p-4 bg-secondary border border-border rounded-2xl hover:border-primary/50 hover:bg-primary/5 transition-all flex items-center justify-between group">
+                    <span className="text-sm font-bold tracking-tight">{sheet}</span>
+                    <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                  </button>
                 ))}
               </div>
             </div>

@@ -6,9 +6,7 @@ import Link from "next/link";
 import { 
   ArrowLeft, 
   CheckCircle2, 
-  Circle, 
   ChevronDown, 
-  ChevronUp, 
   Clock, 
   Zap, 
   Trophy, 
@@ -25,8 +23,6 @@ import {
   Code,
   MessageSquare,
   FileText,
-  Zap as ZapIcon,
-  Terminal,
   Coffee,
   Code2
 } from "lucide-react";
@@ -44,7 +40,7 @@ interface Topic {
 interface Subject {
   id: string;
   title: string;
-  icon: any;
+  icon: React.ElementType;
   topics: Topic[];
 }
 
@@ -175,7 +171,7 @@ export default function CSELanguagePage() {
         <nav className="space-y-1 flex-1">
           {[
             { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, color: "" },
-            { href: "/quests", label: "Daily Quests", icon: ZapIcon, color: "text-amber-400" },
+            { href: "/quests", label: "Daily Quests", icon: Zap, color: "text-amber-400" },
             { href: "/roadmaps", label: "Placement Roadmaps", icon: MapIcon, color: "text-indigo-400", active: true },
             { href: "/aptitude", label: "Aptitude Test", icon: Brain, color: "text-pink-400" },
             { href: "/coding", label: "Coding Simulator", icon: Code, color: "" },
@@ -381,7 +377,7 @@ export default function CSELanguagePage() {
             <div className="relative z-10">
               <Trophy className="w-16 h-16 text-amber-400 mx-auto mb-8 drop-shadow-[0_0_15px_rgba(245,158,11,0.3)]" />
               <h3 className="text-4xl font-black text-white mb-6 tracking-tight">Language Specialist Path</h3>
-              <p className="text-slate-400 mb-10 max-w-xl mx-auto text-lg leading-relaxed">Deep knowledge of your primary language's internals is often the deciding factor in high-stakes technical interviews at product companies.</p>
+              <p className="text-slate-400 mb-10 max-w-xl mx-auto text-lg leading-relaxed">Deep knowledge of your primary language&apos;s internals is often the deciding factor in high-stakes technical interviews at product companies.</p>
               <Link href="/roadmaps/cse" className="btn-primary inline-flex items-center gap-3 bg-indigo-600 hover:bg-indigo-700 border-indigo-500 text-lg py-4 px-10 shadow-[0_0_20px_rgba(99,102,241,0.3)]">
                 Return to Software Hub <ArrowLeft className="w-6 h-6 rotate-180" />
               </Link>

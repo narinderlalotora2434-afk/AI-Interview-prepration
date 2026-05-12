@@ -6,9 +6,7 @@ import Link from "next/link";
 import { 
   ArrowLeft, 
   CheckCircle2, 
-  Circle, 
   ChevronDown, 
-  ChevronUp, 
   Clock, 
   Zap, 
   Trophy, 
@@ -24,8 +22,7 @@ import {
   Brain,
   Code,
   MessageSquare,
-  FileText,
-  Zap as ZapIcon
+  FileText
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -183,7 +180,7 @@ export default function ECEFundamentalsPage() {
         <nav className="space-y-1 flex-1">
           {[
             { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, color: "" },
-            { href: "/quests", label: "Daily Quests", icon: ZapIcon, color: "text-amber-400" },
+            { href: "/quests", label: "Daily Quests", icon: Zap, color: "text-amber-400" },
             { href: "/roadmaps", label: "Placement Roadmaps", icon: MapIcon, color: "text-indigo-400", active: true },
             { href: "/aptitude", label: "Aptitude Test", icon: Brain, color: "text-pink-400" },
             { href: "/coding", label: "Coding Simulator", icon: Code, color: "" },
@@ -391,7 +388,7 @@ export default function ECEFundamentalsPage() {
         >
           <div className="relative z-10">
             <Trophy className="w-12 h-12 text-amber-400 mx-auto mb-6" />
-            <h3 className="text-2xl font-bold text-white mb-4">You're making great progress!</h3>
+            <h3 className="text-2xl font-bold text-white mb-4">You&apos;re making great progress!</h3>
             <p className="text-slate-400 mb-8 max-w-md mx-auto">Mastering these fundamentals puts you in the top 5% of candidates for roles at Qualcomm, NVIDIA, and AMD.</p>
             <Link href="/roadmaps/ece" className="btn-primary inline-flex items-center gap-2">
               Explore Advanced Tracks <CheckCircle2 className="w-5 h-5" />

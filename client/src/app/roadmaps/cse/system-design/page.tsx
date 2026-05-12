@@ -6,9 +6,7 @@ import Link from "next/link";
 import { 
   ArrowLeft, 
   CheckCircle2, 
-  Circle, 
   ChevronDown, 
-  ChevronUp, 
   Clock, 
   Zap, 
   Trophy, 
@@ -25,12 +23,8 @@ import {
   Code,
   MessageSquare,
   FileText,
-  Zap as ZapIcon,
-  Layers,
-  Server,
   Cpu,
   Globe,
-  Database,
   Share2
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -47,7 +41,7 @@ interface Topic {
 interface Subject {
   id: string;
   title: string;
-  icon: any;
+  icon: React.ElementType;
   topics: Topic[];
 }
 
@@ -177,7 +171,7 @@ export default function CSESystemDesignPage() {
         <nav className="space-y-1 flex-1">
           {[
             { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, color: "" },
-            { href: "/quests", label: "Daily Quests", icon: ZapIcon, color: "text-amber-400" },
+            { href: "/quests", label: "Daily Quests", icon: Zap, color: "text-amber-400" },
             { href: "/roadmaps", label: "Placement Roadmaps", icon: MapIcon, color: "text-indigo-400", active: true },
             { href: "/aptitude", label: "Aptitude Test", icon: Brain, color: "text-pink-400" },
             { href: "/coding", label: "Coding Simulator", icon: Code, color: "" },

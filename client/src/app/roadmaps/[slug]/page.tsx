@@ -4,39 +4,88 @@ import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import { 
-  Sparkles,
+  ArrowLeft, 
+  CheckCircle2, 
+  Circle, 
+  ChevronDown, 
+  ChevronUp, 
+  Zap, 
   LayoutDashboard,
-  Zap,
   Map as MapIcon,
-  Brain,
-  Code,
-  MessageSquare,
-  FileText,
   User,
   LogOut,
   Bot,
   Menu,
   X,
-  ArrowLeft,
-  CheckCircle2,
-  Circle,
-  BookOpen,
+  Brain,
+  Code,
+  MessageSquare,
+  FileText,
   Briefcase,
   Layers,
-  ChevronDown,
-  ChevronUp,
   Target,
-  PlayCircle
+  PlayCircle,
+  Sparkles,
+  BookOpen
 } from "lucide-react";
+import { getBaseUrl } from "@/lib/api";
 import { motion } from "framer-motion";
+
+interface Resource {
+  type: 'Video' | 'Article';
+  title: string;
+  url: string;
+}
+
+interface Topic {
+  id: string;
+  title: string;
+  description: string;
+  resources: Resource[];
+}
+
+interface Module {
+  id: string;
+  title: string;
+  topics: Topic[];
+}
+
+interface CompanyTrack {
+  id: string;
+  companyName: string;
+  topics: string; // JSON string
+  interviewRounds: string; // JSON string
+}
+
+interface Roadmap {
+  id: string;
+  title: string;
+  description: string;
+  modules: Module[];
+  companyTracks: CompanyTrack[];
+}
+
+interface Branch {
+  id: string;
+  name: string;
+  description: string;
+  salaryRange: string;
+  difficulty: string;
+  roadmaps: Roadmap[];
+}
+
+interface Progress {
+  topicId: string;
+  status: 'Completed' | 'Pending';
+}
 
 export default function BranchRoadmapPage() {
   const router = useRouter();
   const params = useParams();
   const slug = params?.slug as string;
 
-  const [branch, setBranch] = useState<any>(null);
-  const [progress, setProgress] = useState<any[]>([]);
+  const [branch, setBranch] = useState<Branch | null>(null);
+  const [progress, setProgress] = useState<Progress[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("roadmaps");
   const [expandedModules, setExpandedModules] = useState<Record<string, boolean>>({});
@@ -57,7 +106,7 @@ export default function BranchRoadmapPage() {
     if (!slug) return;
 
     Promise.all([
-      fetch(`https://ai-interview-prepration-2-nadp.onrender.com/api/roadmaps/branches/${slug}`, {
+      fetch(`${getBaseUrl()}/api/roadmaps/branches/${slug}`, {
         headers: { "Authorization": `Bearer ${token}` }
       }).then(res => res.json()),
     ])
@@ -69,7 +118,7 @@ export default function BranchRoadmapPage() {
           setExpandedModules({ [branchData.roadmaps[0].modules[0].id]: true });
         }
 
-        return fetch(`https://ai-interview-prepration-2-nadp.onrender.com/api/roadmaps/progress/${branchData.id}`, {
+        return fetch(`${getBaseUrl()}/api/roadmaps/progress/${branchData.id}`, {
           headers: { "Authorization": `Bearer ${token}` }
         }).then(res => res.json());
       })
@@ -84,7 +133,7 @@ export default function BranchRoadmapPage() {
   }, [slug, router]);
 
   const toggleTopicProgress = async (topicId: string, currentStatus: string) => {
-    const newStatus = currentStatus === 'Completed' ? 'Pending' : 'Completed';
+    const newStatus = (currentStatus === 'Completed' ? 'Pending' : 'Completed') as 'Completed' | 'Pending';
     const token = localStorage.getItem("token");
     
     setProgress(prev => {
@@ -96,7 +145,7 @@ export default function BranchRoadmapPage() {
     });
 
     try {
-      await fetch("https://ai-interview-prepration-2-nadp.onrender.com/api/roadmaps/progress", {
+      await fetch(`${getBaseUrl()}/api/roadmaps/progress`, {
         method: "POST",
         headers: { 
           "Content-Type": "application/json",
@@ -249,7 +298,7 @@ export default function BranchRoadmapPage() {
 
               {branch.roadmaps.length === 0 ? (
                 <div className="text-center py-20 text-slate-500">No roadmaps available yet.</div>
-              ) : branch.roadmaps.map((roadmap: any) => (
+              ) : branch.roadmaps.map((roadmap) => (
                 <div key={roadmap.id} className="relative">
                   <div className="mb-8">
                     <h2 className="text-2xl font-bold text-white flex items-center gap-3">
@@ -260,9 +309,9 @@ export default function BranchRoadmapPage() {
                   </div>
 
                   <div className="space-y-4 relative before:absolute before:inset-0 before:ml-6 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-indigo-500/20 before:via-purple-500/20 before:to-transparent">
-                    {roadmap.modules.map((mod: any, index: number) => {
+                    {roadmap.modules.map((mod, index) => {
                       const isExpanded = expandedModules[mod.id];
-                      const completedTopics = mod.topics.filter((t: any) => isTopicCompleted(t.id)).length;
+                      const completedTopics = mod.topics.filter((t) => isTopicCompleted(t.id)).length;
                       const isModuleDone = completedTopics === mod.topics.length && mod.topics.length > 0;
 
                       return (
@@ -296,7 +345,7 @@ export default function BranchRoadmapPage() {
                               <div className="border-t border-white/5 bg-slate-950/50 p-4 space-y-2">
                                 {mod.topics.length === 0 ? (
                                   <p className="text-slate-500 text-sm p-2">Topics coming soon.</p>
-                                ) : mod.topics.map((topic: any) => {
+                                ) : mod.topics.map((topic) => {
                                   const completed = isTopicCompleted(topic.id);
                                   return (
                                     <div key={topic.id} className="p-4 rounded-xl border border-white/5 bg-white/[0.01] hover:bg-white/[0.03] transition-colors group/topic">
@@ -316,7 +365,7 @@ export default function BranchRoadmapPage() {
                                           {/* Optional Learning Resources */}
                                           {topic.resources?.length > 0 && !completed && (
                                             <div className="mt-4 flex flex-wrap gap-2">
-                                              {topic.resources.map((res: any, idx: number) => (
+                                              {topic.resources.map((res, idx) => (
                                                 <a key={idx} href={res.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-3 py-1 bg-white/5 hover:bg-indigo-500/20 text-xs font-medium text-slate-300 hover:text-indigo-300 border border-white/10 rounded-lg transition-colors">
                                                   {res.type === 'Video' ? <PlayCircle className="w-3.5 h-3.5" /> : <BookOpen className="w-3.5 h-3.5" />}
                                                   {res.title}
@@ -351,7 +400,7 @@ export default function BranchRoadmapPage() {
                         <Sparkles className="w-3 h-3" /> New Enhanced Experience
                       </div>
                       <h2 className="text-3xl font-black text-white mb-2">Core Fundamentals Mastery</h2>
-                      <p className="text-slate-400 max-w-xl">We've upgraded the ECE Fundamentals track with interactive progress tracking, detailed syllabus, and expert-curated learning paths.</p>
+                      <p className="text-slate-400 max-w-xl">We&apos;ve upgraded the ECE Fundamentals track with interactive progress tracking, detailed syllabus, and expert-curated learning paths.</p>
                     </div>
                     <Link href="/roadmaps/ece/fundamentals" className="btn-primary py-4 px-8 flex items-center gap-3 whitespace-nowrap shadow-[0_0_20px_rgba(99,102,241,0.3)] hover:scale-105 transition-all">
                       Launch Interactive Roadmap <Zap className="w-5 h-5 fill-current" />
@@ -541,9 +590,9 @@ export default function BranchRoadmapPage() {
 
           {activeTab === "companies" && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {branch.roadmaps.flatMap((r: any) => r.companyTracks).length === 0 ? (
+              {branch.roadmaps.flatMap((r) => r.companyTracks).length === 0 ? (
                 <div className="col-span-full text-center py-20 text-slate-500">No company tracks available yet.</div>
-              ) : branch.roadmaps.flatMap((r: any) => r.companyTracks).map((track: any) => (
+              ) : branch.roadmaps.flatMap((r) => r.companyTracks).map((track) => (
                 <div key={track.id} className="glass-card p-8 rounded-2xl border border-white/5 hover:border-white/10 transition-colors">
                   <div className="flex items-center justify-between mb-6">
                     <h3 className="text-2xl font-bold text-white flex items-center gap-3">
@@ -557,7 +606,7 @@ export default function BranchRoadmapPage() {
                       <Target className="w-4 h-4 text-emerald-500" /> Key Focus Areas
                     </div>
                     <div className="flex flex-wrap gap-2">
-                      {JSON.parse(track.topics).map((t: string, i: number) => (
+                      {(JSON.parse(track.topics) as string[]).map((t: string, i: number) => (
                         <span key={i} className="px-3 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-lg text-sm">{t}</span>
                       ))}
                     </div>
@@ -566,7 +615,7 @@ export default function BranchRoadmapPage() {
                   <div>
                     <div className="text-xs text-slate-500 font-bold uppercase tracking-widest mb-3">Interview Rounds</div>
                     <div className="space-y-3">
-                      {JSON.parse(track.interviewRounds).map((round: string, i: number) => (
+                      {(JSON.parse(track.interviewRounds) as string[]).map((round: string, i: number) => (
                         <div key={i} className="flex gap-4">
                           <div className="w-6 h-6 rounded bg-indigo-500/20 text-indigo-400 flex items-center justify-center text-xs font-bold border border-indigo-500/30 shrink-0">
                             {i + 1}

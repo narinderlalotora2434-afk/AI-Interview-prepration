@@ -1,23 +1,41 @@
-import { Router, Request, Response } from 'express';
+import { Router, Response } from 'express';
 import multer from 'multer';
-import { PrismaClient } from '@prisma/client';
-import OpenAI from 'openai';
+import prisma from '../db';
 const pdf = require('pdf-parse');
 import { authenticateToken, AuthRequest } from '../middleware/authMiddleware';
 import { updateGamification } from '../utils/gamification';
+import { generateAIResponse } from '../utils/ai';
 
 const router = Router();
-const prisma = new PrismaClient();
 const upload = multer({ storage: multer.memoryStorage() });
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+// Helper to extract text from buffer
+const extractText = async (file: Express.Multer.File): Promise<string> => {
+  if (file.mimetype === 'application/pdf') {
+    try {
+      let pdfData;
+      if (typeof pdf === 'function') {
+        pdfData = await pdf(file.buffer);
+      } else if (typeof pdf.default === 'function') {
+        pdfData = await pdf.default(file.buffer);
+      } else if (typeof pdf.PDFParse === 'function') {
+        pdfData = await pdf.PDFParse(file.buffer);
+      } else {
+        throw new Error('No valid PDF parser function found');
+      }
+      return pdfData.text;
+    } catch (err) {
+      console.error('PDF parsing failed:', err);
+      return 'Error parsing PDF content.';
+    }
+  }
+  return file.buffer.toString('utf-8');
+};
 
 router.post('/analyze', authenticateToken, upload.single('resume'), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const userId = req.user?.userId;
-    const { track } = req.body; // 'software' | 'hardware'
+    const { track, jobDescription } = req.body;
 
     if (!userId) {
       res.status(401).json({ error: 'Unauthorized' });
@@ -29,82 +47,108 @@ router.post('/analyze', authenticateToken, upload.single('resume'), async (req: 
       return;
     }
 
-    let fileText = '';
-    if (req.file.mimetype === 'application/pdf') {
-      try {
-        let pdfData;
-        if (typeof pdf === 'function') {
-          pdfData = await pdf(req.file.buffer);
-        } else if (typeof pdf.default === 'function') {
-          pdfData = await pdf.default(req.file.buffer);
-        } else if (typeof pdf.PDFParse === 'function') {
-          pdfData = await pdf.PDFParse(req.file.buffer);
-        } else {
-          throw new Error('No valid PDF parser function found');
-        }
-        fileText = pdfData.text;
-      } catch (err) {
-        console.error('PDF parsing failed:', err);
-        fileText = 'Error parsing PDF content.';
-      }
-    } else {
+    const fileText = await extractText(req.file);
 
+    const prompt = `You are a world-class ATS (Applicant Tracking System) and Senior Technical Recruiter.
+    
+    TASK: Provide a deep, professional analysis of this student resume for the "${track}" track.
+    ${jobDescription ? `COMPARE AGAINST THIS JOB DESCRIPTION: "${jobDescription}"` : ''}
 
-      fileText = req.file.buffer.toString('utf-8');
-    }
+    EVALUATE ACROSS THESE CATEGORIES:
+    1. Resume Format (Max 15) - Check for ATS-safe structure.
+    2. Skills Match (Max 25) - Depth and relevance to ${track}.
+    3. Projects Quality (Max 20) - Complexity and technical implementation.
+    4. Experience Strength (Max 20) - Quantified impact and role relevance.
+    5. Keyword Optimization (Max 10) - Presence of industry-standard terms.
+    6. Certifications & Achievements (Max 5).
+    7. Grammar & Readability (Max 5).
 
-    const prompt = `You are an advanced ATS (Applicant Tracking System) and resume expert.
-    
-    Analyze the following resume based on these 6 categories:
-    1. Content Quality (Max 25)
-    2. Skills Match (Max 20) - Selected Track: ${track}
-    3. ATS Compatibility (Max 15)
-    4. Projects Quality (Max 15)
-    5. Experience Impact (Max 10)
-    6. Formatting & Readability (Max 15)
-    
-    If Software Track: prioritize DSA, programming, web/backend skills.
-    If Hardware Track: prioritize Digital Electronics, VLSI, Embedded Systems.
-    
-    Return ONLY valid JSON in this exact format:
+    RETURN ONLY VALID JSON IN THIS FORMAT:
     {
       "totalScore": number,
+      "placementReadiness": number,
+      "strength": "Strong" | "Average" | "Needs Work",
+      "parsedInfo": {
+        "name": "string",
+        "email": "string",
+        "phone": "string",
+        "linkedin": "string",
+        "github": "string",
+        "skills": ["string"],
+        "education": "string"
+      },
       "breakdown": {
-        "content": number,
+        "format": number,
         "skills": number,
-        "ats": number,
         "projects": number,
         "experience": number,
-        "formatting": number
+        "keywords": number,
+        "certifications": number,
+        "grammar": number
       },
+      "jdMatchScore": number (0-100, if JD provided),
+      "missingKeywords": ["string"],
+      "matchedKeywords": ["string"],
       "strengths": ["string"],
       "weaknesses": ["string"],
       "suggestions": ["string"],
-      "missingKeywords": ["string"]
+      "actionVerbAnalysis": {
+         "score": number,
+         "weakPhrases": ["string"],
+         "replacements": { "weakPhrase": "strongerPhrase" }
+      },
+      "formattingWarnings": ["string"]
     }
     
     Resume Text:
-    ${fileText.substring(0, 4000)}`;
+    ${fileText.substring(0, 5000)}`;
 
     let analysisData;
     try {
-      const completion = await openai.chat.completions.create({
-        model: "gpt-4o-mini",
-        messages: [{ role: "user", content: prompt }],
-        response_format: { type: "json_object" }
+      const aiResponse = await generateAIResponse({
+        userPrompt: prompt,
+        jsonMode: true
       });
-
-      analysisData = JSON.parse(completion.choices[0]?.message?.content || "{}");
-    } catch (openaiError: any) {
-      console.warn("OpenAI API failed, using fallback analysis:", openaiError.message);
-      // Fallback Demo Data
+      
+      // Ensure it's an object and merge with defaults
       analysisData = {
-        totalScore: 72,
-        breakdown: { content: 18, skills: 15, ats: 12, projects: 10, experience: 7, formatting: 10 },
-        strengths: ["Clear contact information", "Good use of action verbs"],
-        weaknesses: ["Missing quantified achievements", "Weak project descriptions"],
-        suggestions: ["Add more numbers to your experience", "Include a professional summary"],
-        missingKeywords: ["Cloud Computing", "Agile", "Unit Testing"]
+        totalScore: aiResponse.totalScore || 70,
+        placementReadiness: aiResponse.placementReadiness || 65,
+        strength: aiResponse.strength || "Average",
+        parsedInfo: aiResponse.parsedInfo || { name: "Extracted", email: "", skills: [] },
+        breakdown: {
+          format: aiResponse.breakdown?.format ?? 10,
+          skills: aiResponse.breakdown?.skills ?? 15,
+          projects: aiResponse.breakdown?.projects ?? 15,
+          experience: aiResponse.breakdown?.experience ?? 15,
+          keywords: aiResponse.breakdown?.keywords ?? 5,
+          certifications: aiResponse.breakdown?.certifications ?? 3,
+          grammar: aiResponse.breakdown?.grammar ?? 3
+        },
+        jdMatchScore: aiResponse.jdMatchScore,
+        missingKeywords: aiResponse.missingKeywords || [],
+        matchedKeywords: aiResponse.matchedKeywords || [],
+        strengths: aiResponse.strengths || [],
+        weaknesses: aiResponse.weaknesses || [],
+        suggestions: aiResponse.suggestions || [],
+        actionVerbAnalysis: aiResponse.actionVerbAnalysis || { score: 70, weakPhrases: [], replacements: {} },
+        formattingWarnings: aiResponse.formattingWarnings || []
+      };
+    } catch (aiError: any) {
+      console.warn("AI Analysis failed, using complete fallback:", aiError.message);
+      analysisData = {
+        totalScore: 68,
+        placementReadiness: 65,
+        strength: "Average",
+        parsedInfo: { name: "User", email: "user@example.com", skills: ["React", "JavaScript"] },
+        breakdown: { format: 12, skills: 18, projects: 12, experience: 14, keywords: 6, certifications: 3, grammar: 3 },
+        missingKeywords: ["TypeScript", "Unit Testing"],
+        matchedKeywords: ["React", "HTML"],
+        strengths: ["Clear contact information", "Good use of keywords"],
+        weaknesses: ["Missing quantified achievements"],
+        suggestions: ["Add metrics to your project descriptions"],
+        actionVerbAnalysis: { score: 70, weakPhrases: ["Worked on"], replacements: { "Worked on": "Developed" } },
+        formattingWarnings: []
       };
     }
 
@@ -113,11 +157,11 @@ router.post('/analyze', authenticateToken, upload.single('resume'), async (req: 
         userId,
         content: 'Uploaded file: ' + req.file.originalname,
         atsScore: analysisData.totalScore,
-        feedback: JSON.stringify(analysisData), // Store full JSON in feedback for now
+        feedback: JSON.stringify(analysisData),
       }
     });
 
-    await updateGamification(userId, 20);
+    await updateGamification(userId, 50);
 
     res.json({ message: 'Analysis complete', analysis: analysisData, resumeId: resume.id });
   } catch (error: any) {
@@ -126,70 +170,79 @@ router.post('/analyze', authenticateToken, upload.single('resume'), async (req: 
   }
 });
 
-
-router.post('/parse', authenticateToken, upload.single('resume'), async (req: AuthRequest, res: Response): Promise<void> => {
+router.post('/improve', authenticateToken, async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    if (!req.file) {
-      res.status(400).json({ error: 'No resume file uploaded' });
+    const { section, content, track } = req.body;
+    if (!content) {
+      res.status(400).json({ error: 'Content required for improvement' });
       return;
     }
 
-    let fileText = '';
-    try {
-      if (req.file.mimetype === 'application/pdf') {
-        // Try both common call styles for pdf-parse
-        const pdfData = typeof pdf === 'function' ? await pdf(req.file.buffer) : await pdf.default(req.file.buffer);
-        fileText = pdfData.text;
-      } else {
-        fileText = req.file.buffer.toString('utf-8');
-      }
-    } catch (pdfError: any) {
-      console.error("PDF Parsing Error:", pdfError);
-      fileText = "Manual fallback text due to PDF parsing error.";
-    }
+    const prompt = `You are a professional Resume Writer and Recruiter. 
+    Rewrite the following "${section}" from a ${track} resume to be more impactful, professional, and ATS-friendly.
+    Use strong action verbs, quantify achievements if possible, and ensure technical depth.
 
-    const prompt = `Extract skills, technologies, and key projects from the following resume text.
-    Return ONLY JSON in this format:
-    {
-      "skills": ["string"],
-      "technologies": ["string"],
-      "projects": [{"title": "string", "description": "string"}]
-    }
+    Original Content:
+    "${content}"
 
-    Resume Text:
-    ${fileText.substring(0, 4000)}`;
+    Return ONLY the improved content as a string. No conversation.`;
 
+    const improvedContent = await generateAIResponse({
+      userPrompt: prompt,
+      jsonMode: false
+    });
 
-    let parseData = {
-      skills: ["JavaScript", "React", "Node.js", "TypeScript", "Tailwind CSS"],
-      technologies: ["Next.js", "Express", "Prisma", "PostgreSQL", "Docker"],
-      projects: [
-        { title: "E-commerce Platform", description: "A full-stack e-commerce app with real-time inventory management." },
-        { title: "AI Chatbot", description: "An intelligent chatbot integrated with multiple messaging platforms." }
-      ]
-    };
-
-    try {
-      const completion = await openai.chat.completions.create({
-        model: "gpt-4o-mini",
-        messages: [{ role: "user", content: prompt }],
-        response_format: { type: "json_object" }
-      });
-
-      const responseContent = completion.choices[0]?.message?.content || "{}";
-      parseData = JSON.parse(responseContent);
-    } catch (openaiError: any) {
-      console.warn("OpenAI API failed, using mock parse data:", openaiError.message);
-      // If the API key is the placeholder or missing, we use the fallback parseData
-    }
-
-    res.json(parseData);
+    res.json({ improvedContent });
   } catch (error: any) {
-    console.error(error);
-    res.status(500).json({ error: 'Failed to parse resume' });
+    res.status(500).json({ error: error.message });
   }
 });
 
+router.post('/chat', authenticateToken, async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const { message, track, resumeData } = req.body;
+    
+    const prompt = `You are a professional AI Resume Coach. 
+    Help the student with their resume optimization for the "${track}" track.
+    
+    CANDIDATE DATA SUMMARY:
+    Score: ${resumeData?.totalScore || 'N/A'}
+    Strengths: ${resumeData?.strengths?.join(', ') || 'N/A'}
+    Weaknesses: ${resumeData?.weaknesses?.join(', ') || 'N/A'}
+    
+    STUDENT QUESTION: "${message}"
+    
+    Provide a helpful, professional, and actionable response. Keep it concise.`;
+
+    const reply = await generateAIResponse({
+      userPrompt: prompt,
+      jsonMode: false
+    });
+
+    res.json({ reply });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.get('/history', authenticateToken, async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const userId = req.user?.userId;
+    if (!userId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+
+    const resumes = await prisma.resume.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'desc' },
+      take: 10
+    });
+
+    res.json(resumes);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
 
 export default router;
-

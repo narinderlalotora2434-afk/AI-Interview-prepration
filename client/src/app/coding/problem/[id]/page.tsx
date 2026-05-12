@@ -30,9 +30,36 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
-// --- Mock Data ---
+// --- Types ---
 
-const PROBLEM_TEMPLATES: any = {
+interface Example {
+  input: string;
+  output: string;
+}
+
+interface Problem {
+  id: string | string[];
+  title: string;
+  difficulty: "Easy" | "Medium" | "Hard";
+  category: string;
+  acceptanceRate: number;
+  description: string;
+  examples: Example[];
+  hints: string[];
+}
+
+interface ExecutionOutput {
+  status: string;
+  runtime: string;
+  memory: string;
+  stdout: string;
+}
+
+interface ProblemTemplates {
+  [key: string]: string;
+}
+
+const PROBLEM_TEMPLATES: ProblemTemplates = {
   cpp: "int main() {\n    // Write your code here\n    return 0;\n}",
   java: "public class Main {\n    public static void main(String[] args) {\n        // Write your code here\n    }\n}",
   python: "def solve():\n    # Write your code here\n    pass\n\nif __name__ == '__main__':\n    solve()",
@@ -43,13 +70,13 @@ export default function CodingWorkspace() {
   const { id } = useParams();
   const router = useRouter();
   
-  const [problem, setProblem] = useState<any>(null);
+  const [problem, setProblem] = useState<Problem | null>(null);
   const [loading, setLoading] = useState(true);
   const [language, setLanguage] = useState("javascript");
   const [code, setCode] = useState(PROBLEM_TEMPLATES.javascript);
   const [activeTab, setActiveTab] = useState("description"); // description, solution, discussion
   const [outputTab, setOutputTab] = useState("testcases"); // testcases, console
-  const [output, setOutput] = useState<any>(null);
+  const [output, setOutput] = useState<ExecutionOutput | null>(null);
   const [isRunning, setIsRunning] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [verdict, setVerdict] = useState<string | null>(null);
@@ -63,7 +90,7 @@ export default function CodingWorkspace() {
     // In real app, fetch from API
     setTimeout(() => {
       setProblem({
-        id,
+        id: id || "1",
         title: "Two Sum",
         difficulty: "Easy",
         category: "Array",
@@ -240,14 +267,14 @@ You can return the answer in any order.
                       <Layout className="w-3 h-3" /> {problem?.category}
                     </span>
                     <span className="flex items-center gap-1.5 text-slate-400 bg-white/5 px-2 py-1 rounded border border-white/10">
-                      <RotateCcw className="w-3 h-3" /> Acceptance: {Math.round(problem?.acceptanceRate * 100)}%
+                      <RotateCcw className="w-3 h-3" /> Acceptance: {problem ? Math.round(problem.acceptanceRate * 100) : 0}%
                     </span>
                   </div>
 
-                  <div className="text-slate-300 leading-relaxed space-y-4 text-sm" dangerouslySetInnerHTML={{ __html: problem?.description.replace(/\n/g, '<br />') }} />
+                  <div className="text-slate-300 leading-relaxed space-y-4 text-sm" dangerouslySetInnerHTML={{ __html: problem?.description.replace(/\n/g, '<br />') || "" }} />
 
                   <div className="mt-12 space-y-8">
-                    {problem?.examples.map((ex: any, i: number) => (
+                    {problem?.examples.map((ex, i) => (
                       <div key={i} className="space-y-3">
                         <h4 className="text-sm font-bold text-white uppercase tracking-widest text-[10px]">Example {i + 1}</h4>
                         <div className="bg-white/5 border border-white/5 rounded-xl p-4 font-mono text-sm space-y-2">
@@ -332,8 +359,7 @@ You can return the answer in any order.
                   useShadows: false,
                   verticalScrollbarSize: 10,
                   horizontalScrollbarSize: 10
-                },
-                backgroundColor: "#111"
+                }
               }}
             />
             
@@ -364,7 +390,7 @@ You can return the answer in any order.
                           <div className="text-sm font-bold text-white">12.4MB</div>
                         </div>
                       </div>
-                      <button className="w-full btn-primary py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold shadow-lg shadow-emerald-900/40 active:scale-95 transition-all">
+                      <button className="w-full px-8 py-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-black uppercase tracking-widest text-xs shadow-lg active:scale-95 transition-all">
                         Next Challenge
                       </button>
                     </div>

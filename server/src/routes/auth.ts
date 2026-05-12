@@ -1,12 +1,12 @@
 import { Router, Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { PrismaClient } from '@prisma/client';
-import crypto from 'crypto';
 import nodemailer from 'nodemailer';
+import crypto from 'crypto';
+import prisma from '../db';
+import { authenticateToken, AuthRequest } from '../middleware/authMiddleware';
 
 const router = Router();
-const prisma = new PrismaClient();
 
 // Setup Nodemailer transporter
 const transporter = nodemailer.createTransport({

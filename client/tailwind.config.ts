@@ -34,7 +34,10 @@ const config: Config = {
   			},
   			accent: {
   				DEFAULT: 'hsl(var(--accent))',
-  				foreground: 'hsl(var(--accent-foreground))'
+  				foreground: 'hsl(var(--accent-foreground))',
+          purple: '#7C3AED',
+          cyan: '#06B6D4',
+          pink: '#EC4899'
   			},
   			destructive: {
   				DEFAULT: 'hsl(var(--destructive))',
@@ -54,8 +57,17 @@ const config: Config = {
   		borderRadius: {
   			lg: 'var(--radius)',
   			md: 'calc(var(--radius) - 2px)',
-  			sm: 'calc(var(--radius) - 4px)'
-  		}
+  			sm: 'calc(var(--radius) - 4px)',
+        'xl': '1rem',
+        '2xl': '1.5rem'
+  		},
+      fontFamily: {
+        sans: ['Inter', 'sans-serif'],
+      },
+      backgroundImage: {
+        'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
+        'glass-gradient': 'linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.01) 100%)',
+      }
   	}
   },
   plugins: [require("tailwindcss-animate")],

@@ -1,11 +1,12 @@
 "use client";
 
 import React, { useState } from 'react';
-import { Upload, FileText, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Upload, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { getBaseUrl } from '@/lib/api';
 
 interface ResumeUploaderProps {
-  onParseComplete: (data: { skills: string[], technologies: string[], projects: any[] }) => void;
+  onParseComplete: (data: { skills: string[], technologies: string[], projects: string[] }) => void;
 }
 
 const ResumeUploader: React.FC<ResumeUploaderProps> = ({ onParseComplete }) => {
@@ -26,7 +27,7 @@ const ResumeUploader: React.FC<ResumeUploaderProps> = ({ onParseComplete }) => {
     formData.append('resume', file);
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/resume/parse`, {
+      const res = await fetch(`${getBaseUrl()}/api/resume/parse`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`

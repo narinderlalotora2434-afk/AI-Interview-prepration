@@ -1,8 +1,45 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from 'react';
-import { Mic, MicOff, Loader2 } from 'lucide-react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { Mic, MicOff } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+
+// Add types for Speech Recognition
+interface SpeechRecognitionEvent extends Event {
+  resultIndex: number;
+  results: {
+    length: number;
+    [key: number]: {
+      [key: number]: {
+        transcript: string;
+      };
+      isFinal: boolean;
+    };
+  };
+}
+
+interface SpeechRecognitionErrorEvent extends Event {
+  error: string;
+}
+
+interface SpeechRecognition extends EventTarget {
+  continuous: boolean;
+  interimResults: boolean;
+  lang: string;
+  onresult: (event: SpeechRecognitionEvent) => void;
+  onerror: (event: SpeechRecognitionErrorEvent) => void;
+  onend: () => void;
+  start: () => void;
+  stop: () => void;
+}
+
+interface WebkitWindow extends Window {
+  WebkitSpeechRecognition?: new () => SpeechRecognition;
+  webkitSpeechRecognition?: new () => SpeechRecognition;
+  SpeechRecognition?: new () => SpeechRecognition;
+  speechRecognition?: new () => SpeechRecognition;
+}
+
 
 interface VoiceRecorderProps {
   onTranscriptChange: (transcript: string) => void;
@@ -20,61 +57,11 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({
   disabled 
 }) => {
   const [interimTranscript, setInterimTranscript] = useState('');
-  const recognitionRef = useRef<any>(null);
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
   const silenceTimerRef = useRef<NodeJS.Timeout | null>(null);
   const fullTranscriptRef = useRef('');
 
-  useEffect(() => {
-    if (typeof window !== 'undefined' && ('WebkitSpeechRecognition' in window || 'speechRecognition' in window)) {
-      const SpeechRecognition = (window as any).WebkitSpeechRecognition || (window as any).speechRecognition;
-      recognitionRef.current = new SpeechRecognition();
-      recognitionRef.current.continuous = true;
-      recognitionRef.current.interimResults = true;
-
-      recognitionRef.current.onresult = (event: any) => {
-        let currentInterim = '';
-        
-        for (let i = event.resultIndex; i < event.results.length; ++i) {
-          const transcriptSegment = event.results[i][0].transcript;
-          if (event.results[i].isFinal) {
-            fullTranscriptRef.current += ' ' + transcriptSegment;
-          } else {
-            currentInterim += transcriptSegment;
-          }
-        }
-
-        setInterimTranscript(fullTranscriptRef.current + currentInterim);
-        onTranscriptChange(fullTranscriptRef.current + currentInterim);
-
-        // Reset silence timer on speech
-        if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
-        silenceTimerRef.current = setTimeout(() => {
-          stopRecording();
-        }, 2500); // Stop after 2.5 seconds of silence
-      };
-
-      recognitionRef.current.onerror = (event: any) => {
-        console.error('Speech recognition error', event.error);
-        setIsRecording(false);
-      };
-    }
-
-    return () => {
-      if (recognitionRef.current) recognitionRef.current.stop();
-      if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
-    };
-  }, []);
-
-  const startRecording = () => {
-    if (recognitionRef.current && !isRecording) {
-      fullTranscriptRef.current = '';
-      setInterimTranscript('');
-      recognitionRef.current.start();
-      setIsRecording(true);
-    }
-  };
-
-  const stopRecording = () => {
+  const stopRecording = useCallback(() => {
     if (recognitionRef.current) {
       recognitionRef.current.stop();
       setIsRecording(false);
@@ -88,7 +75,96 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({
         }
       }, 500);
     }
-  };
+  }, [setIsRecording, onFinalTranscript]);
+
+  const startRecording = useCallback(() => {
+    if (recognitionRef.current) {
+      try {
+        // Stop any existing instance just in case to avoid InvalidStateError
+        recognitionRef.current.stop();
+        
+        fullTranscriptRef.current = '';
+        setInterimTranscript('');
+        recognitionRef.current.start();
+        setIsRecording(true);
+      } catch (e: unknown) {
+        if (e && typeof e === 'object' && 'name' in e && e.name === 'InvalidStateError') {
+          // If already started, just sync the UI state
+          setIsRecording(true);
+        } else {
+          console.error("Failed to start speech recognition:", e);
+        }
+      }
+    }
+  }, [setIsRecording]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const win = window as unknown as WebkitWindow;
+      const SpeechRecognition = win.WebkitSpeechRecognition || win.SpeechRecognition || win.webkitSpeechRecognition || win.speechRecognition;
+      
+      if (SpeechRecognition) {
+        recognitionRef.current = new SpeechRecognition();
+        if (recognitionRef.current) {
+          recognitionRef.current.continuous = true;
+          recognitionRef.current.interimResults = true;
+
+          recognitionRef.current.onresult = (event: SpeechRecognitionEvent) => {
+            let currentInterim = '';
+            
+            for (let i = event.resultIndex; i < event.results.length; ++i) {
+              const transcriptSegment = event.results[i][0].transcript;
+              if (event.results[i].isFinal) {
+                fullTranscriptRef.current += ' ' + transcriptSegment;
+              } else {
+                currentInterim += transcriptSegment;
+              }
+            }
+
+            setInterimTranscript(fullTranscriptRef.current + currentInterim);
+            onTranscriptChange(fullTranscriptRef.current + currentInterim);
+
+            // Reset silence timer on speech
+            if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+            silenceTimerRef.current = setTimeout(() => {
+              stopRecording();
+            }, 2500); // Stop after 2.5 seconds of silence
+          };
+
+          recognitionRef.current.onend = () => {
+            setIsRecording(false);
+          };
+
+          recognitionRef.current.onerror = (event: SpeechRecognitionErrorEvent) => {
+            console.error('Speech recognition error', event.error);
+            
+            if (event.error === 'network') {
+              // Try to restart if it's a transient network error
+              console.warn("Network error in speech recognition. Attempting to recover...");
+              setIsRecording(false);
+              // Small delay before allowing restart or auto-restarting
+              setTimeout(() => {
+                if (isRecording) startRecording();
+              }, 1000);
+            } else if (event.error === 'not-allowed') {
+              setIsRecording(false);
+              alert("Microphone permission denied. Please allow microphone access in your browser settings.");
+            } else if (event.error === 'no-speech') {
+              // Just stop recording quietly if no speech was detected
+              setIsRecording(false);
+            } else {
+              setIsRecording(false);
+            }
+          };
+        }
+      }
+    }
+
+    return () => {
+      if (recognitionRef.current) recognitionRef.current.stop();
+      if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+    };
+  }, [onTranscriptChange, setIsRecording, stopRecording]);
 
 
   return (

@@ -1,9 +1,8 @@
 import { Router, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
+import prisma from '../db';
 import { authenticateToken, AuthRequest } from '../middleware/authMiddleware';
 
 const router = Router();
-const prisma = new PrismaClient();
 
 router.get('/dashboard', authenticateToken, async (req: AuthRequest, res: Response) => {
   try {
@@ -12,32 +11,38 @@ router.get('/dashboard', authenticateToken, async (req: AuthRequest, res: Respon
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    const analytics = await prisma.analytics.findUnique({
-      where: { userId }
-    });
-
-    const recentInterviews = await prisma.interview.findMany({
-      where: { userId },
-      take: 5,
-      orderBy: { createdAt: 'desc' }
-    });
-
-    const recentResumes = await prisma.resume.findMany({
-      where: { userId },
-      orderBy: { createdAt: 'desc' }
-    });
-
-    const recentAptitude = await prisma.aptitudeAttempt.findMany({
-      where: { userId },
-      take: 20,
-      orderBy: { createdAt: 'desc' }
-    });
-
-    const recentCoding = await prisma.codeSubmission.findMany({
-      where: { userId },
-      take: 20,
-      orderBy: { createdAt: 'desc' }
-    });
+    const [analytics, recentInterviews, recentResumes, recentAptitude, recentCoding, user, moduleProgresses] = await Promise.all([
+      prisma.analytics.findUnique({
+        where: { userId }
+      }),
+      prisma.interview.findMany({
+        where: { userId },
+        take: 5,
+        orderBy: { createdAt: 'desc' }
+      }),
+      prisma.resume.findMany({
+        where: { userId },
+        orderBy: { createdAt: 'desc' }
+      }),
+      prisma.aptitudeAttempt.findMany({
+        where: { userId },
+        take: 20,
+        orderBy: { createdAt: 'desc' }
+      }),
+      prisma.codeSubmission.findMany({
+        where: { userId },
+        take: 20,
+        orderBy: { createdAt: 'desc' }
+      }),
+      prisma.user.findUnique({
+        where: { id: userId },
+        select: { profilePic: true, name: true, email: true }
+      }),
+      prisma.moduleProgress.findMany({
+        where: { userId },
+        orderBy: { lastActivity: 'desc' }
+      })
+    ]);
 
     const allActivity = [
       ...recentInterviews.map(i => ({ type: 'Interview', date: i.createdAt, score: i.score })),
@@ -46,16 +51,12 @@ router.get('/dashboard', authenticateToken, async (req: AuthRequest, res: Respon
       ...recentCoding.map(c => ({ type: 'Coding', date: c.createdAt, score: c.status === 'Accepted' ? 100 : 0 }))
     ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { profilePic: true, name: true, email: true }
-    });
-
     res.json({
       analytics: analytics || { mockInterviewCount: 0, codingRoundCount: 0, avgScore: 0, xp: 0, streak: 0, badges: "[]" },
       recentInterviews,
       recentResumes,
       allActivity,
+      moduleProgresses: moduleProgresses || [],
       user
     });
   } catch (error: any) {

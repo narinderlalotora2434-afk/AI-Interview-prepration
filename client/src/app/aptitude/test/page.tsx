@@ -14,13 +14,20 @@ import {
   Loader2
 } from "lucide-react";
 
+interface Question {
+  id: string;
+  questionText: string;
+  options: string[];
+  correctAnswer: string;
+}
+
 function TestContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const category = searchParams.get("category") || "Mixed";
   const difficulty = searchParams.get("difficulty") || "Beginner";
 
-  const [questions, setQuestions] = useState<any[]>([]);
+  const [questions, setQuestions] = useState<Question[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentIdx, setCurrentIdx] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});

@@ -25,6 +25,7 @@ model User {
   resetPasswordToken String?
   resetPasswordExpires DateTime?
   userProgresses     UserProgress[]
+  moduleProgresses   ModuleProgress[]
   createdAt          DateTime    @default(now())
   updatedAt          DateTime    @updatedAt
 }
@@ -35,8 +36,14 @@ model Interview {
   userId      String      @db.ObjectId
   user        User        @relation(fields: [userId], references: [id])
   type        String // e.g., "MOCK", "CODING"
+  category    String? // e.g., "Technical", "HR", "DSA", "System Design"
+  role        String?
+  experienceLevel String?
   score       Int?
   feedback    String?
+  metrics     String?     // JSON string for detailed metrics (accuracy, complexity, etc.)
+  duration    Int?        // Actual duration in seconds
+  difficulty  String?     // Easy, Medium, Hard
   questions   Question[]
   createdAt   DateTime    @default(now())
 }
@@ -47,8 +54,10 @@ model Question {
   interviewId      String      @db.ObjectId
   interview      Interview @relation(fields: [interviewId], references: [id])
   content        String
+  topic          String?     // e.g., "Arrays", "DP"
   expectedAnswer String?
   answers        Answer[]
+  createdAt      DateTime    @default(now())
 }
 
 model Answer {
@@ -58,6 +67,12 @@ model Answer {
   content     String
   score       Int?
   feedback    String?
+  timeComplexity  String?
+  spaceComplexity String?
+  testCasesPassed Int?
+  totalTestCases  Int?
+  executionTime   Float?      // in ms
+  createdAt   DateTime    @default(now())
 }
 
 model Resume {
@@ -77,8 +92,14 @@ model Analytics {
   mockInterviewCount  Int      @default(0)
   codingRoundCount    Int      @default(0)
   avgScore            Float    @default(0.0)
+  totalCodingTime     Int      @default(0) // in minutes
+  accuracy            Float    @default(0.0)
   xp                  Int      @default(0)
   streak              Int      @default(0)
+  strongTopics        String   @default("[]") // JSON string array
+  weakTopics          String   @default("[]") // JSON string array
+  topicPerformance    String   @default("{}") // JSON string map { Topic: Score }
+  roadmap             String?     // JSON string for personalized AI roadmap
   lastActive          DateTime @default(now())
   badges              String   @default("[]") // JSON string of badge IDs
 }
@@ -298,4 +319,31 @@ model UserProgress {
   status          String         // "Pending", "In Progress", "Completed"
   completedAt     DateTime?
   @@unique([userId, topicId])
+}
+
+model ModuleProgress {
+  id              String      @id @default(auto()) @map("_id") @db.ObjectId
+  userId          String      @db.ObjectId
+  user            User        @relation(fields: [userId], references: [id])
+  moduleId        String      // e.g., "dsa-arrays", "aptitude-quant"
+  category        String      // "DSA", "Aptitude", "Interview", "Resume"
+  title           String
+  progress        Int         @default(0)
+  status          String      @default("In Progress") // "In Progress", "Revision Needed", "Completed"
+  lastActivity    DateTime    @default(now())
+  state           String      @default("{}") // JSON string for last lesson, question, code, etc.
+  accuracy        Int         @default(0)
+  streak          Int         @default(0)
+  estimatedTime   String?     // e.g., "15 mins left"
+  recommendation  String?     // AI recommendation string
+
+  @@unique([userId, moduleId])
+}
+
+model AssistantChat {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  role      String   // "user", "ai"
+  content   String
+  createdAt DateTime @default(now())
 }

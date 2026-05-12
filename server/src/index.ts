@@ -1,6 +1,8 @@
+import dotenv from 'dotenv';
+dotenv.config();
 import express from 'express';
 import cors from 'cors';
-import dotenv from 'dotenv';
+import compression from 'compression';
 import authRoutes from './routes/auth';
 import interviewRoutes from './routes/interview';
 import resumeRoutes from './routes/resume';
@@ -9,15 +11,14 @@ import codingRoutes from './routes/coding';
 import challengeRoutes from './routes/challenges';
 import aptitudeRoutes from './routes/aptitude';
 import roadmapsRoutes from './routes/roadmaps';
-import voiceInterviewRoutes from './routes/voiceInterview';
-
-
-dotenv.config();
+import learningRoutes from './routes/learning';
+import assistantRoutes from './routes/assistant';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
 app.use(cors({ origin: true, credentials: true }));
+app.use(compression());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
@@ -30,7 +31,8 @@ app.use('/api/coding', codingRoutes);
 app.use('/api/challenges', challengeRoutes);
 app.use('/api/aptitude', aptitudeRoutes);
 app.use('/api/roadmaps', roadmapsRoutes);
-app.use('/api/voice-interview', voiceInterviewRoutes);
+app.use('/api/learning', learningRoutes);
+app.use('/api/assistant', assistantRoutes);
 
 
 app.get('/health', (req, res) => {

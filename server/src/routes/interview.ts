@@ -1,20 +1,15 @@
 import { Router, Request, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
-import OpenAI from 'openai';
+import prisma from '../db';
 import { authenticateToken, AuthRequest } from '../middleware/authMiddleware';
 import { updateGamification } from '../utils/gamification';
+import { generateAIResponse } from '../utils/ai';
 
 const router = Router();
-const prisma = new PrismaClient();
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
-
-// Create a new mock interview
+// Initialize a dynamic mock interview
 router.post('/generate', authenticateToken, async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const { role, experienceLevel, company, resumeId } = req.body;
+    const { role, experienceLevel, company, resumeId, interviewType, difficulty, duration, features } = req.body;
     const userId = req.user?.userId;
 
     if (!userId) {
@@ -34,46 +29,62 @@ router.post('/generate', authenticateToken, async (req: AuthRequest, res: Respon
       }
     }
 
-    let questionsData = [];
-    try {
-      // Call OpenAI to generate questions based on role, experience, company, and resume
-      const prompt = `Generate 5 interview questions for a ${experienceLevel} level ${role} ${company ? `at ${company}` : ''}. 
-      ${resumeContext ? `IMPORTANT: Tailor these questions to the candidate's actual resume provided below. Focus on their specific Skills, Projects, Experience, and Achievements. Challenge them on their claims.
-      
-      ${resumeContext}` : ''}
-      
-      If a company is specified, tailor the questions to their known interview style.
-      Return ONLY a JSON array of objects with 'question' and 'expectedAnswer' keys. No other text.`;
+    // Step 1: Introduction Round or Specific Start
+    const systemPrompt = `You are a world-class expert interviewer at a top-tier tech company (like Google, Amazon, or a specialized ECE firm like NVIDIA).
+    Your goal is to conduct a highly professional, realistic, and adaptive ${interviewType} for a ${experienceLevel} ${role} candidate.
+    
+    SESSION CONTEXT: ${interviewType}
+    - If Technical: Assess domain fundamentals, project depth, and practical logic.
+    - If HR: Assess personality, communication, culture fit, and soft skills.
+    - If Behavioral: Use the STAR methodology to probe situational thinking.
+    - If DSA: Provide a coding problem and assess algorithmic thinking.
+    - If System Design: Discuss architecture, scalability, and trade-offs.
+    - If Aptitude: Ask a logical, quantitative, or analytical puzzle.
+    - If Resume-Based: Deep dive into the candidate's specific projects and skills.
+    
+    ${resumeContext ? `CANDIDATE RESUME: ${resumeContext}` : ''}
+    
+    INTERVIEW STYLE:
+    - Be professional, conversational, and encouraging but firm.
+    - Ask ONE question at a time.
+    - Do NOT be robotic. Act like a real person.
+    - Adapt difficulty based on the ${experienceLevel} level.
+    
+    Return ONLY JSON: { "question": "string", "expectedAnswer": "string", "category": "string" }`;
 
-      const completion = await openai.chat.completions.create({
-        model: "gpt-4o-mini",
-        messages: [{ role: "user", content: prompt }],
-      });
-
-      const responseContent = completion.choices[0]?.message?.content || "[]";
-      const cleanJson = responseContent.replace(/```json/g, '').replace(/```/g, '').trim();
-      questionsData = JSON.parse(cleanJson);
-    } catch (openaiError: any) {
-      console.warn("OpenAI API failed, using mock questions:", openaiError.message);
-      // Fallback for Demo Mode
-      questionsData = [
-        { question: `Tell me about a challenging project you worked on as a ${role}.`, expectedAnswer: "Star method, specific technical details, outcome." },
-        { question: `How do you stay updated with the latest trends in ${role} technologies?`, expectedAnswer: "Blogs, community, side projects." },
-        { question: "Explain the difference between synchronous and asynchronous programming.", expectedAnswer: "Blocking vs non-blocking, event loop." },
-        { question: "How do you handle conflicts within a technical team?", expectedAnswer: "Communication, empathy, focus on goals." },
-        { question: `What is your approach to testing and debugging in a ${experienceLevel} role?`, expectedAnswer: "Unit tests, integration tests, logging." }
-      ];
+    let userPrompt = `Generate the first question for this ${interviewType} session.`;
+    if (interviewType === "Resume-Based Interview" && resumeContext) {
+      userPrompt = `Based on the candidate's resume, start with a deep dive into their most significant project or core skill.`;
+    } else if (interviewType === "Aptitude Round") {
+      userPrompt = `Start with a challenging logical reasoning or quantitative aptitude question appropriate for a ${role} role.`;
+    } else if (interviewType === "DSA Round") {
+      userPrompt = `Provide the first DSA problem description. Keep it concise.`;
+    } else {
+      userPrompt = `Start with a professional greeting and the first question (e.g., "Tell me about yourself" or a core technical concept).`;
     }
+
+    const responseContent = await generateAIResponse({
+      systemPrompt,
+      userPrompt,
+      jsonMode: true
+    });
+
+    // Defensive check for AI response
+    const questionContent = responseContent.question || responseContent.nextQuestion || "Welcome! To start, could you introduce yourself and tell me about your background?";
+    const expectedAnswer = responseContent.expectedAnswer || "A professional introduction and overview of skills/experience.";
 
     const interview = await prisma.interview.create({
       data: {
         userId,
         type: 'MOCK',
+        category: interviewType || 'Technical Interview',
+        role: role || 'General Candidate',
+        experienceLevel: experienceLevel || 'Intermediate',
         questions: {
-          create: questionsData.map((q: any) => ({
-            content: q.question,
-            expectedAnswer: q.expectedAnswer,
-          }))
+          create: [{
+            content: questionContent,
+            expectedAnswer: expectedAnswer,
+          }]
         }
       },
       include: {
@@ -81,10 +92,231 @@ router.post('/generate', authenticateToken, async (req: AuthRequest, res: Respon
       }
     });
 
-    res.status(201).json({ interview });
+    res.status(201).json({ interview, nextQuestion: questionContent });
   } catch (error: any) {
     console.error(error);
     res.status(500).json({ error: error.message || 'Internal server error' });
+  }
+});
+
+// Dynamic Next Question logic
+router.post('/:id/next', authenticateToken, async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const interviewId = String(req.params.id);
+    const { answer, currentStep } = req.body;
+    const userId = req.user?.userId;
+
+    if (!userId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+
+    const interview = await prisma.interview.findUnique({
+      where: { id: interviewId },
+      include: { 
+        questions: { 
+          include: { answers: true },
+          orderBy: { createdAt: 'asc' }
+        } 
+      }
+    });
+
+    if (!interview || interview.userId !== userId) {
+      res.status(404).json({ error: 'Interview not found' });
+      return;
+    }
+
+    const lastQuestion = interview.questions[interview.questions.length - 1];
+    
+    // Save user's answer
+    const savedAnswer = await prisma.answer.create({
+      data: {
+        questionId: lastQuestion.id,
+        content: answer,
+      }
+    });
+
+    // Evaluate and get next question
+    const history = interview.questions.map(q => ({
+      question: q.content,
+      answer: q.answers[0]?.content || (q.id === lastQuestion.id ? answer : "")
+    }));
+
+    const systemPrompt = `You are a world-class AI interviewer continuing a ${interview.category || 'Technical Interview'} session for a ${interview.role || 'candidate'} position at a top-tier company.
+    
+    CURRENT MODE: ${interview.category}
+    - If Technical: Drill down into specific domain knowledge, edge cases, and architectural understanding.
+    - If HR: Focus on culture fit, leadership principles, and soft skills.
+    - If Behavioral: Ask follow-ups based on the STAR method (Situation, Task, Action, Result).
+    - If DSA: Evaluate their current approach and provide hints or ask about complexity if they seem stuck.
+    - If System Design: Challenge their choices on scalability, databases, and bottlenecks.
+    
+    DIFFICULTY: ${interview.difficulty || 'Medium'}
+    
+    CONVERSATION HISTORY:
+    ${JSON.stringify(history)}
+    
+    CANDIDATE'S LAST ANSWER: "${answer}"
+    
+    INSTRUCTIONS:
+    1. Evaluate the last answer for accuracy, technical depth, and communication.
+    2. Decide if the session is finished (usually after 4-5 questions).
+    3. If not finished, generate the NEXT question relevant to the ${interview.category} context.
+    4. If finished, provide a final overall evaluation.
+    
+    Return ONLY JSON: 
+    { 
+      "isFinished": boolean, 
+      "evaluation": { 
+        "score": number (0-10), 
+        "feedback": "string",
+        "topic": "string (e.g., Arrays, Strings, DP, Recursion, Trees, Graphs)",
+        "timeComplexity": "string (e.g., O(n), O(log n))",
+        "spaceComplexity": "string (e.g., O(1))",
+        "testCasesPassed": number,
+        "totalTestCases": number,
+        "metrics": {
+           "technical": number,
+           "communication": number,
+           "logic": number,
+           "confidence": number
+        }
+      },
+      "nextQuestion": "string",
+      "expectedAnswer": "string",
+      "isFinished": boolean
+    }`;
+
+    const response = await generateAIResponse({
+      systemPrompt,
+      userPrompt: `History: ${JSON.stringify(history)} \n\n Current Answer: ${answer}`,
+      jsonMode: true
+    });
+
+    // Defensive check for AI response
+    if (!response || !response.evaluation) {
+      throw new Error("Invalid AI response format");
+    }
+
+    // Update evaluation for the last answer
+    await prisma.answer.update({
+      where: { id: savedAnswer.id },
+      data: {
+        score: Math.round(Number(response.evaluation.score) || 0),
+        feedback: response.evaluation.feedback || "No feedback provided",
+        timeComplexity: response.evaluation.timeComplexity,
+        spaceComplexity: response.evaluation.spaceComplexity,
+        testCasesPassed: response.evaluation.testCasesPassed,
+        totalTestCases: response.evaluation.totalTestCases
+      }
+    });
+
+    if (response.isFinished) {
+      // Calculate final score and metrics
+      const allAnswers = await prisma.answer.findMany({
+        where: { question: { interviewId } },
+        include: { question: true }
+      });
+      
+      const totalAnswers = allAnswers.length || 1;
+      const avgScore = (allAnswers.reduce((sum, a) => sum + (a.score || 0), 0) / totalAnswers) * 10;
+      
+      // Aggregate Topic Performance
+      const topicScores: Record<string, number[]> = {};
+      allAnswers.forEach(a => {
+        const topic = a.question.topic || response.evaluation.topic || "General";
+        if (!topicScores[topic]) topicScores[topic] = [];
+        topicScores[topic].push(a.score || 0);
+      });
+
+      const performanceMetrics = {
+        accuracy: (allAnswers.filter(a => (a.score || 0) >= 7).length / totalAnswers) * 100,
+        avgComplexity: "Optimized",
+        communication: 8.5, // AI could provide this per session
+        confidence: 9.0
+      };
+
+      await prisma.interview.update({
+        where: { id: interviewId },
+        data: { 
+          score: Math.round(avgScore),
+          metrics: JSON.stringify(performanceMetrics)
+        }
+      });
+
+      // Update User Analytics
+      const analytics = await prisma.analytics.findUnique({ where: { userId } });
+      if (analytics) {
+         const newMockCount = analytics.mockInterviewCount + 1;
+         const newAvgScore = ((analytics.avgScore * analytics.mockInterviewCount) + avgScore) / newMockCount;
+         
+         const currentTopicPerf = JSON.parse(analytics.topicPerformance);
+         Object.entries(topicScores).forEach(([topic, scores]) => {
+           const avgTopicScore = scores.reduce((a, b) => a + b, 0) / scores.length;
+           currentTopicPerf[topic] = Math.round(((currentTopicPerf[topic] || avgTopicScore) + avgTopicScore) / 2);
+         });
+
+         const weakTopics = Object.entries(currentTopicPerf)
+            .filter(([_, score]) => (score as number) < 6)
+            .map(([topic]) => topic);
+         
+         const strongTopics = Object.entries(currentTopicPerf)
+            .filter(([_, score]) => (score as number) >= 8)
+            .map(([topic]) => topic);
+
+         // Generate simple AI Roadmap if weak topics exist
+         let roadmap = analytics.roadmap;
+         if (weakTopics.length > 0) {
+           roadmap = JSON.stringify({
+             title: "Personalized DSA Mastery Path",
+             steps: weakTopics.map(t => ({
+               topic: t,
+               priority: "High",
+               resources: [`Mastering ${t} fundamentals`, `Advanced ${t} problems`]
+             }))
+           });
+         }
+
+         await prisma.analytics.update({
+           where: { userId },
+           data: {
+             mockInterviewCount: newMockCount,
+             avgScore: newAvgScore,
+             topicPerformance: JSON.stringify(currentTopicPerf),
+             weakTopics: JSON.stringify(weakTopics),
+             strongTopics: JSON.stringify(strongTopics),
+             roadmap,
+             lastActive: new Date(),
+             streak: { increment: 1 } // Simplified streak
+           }
+         });
+         
+         // Update Gamification
+         await updateGamification(userId, 100);
+      }
+
+      res.json({ isFinished: true, score: avgScore, metrics: performanceMetrics });
+    } else {
+      // Add next question to DB
+      const nextQ = await prisma.question.create({
+        data: {
+          interviewId,
+          content: response.nextQuestion || "Can you tell me more about that?",
+          expectedAnswer: response.expectedAnswer || "",
+          topic: response.evaluation.topic
+        }
+      });
+
+      res.json({ 
+        isFinished: false, 
+        nextQuestion: nextQ.content, 
+        evaluation: response.evaluation 
+      });
+    }
+
+  } catch (error: any) {
+    console.error("Interview Progression Error:", error);
+    res.status(500).json({ error: error.message || 'Failed to progress interview' });
   }
 });
 
@@ -110,8 +342,7 @@ router.post('/:id/evaluate', authenticateToken, async (req: AuthRequest, res: Re
       return;
     }
 
-    let totalScore = 0;
-    const evaluatedAnswers = await Promise.all(answers.map(async (ans: any) => {
+    const results = await Promise.all(answers.map(async (ans: any) => {
       const question = interview.questions.find((q: any) => q.id === ans.questionId);
       if (!question) return null;
 
@@ -126,21 +357,15 @@ router.post('/:id/evaluate', authenticateToken, async (req: AuthRequest, res: Re
         Score the candidate out of 10 and provide brief feedback. 
         Return ONLY JSON with 'score' (number) and 'feedback' (string). No other text.`;
 
-        const completion = await openai.chat.completions.create({
-          model: "gpt-4o-mini",
-          messages: [{ role: "user", content: prompt }],
+        evalData = await generateAIResponse({
+          userPrompt: prompt,
+          jsonMode: true
         });
-
-        const responseContent = completion.choices[0]?.message?.content || "{}";
-        const cleanJson = responseContent.replace(/```json/g, '').replace(/```/g, '').trim();
-        evalData = JSON.parse(cleanJson);
-      } catch (openaiError: any) {
-        console.warn("OpenAI API failed, using mock evaluation:", openaiError.message);
+      } catch (aiError: any) {
+        console.warn("AI Evaluation failed, using mock evaluation:", aiError.message);
       }
 
-      totalScore += evalData.score;
-
-      return prisma.answer.create({
+      const answer = await prisma.answer.create({
         data: {
           questionId: ans.questionId,
           content: ans.content,
@@ -148,7 +373,12 @@ router.post('/:id/evaluate', authenticateToken, async (req: AuthRequest, res: Re
           feedback: evalData.feedback,
         }
       });
+      return { score: evalData.score, answer };
     }));
+
+    const validResults = (results.filter(r => r !== null) as { score: number, answer: any }[]);
+    const totalScore = validResults.reduce((sum, r) => sum + r.score, 0);
+    const evaluatedAnswers = validResults.map(r => r.answer);
 
     const avgScore = (totalScore / answers.length) * 10; // Convert to percentage
 

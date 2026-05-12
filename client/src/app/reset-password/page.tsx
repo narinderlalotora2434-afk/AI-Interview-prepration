@@ -8,7 +8,6 @@ import { Lock, ArrowRight, Loader2, Bot, CheckCircle2, AlertCircle, Eye, EyeOff 
 function ResetPasswordForm() {
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
-  const router = useRouter();
 
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -67,8 +66,8 @@ function ResetPasswordForm() {
       if (!res.ok) throw new Error(data.error || "Failed to reset password");
 
       setSuccess(true);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to reset password");
     } finally {
       setLoading(false);
     }

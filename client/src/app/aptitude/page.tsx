@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
+import { motion, AnimatePresence } from "framer-motion";
 import { 
   Bot, 
   LayoutDashboard, 
@@ -25,22 +26,45 @@ import {
   Clock,
   ShieldAlert,
   Trophy,
-  Medal
+  Medal,
+  Menu,
+  X,
+  Sparkles,
+  ChevronRight,
+  Timer
 } from "lucide-react";
+import { getBaseUrl } from "@/lib/api";
+import { ThemeToggle } from "@/components/ThemeToggle";
+
+interface Attempt {
+  category: string;
+  correctAnswers: number;
+  totalQuestions: number;
+  timeTaken: number;
+  difficulty: string;
+  score: number;
+  createdAt: string;
+}
+
+interface LeaderboardEntry {
+  userId: string;
+  name: string;
+  totalScore: number;
+}
 
 const CATEGORIES = [
-  { id: "Quantitative Aptitude", title: "Quantitative Aptitude", icon: Calculator, color: "text-blue-400", bg: "bg-blue-500/10", border: "border-blue-500/20" },
+  { id: "Quantitative Aptitude", title: "Quantitative", icon: Calculator, color: "text-blue-400", bg: "bg-blue-500/10", border: "border-blue-500/20" },
   { id: "Logical Reasoning", title: "Logical Reasoning", icon: Lightbulb, color: "text-amber-400", bg: "bg-amber-500/10", border: "border-amber-500/20" },
   { id: "Verbal Ability", title: "Verbal Ability", icon: BookOpen, color: "text-emerald-400", bg: "bg-emerald-500/10", border: "border-emerald-500/20" },
-  { id: "Data Interpretation", title: "Data Interpretation", icon: PieChart, color: "text-purple-400", bg: "bg-purple-500/10", border: "border-purple-500/20" },
-  { id: "Coding Aptitude", title: "Coding Aptitude", icon: TerminalSquare, color: "text-rose-400", bg: "bg-rose-500/10", border: "border-rose-500/20" },
-  { id: "Mixed", title: "Full Mock Test", icon: Target, color: "text-orange-400", bg: "bg-orange-500/10", border: "border-orange-500/20" },
+  { id: "Data Interpretation", title: "Data Analysis", icon: PieChart, color: "text-purple-400", bg: "bg-purple-500/10", border: "border-purple-500/20" },
+  { id: "Coding Aptitude", title: "Coding Theory", icon: TerminalSquare, color: "text-rose-400", bg: "bg-rose-500/10", border: "border-rose-500/20" },
+  { id: "Mixed", title: "Full Mock Test", icon: Target, color: "text-primary", bg: "bg-primary/10", border: "border-primary/20" },
 ];
 
 export default function AptitudeDashboard() {
   const router = useRouter();
-  const [history, setHistory] = useState<any[]>([]);
-  const [leaderboard, setLeaderboard] = useState<any[]>([]);
+  const [history, setHistory] = useState<Attempt[]>([]);
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -50,162 +74,149 @@ export default function AptitudeDashboard() {
       return;
     }
 
+    const cachedHistory = localStorage.getItem("aptitude_history_cache");
+    const cachedLeaderboard = localStorage.getItem("aptitude_leaderboard_cache");
+    
+    try {
+      if (cachedHistory) setHistory(JSON.parse(cachedHistory));
+      if (cachedLeaderboard) setLeaderboard(JSON.parse(cachedLeaderboard));
+      if (cachedHistory) setLoading(false);
+    } catch (e) { }
+
     Promise.all([
-      fetch(`https://ai-interview-prepration-2-nadp.onrender.com/api/aptitude/history`  , {
+      fetch(`${getBaseUrl()}/api/aptitude/history`, {
         headers: { "Authorization": `Bearer ${token}` }
       }).then(res => res.json()),
-      fetch(`https://ai-interview-prepration-2-nadp.onrender.com/api/aptitude/leaderboard`  , {
+      fetch(`${getBaseUrl()}/api/aptitude/leaderboard`, {
         headers: { "Authorization": `Bearer ${token}` }
       }).then(res => res.json())
     ])
     .then(([historyData, leaderboardData]) => {
       setHistory(historyData);
       setLeaderboard(leaderboardData);
+      try {
+        localStorage.setItem("aptitude_history_cache", JSON.stringify(historyData));
+        localStorage.setItem("aptitude_leaderboard_cache", JSON.stringify(leaderboardData));
+      } catch (e) {
+        console.warn("Failed to cache aptitude data:", e);
+      }
     })
     .catch(err => console.error(err))
     .finally(() => setLoading(false));
   }, [router]);
 
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    router.push("/login");
-  };
-
   const startTest = (category: string, difficulty: string) => {
     router.push(`/aptitude/test?category=${encodeURIComponent(category)}&difficulty=${difficulty}`);
   };
 
-  if (loading) return (
-    <div className="min-h-screen bg-slate-950 flex items-center justify-center">
-      <Brain className="w-12 h-12 text-pink-500 animate-pulse" />
-    </div>
-  );
-
   return (
-    <div className="min-h-screen bg-slate-950 flex text-slate-200">
-      {/* Sidebar */}
-      <aside className="w-64 border-r border-white/5 bg-slate-950 p-6 flex flex-col hidden md:flex">
-        <Link href="/" className="flex items-center gap-2 mb-10">
-          <div className="bg-indigo-600 p-2 rounded-lg">
-            <Bot className="w-5 h-5 text-white" />
-          </div>
-          <span className="text-xl font-bold tracking-tight text-white">PrepAI</span>
-        </Link>
-        <nav className="space-y-1 flex-1">
-          <Link href="/dashboard" className="flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-white/5 hover:text-white rounded-xl transition-colors">
-            <LayoutDashboard className="w-5 h-5" /> Dashboard
-          </Link>
-          <Link href="/quests" className="flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-white/5 hover:text-white rounded-xl transition-colors">
-            <Zap className="w-5 h-5 text-amber-400" /> Daily Quests
-          </Link>
-          <Link href="/roadmaps" className="flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-white/5 hover:text-white rounded-xl transition-colors">
-            <MapIcon className="w-5 h-5" />
-            Placement Roadmaps
-          </Link>
-          <Link href="/aptitude" className="flex items-center gap-3 px-4 py-3 bg-white/5 text-white rounded-xl font-medium">
-            <Brain className="w-5 h-5 text-pink-400" /> Aptitude Test
-          </Link>
-          <Link href="/coding" className="flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-white/5 hover:text-white rounded-xl transition-colors">
-            <Code className="w-5 h-5" /> Coding Simulator
-          </Link>
-          <Link href="/interview" className="flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-white/5 hover:text-white rounded-xl transition-colors">
-            <MessageSquare className="w-5 h-5" /> Mock Interview
-          </Link>
-          <Link href="/resume" className="flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-white/5 hover:text-white rounded-xl transition-colors">
-            <FileText className="w-5 h-5" /> Resume Analyzer
-          </Link>
-          <Link href="/profile" className="flex items-center gap-3 px-4 py-3 text-slate-400 hover:bg-white/5 hover:text-white rounded-xl transition-colors">
-            <User className="w-5 h-5 text-indigo-400" /> Profile
-          </Link>
-        </nav>
-        <button onClick={handleLogout} className="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-red-400 transition-colors mt-auto">
-          <LogOut className="w-5 h-5" /> Logout
-        </button>
-      </aside>
+    <div className="min-h-screen bg-background text-foreground selection:bg-primary/30">
+      <div className="absolute inset-0 bg-grid opacity-10 pointer-events-none" />
+      <div className="absolute top-0 right-1/4 w-full max-w-4xl h-64 bg-primary/10 blur-[120px] pointer-events-none" />
 
-      {/* Main Content */}
-      <main className="flex-1 p-6 md:p-10 overflow-y-auto relative">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-pink-900/20 via-slate-950 to-slate-950 -z-10" />
-
-        <header className="mb-12">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-pink-500/10 border border-pink-500/20 text-pink-400 text-sm font-bold mb-4">
-            <Brain className="w-4 h-4" /> AI-Powered Assessments
+      {/* Header */}
+      <header className="relative z-50 h-20 border-b border-border px-8 flex items-center justify-between bg-background/50 backdrop-blur-md">
+        <div className="flex items-center gap-4">
+          <Link href="/dashboard" className="p-2 hover:bg-secondary rounded-lg transition-colors">
+            <LogOut className="w-5 h-5 rotate-180" />
+          </Link>
+          <div className="h-6 w-px bg-border" />
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-primary-foreground">
+              <Sparkles className="w-5 h-5" />
+            </div>
+            <span className="font-bold tracking-tight">Aptitude Arena</span>
           </div>
-          <h1 className="text-4xl md:text-5xl font-extrabold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-white to-slate-400">
-            Aptitude Mastery
-          </h1>
-          <p className="text-lg text-slate-400 max-w-2xl">
-            Ace your placements with our comprehensive aptitude modules. Features AMCAT/eLitmus style interfaces, negative marking, and deep AI performance analysis.
+        </div>
+        <div className="flex items-center gap-4">
+          <ThemeToggle />
+          <div className="w-10 h-10 rounded-full bg-foreground/10 border border-border flex items-center justify-center font-bold">U</div>
+        </div>
+      </header>
+
+      <main className="relative z-10 p-8 max-w-7xl mx-auto min-h-[calc(100vh-80px)] space-y-12">
+        <motion.header 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="space-y-4"
+        >
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-[10px] font-black uppercase tracking-widest">
+            <Brain className="w-4 h-4" /> Professional Assessments
+          </div>
+          <h1 className="text-5xl font-bold accent-gradient-text">Aptitude Mastery</h1>
+          <p className="text-muted-foreground text-lg max-w-2xl leading-relaxed">
+            Hone your logical and quantitative skills with AMCAT-style mock assessments and real-time AI performance metrics.
           </p>
-        </header>
+        </motion.header>
 
         {/* Categories Grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
-          {CATEGORIES.map((cat) => (
-            <div key={cat.id} className="glass-card p-6 border border-white/5 hover:border-white/20 transition-all duration-300 group">
-              <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-4 ${cat.bg} ${cat.border} border`}>
-                <cat.icon className={`w-6 h-6 ${cat.color}`} />
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {CATEGORIES.map((cat, idx) => (
+            <motion.div 
+              key={idx}
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: idx * 0.1 }}
+              className="glass-card p-8 group hover:border-primary/50 transition-all duration-500"
+            >
+              <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-6 border ${cat.bg} ${cat.border} shadow-lg shadow-black/20 group-hover:scale-110 transition-transform`}>
+                <cat.icon className={`w-7 h-7 ${cat.color}`} />
               </div>
-              <h3 className="text-xl font-bold mb-2 text-white">{cat.title}</h3>
-              <p className="text-sm text-slate-400 mb-6 line-clamp-2">
-                Practice topic-wise questions with instant solutions and performance tracking.
+              <h3 className="text-2xl font-bold mb-3">{cat.title}</h3>
+              <p className="text-muted-foreground text-sm mb-8 leading-relaxed">
+                Adaptive difficulty engine designed to prepare you for top-tier placement examinations.
               </p>
               
               <div className="space-y-3">
-                <button 
-                  onClick={() => startTest(cat.id, 'Beginner')}
-                  className="w-full flex items-center justify-between p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-colors text-sm font-medium"
-                >
-                  Beginner Level <ArrowRight className="w-4 h-4 opacity-50 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
-                </button>
-                <button 
-                  onClick={() => startTest(cat.id, 'Intermediate')}
-                  className="w-full flex items-center justify-between p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-colors text-sm font-medium"
-                >
-                  Intermediate Level <ArrowRight className="w-4 h-4 opacity-50 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
-                </button>
-                <button 
-                  onClick={() => startTest(cat.id, 'Advanced')}
-                  className="w-full flex items-center justify-between p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-colors text-sm font-medium"
-                >
-                  Advanced Level <ArrowRight className="w-4 h-4 opacity-50 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
-                </button>
+                {['Beginner', 'Intermediate', 'Advanced'].map((diff) => (
+                  <button 
+                    key={diff}
+                    onClick={() => startTest(cat.id, diff)}
+                    className="w-full btn-glass p-3 flex items-center justify-between group/btn overflow-hidden"
+                  >
+                    <span className="text-xs font-bold uppercase tracking-widest">{diff}</span>
+                    <ChevronRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform text-primary" />
+                  </button>
+                ))}
               </div>
-            </div>
+            </motion.div>
           ))}
         </div>
 
-        {/* Analytics & Recent History */}
+        {/* Bottom Section: History & Leaderboard */}
         <div className="grid lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2 glass-card p-8">
-            <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
-              <TrendingUp className="w-6 h-6 text-indigo-400" /> Recent Attempts
-            </h2>
+          <div className="lg:col-span-2 glass-card p-10">
+            <div className="flex items-center justify-between mb-10">
+              <h2 className="text-2xl font-bold flex items-center gap-3">
+                <Timer className="w-6 h-6 text-primary" /> Recent History
+              </h2>
+            </div>
+            
             {history.length === 0 ? (
-              <div className="text-center py-10 bg-white/5 rounded-xl border border-dashed border-white/20">
-                <ShieldAlert className="w-10 h-10 text-slate-500 mx-auto mb-3" />
-                <p className="text-slate-400">No tests taken yet. Start practicing to see your analytics!</p>
+              <div className="text-center py-20 bg-secondary rounded-3xl border-2 border-dashed border-border">
+                <ShieldAlert className="w-12 h-12 text-foreground/10 mx-auto mb-4" />
+                <p className="text-muted-foreground font-bold uppercase tracking-widest text-xs">No activity recorded yet</p>
               </div>
             ) : (
               <div className="space-y-4">
                 {history.slice(0, 5).map((attempt, i) => (
-                  <div key={i} className="flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/5 hover:bg-white/10 transition-colors">
-                    <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 rounded-full bg-indigo-500/10 flex items-center justify-center text-indigo-400 font-bold">
+                  <div key={i} className="flex items-center justify-between p-6 bg-secondary border border-border rounded-[24px] hover:bg-foreground/10 transition-all group">
+                    <div className="flex items-center gap-6">
+                      <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary font-bold border border-primary/20 shadow-lg">
                         {Math.round((attempt.correctAnswers / attempt.totalQuestions) * 100)}%
                       </div>
                       <div>
-                        <h4 className="font-bold text-white">{attempt.category}</h4>
-                        <div className="flex items-center gap-3 text-xs text-slate-400 mt-1">
-                          <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {Math.round(attempt.timeTaken / 60)} mins</span>
-                          <span>•</span>
+                        <h4 className="font-bold text-lg group-hover:text-primary transition-colors">{attempt.category}</h4>
+                        <div className="flex items-center gap-4 text-[10px] font-bold uppercase tracking-widest text-muted-foreground mt-1">
+                          <span className="flex items-center gap-1.5"><Clock className="w-3.5 h-3.5" /> {Math.round(attempt.timeTaken / 60)}m</span>
+                          <div className="w-1 h-1 rounded-full bg-foreground/10" />
                           <span>{attempt.difficulty}</span>
                         </div>
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="font-bold text-emerald-400">Score: {attempt.score}</div>
-                      <div className="text-xs text-slate-500">{new Date(attempt.createdAt).toLocaleDateString()}</div>
+                      <div className="text-2xl font-bold accent-gradient-text">+{attempt.score}</div>
+                      <div className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest mt-1">{new Date(attempt.createdAt).toLocaleDateString()}</div>
                     </div>
                   </div>
                 ))}
@@ -213,65 +224,34 @@ export default function AptitudeDashboard() {
             )}
           </div>
           
-          <div className="glass-card p-8 bg-gradient-to-br from-pink-600/10 to-transparent">
-            <h2 className="text-xl font-bold mb-6">Performance Radar</h2>
-            <div className="h-48 flex items-center justify-center border border-white/10 rounded-xl mb-6 bg-slate-900/50 relative overflow-hidden">
-               {/* Mock Radar Chart visualization using CSS */}
-               <div className="w-32 h-32 rounded-full border border-pink-500/30 flex items-center justify-center absolute">
-                 <div className="w-20 h-20 rounded-full border border-pink-500/40 flex items-center justify-center">
-                    <div className="w-8 h-8 rounded-full bg-pink-500/50 animate-pulse" />
-                 </div>
-               </div>
-               <span className="text-sm text-slate-500 mt-32 z-10 font-medium">Take more tests to unlock radar.</span>
-            </div>
-            
-            <div className="space-y-4">
-               <div className="flex justify-between items-center text-sm">
-                 <span className="text-slate-400">Total Tests Taken</span>
-                 <span className="font-bold text-white">{history.length}</span>
-               </div>
-               <div className="flex justify-between items-center text-sm">
-                 <span className="text-slate-400">Average Accuracy</span>
-                 <span className="font-bold text-emerald-400">
-                   {history.length > 0 ? Math.round(history.reduce((a,b) => a + (b.correctAnswers/b.totalQuestions), 0) / history.length * 100) : 0}%
-                 </span>
-               </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Leaderboard Section */}
-        <div className="mt-8 glass-card p-8 bg-gradient-to-tr from-slate-900 to-indigo-900/20 border-indigo-500/10">
-          <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
-            <Trophy className="w-6 h-6 text-amber-400" /> Global Top Performers
-          </h2>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {leaderboard.length === 0 ? (
-              <p className="text-slate-500 italic col-span-full">Leaderboard is currently empty. Be the first to rank!</p>
-            ) : (
-              leaderboard.map((user, idx) => (
-                <div key={user.userId} className="flex items-center gap-4 bg-white/5 p-4 rounded-xl border border-white/5 hover:bg-white/10 transition-colors">
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg ${
-                    idx === 0 ? 'bg-amber-500 text-white shadow-[0_0_15px_rgba(245,158,11,0.5)]' :
-                    idx === 1 ? 'bg-slate-300 text-slate-900 shadow-[0_0_15px_rgba(203,213,225,0.5)]' :
-                    idx === 2 ? 'bg-amber-700 text-white shadow-[0_0_15px_rgba(180,83,9,0.5)]' :
-                    'bg-slate-800 text-slate-400'
+          <div className="glass-card p-10 flex flex-col">
+            <h2 className="text-2xl font-bold mb-8 flex items-center gap-3">
+              <Trophy className="w-6 h-6 text-amber-500" /> Leaderboard
+            </h2>
+            <div className="space-y-4 flex-1">
+              {leaderboard.slice(0, 6).map((user, idx) => (
+                <div key={user.userId} className="flex items-center gap-4 p-4 rounded-2xl bg-secondary border border-border group hover:bg-foreground/10 transition-all">
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-sm border-2 ${
+                    idx === 0 ? 'bg-amber-500/20 border-amber-500 text-amber-500' :
+                    idx === 1 ? 'bg-slate-500/20 border-slate-500 text-muted-foreground' :
+                    idx === 2 ? 'bg-orange-500/20 border-orange-500 text-orange-600' :
+                    'bg-secondary border-border text-muted-foreground'
                   }`}>
-                    #{idx + 1}
+                    {idx + 1}
                   </div>
                   <div className="flex-1">
-                    <h4 className="font-bold text-white flex items-center gap-2">
+                    <h4 className="font-bold text-sm flex items-center justify-between">
                       {user.name} 
-                      {idx < 3 && <Medal className={`w-4 h-4 ${idx===0?'text-amber-400':idx===1?'text-slate-300':'text-amber-700'}`} />}
+                      {idx < 3 && <Medal className={`w-4 h-4 ${idx===0?'text-amber-500':idx===1?'text-muted-foreground':'text-orange-700'}`} />}
                     </h4>
-                    <div className="text-sm text-indigo-400 font-bold">{Math.round(user.totalScore)} Pts</div>
+                    <div className="text-[10px] text-primary font-bold uppercase tracking-widest mt-0.5">{Math.round(user.totalScore)} PTS</div>
                   </div>
                 </div>
-              ))
-            )}
+              ))}
+            </div>
+            <button className="w-full btn-glass mt-10 text-[10px] font-bold uppercase tracking-[0.2em] py-4">View All Standings</button>
           </div>
         </div>
-
       </main>
     </div>
   );

@@ -6,9 +6,7 @@ import Link from "next/link";
 import { 
   ArrowLeft, 
   CheckCircle2, 
-  Circle, 
   ChevronDown, 
-  ChevronUp, 
   Clock, 
   Zap, 
   Trophy, 
@@ -25,7 +23,6 @@ import {
   Code,
   MessageSquare,
   FileText,
-  Zap as ZapIcon,
   Cpu,
   Microscope,
   Layers
@@ -50,7 +47,7 @@ interface SubCategory {
 interface Pathway {
   id: string;
   title: string;
-  icon: any;
+  icon: React.ElementType;
   categories: SubCategory[];
 }
 
@@ -232,7 +229,7 @@ export default function VLSITrackPage() {
         <nav className="space-y-1 flex-1">
           {[
             { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, color: "" },
-            { href: "/quests", label: "Daily Quests", icon: ZapIcon, color: "text-amber-400" },
+            { href: "/quests", label: "Daily Quests", icon: Zap, color: "text-amber-400" },
             { href: "/roadmaps", label: "Placement Roadmaps", icon: MapIcon, color: "text-indigo-400", active: true },
             { href: "/aptitude", label: "Aptitude Test", icon: Brain, color: "text-pink-400" },
             { href: "/coding", label: "Coding Simulator", icon: Code, color: "" },

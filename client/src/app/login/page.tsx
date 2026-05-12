@@ -1,10 +1,10 @@
 "use client";
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Bot, Mail, Lock, ArrowRight, Loader2 } from "lucide-react";
+import { motion } from "framer-motion";
+import { Mail, Lock, ArrowRight, Loader2, Sparkles, ShieldCheck, Zap } from "lucide-react";
 import { getBaseUrl } from "@/lib/api";
 
 export default function LoginPage() {
@@ -27,97 +27,122 @@ export default function LoginPage() {
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Login failed");
+      
+      if (!res.ok) {
+        setError(data.error || "Authentication failed. Please verify credentials.");
+        setLoading(false);
+        return;
+      }
 
       localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
       router.push("/dashboard");
     } catch (err: any) {
-      console.error("Login Error:", err);
-      setError(`Connection Error: ${err.message || "Please check if you are connected to the internet and using HTTPS."}`);
+      setError("Neural link failed. Verify server synchronization.");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6">
-      <Link href="/" className="flex items-center gap-2 mb-12 group">
-        <div className="bg-indigo-600 p-2 rounded-lg group-hover:rotate-12 transition-transform">
-          <Bot className="w-6 h-6 text-white" />
+    <div className="min-h-screen bg-background text-foreground selection:bg-primary/30 flex items-center justify-center p-6 relative overflow-hidden">
+      {/* Background Decor */}
+      <div className="absolute inset-0 bg-grid opacity-10 pointer-events-none" />
+      <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-primary/20 rounded-full blur-[150px] animate-glow pointer-events-none" />
+      <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-accent-cyan/10 rounded-full blur-[120px] animate-glow pointer-events-none" />
+
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="w-full max-w-md z-10 space-y-10"
+      >
+        <div className="text-center space-y-4">
+           <Link href="/" className="inline-flex items-center gap-3 group mb-4">
+             <div className="w-12 h-12 rounded-2xl bg-primary flex items-center justify-center group-hover:rotate-12 transition-all shadow-[0_0_30px_rgba(124,58,237,0.4)]">
+               <Sparkles className="w-7 h-7 text-white" />
+             </div>
+             <span className="text-3xl font-bold tracking-tighter">PrepAI</span>
+           </Link>
+           <h1 className="text-4xl font-bold tracking-tight accent-gradient-text">Welcome Back</h1>
+           <p className="text-slate-400 font-medium tracking-wide">Enter your neural keys to continue</p>
         </div>
-        <span className="text-2xl font-bold tracking-tight text-white">PrepAI</span>
-      </Link>
 
-      <div className="w-full max-w-md glass-card p-8 border border-white/10">
-        <h1 className="text-3xl font-bold mb-2 text-center">Welcome Back</h1>
-        <p className="text-slate-400 text-center mb-8">Sign in to continue your preparation</p>
+        <div className="glass-card p-10 space-y-8 relative overflow-hidden group">
+           <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
+              <ShieldCheck className="w-32 h-32" />
+           </div>
 
-        {error && (
-          <div className="mb-6 p-4 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
-            {error}
-          </div>
-        )}
+           {error && (
+             <motion.div 
+               initial={{ opacity: 0, scale: 0.95 }}
+               animate={{ opacity: 1, scale: 1 }}
+               className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-sm font-bold flex items-center gap-3"
+             >
+               <Zap className="w-4 h-4 shrink-0" />
+               {error}
+             </motion.div>
+           )}
 
-        <form onSubmit={handleLogin} className="space-y-6">
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-slate-300">Email Address</label>
-            <div className="relative">
-              <Mail className="absolute left-3 top-3 w-5 h-5 text-slate-500" />
-              <input
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full bg-white/5 border border-white/10 rounded-xl py-2.5 pl-11 pr-4 focus:border-indigo-500 outline-none transition-colors text-white"
-                placeholder="name@example.com"
-              />
-            </div>
-          </div>
+           <form onSubmit={handleLogin} className="space-y-6 relative z-10">
+             <div className="space-y-3">
+               <label className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] ml-1">Authentication Email</label>
+               <div className="relative group/input">
+                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500 group-focus-within/input:text-primary transition-colors" />
+                 <input
+                   type="email"
+                   required
+                   value={email}
+                   onChange={(e) => setEmail(e.target.value)}
+                   className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-4 focus:border-primary/50 focus:bg-white/10 outline-none transition-all text-white font-medium"
+                   placeholder="agent@prepai.io"
+                 />
+               </div>
+             </div>
 
-          <div className="space-y-2">
-            <div className="flex justify-between items-center">
-              <label className="text-sm font-medium text-slate-300">Password</label>
-              <Link href="/forgot-password" className="text-sm font-medium text-indigo-400 hover:text-indigo-300 transition-colors">
-                Forgot Password?
-              </Link>
-            </div>
-            <div className="relative">
-              <Lock className="absolute left-3 top-3 w-5 h-5 text-slate-500" />
-              <input
-                type="password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full bg-white/5 border border-white/10 rounded-xl py-2.5 pl-11 pr-4 focus:border-indigo-500 outline-none transition-colors text-white"
-                placeholder="••••••••"
-              />
-            </div>
-          </div>
+             <div className="space-y-3">
+               <div className="flex justify-between items-center px-1">
+                 <label className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em]">Security Cipher</label>
+                 <Link href="/forgot-password" title="Recover neural access" className="text-[10px] font-bold text-primary hover:text-primary/80 transition-colors uppercase tracking-widest">
+                   Recover Key?
+                 </Link>
+               </div>
+               <div className="relative group/input">
+                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500 group-focus-within/input:text-primary transition-colors" />
+                 <input
+                   type="password"
+                   required
+                   value={password}
+                   onChange={(e) => setPassword(e.target.value)}
+                   className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-4 focus:border-primary/50 focus:bg-white/10 outline-none transition-all text-white font-medium"
+                   placeholder="••••••••"
+                 />
+               </div>
+             </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full btn-primary py-3 flex items-center justify-center gap-2"
-          >
-            {loading ? (
-              <Loader2 className="w-5 h-5 animate-spin" />
-            ) : (
-              <>
-                Sign In
-                <ArrowRight className="w-4 h-4" />
-              </>
-            )}
-          </button>
-        </form>
+             <button
+               type="submit"
+               disabled={loading}
+               className="w-full btn-primary py-4 rounded-2xl flex items-center justify-center gap-3 group-hover:shadow-[0_0_30px_rgba(124,58,237,0.3)] transition-all"
+             >
+               {loading ? (
+                 <Loader2 className="w-6 h-6 animate-spin" />
+               ) : (
+                 <>
+                   <span className="font-bold tracking-widest uppercase text-sm">Access Dashboard</span>
+                   <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                 </>
+               )}
+             </button>
+           </form>
+        </div>
 
-        <p className="mt-8 text-center text-sm text-slate-500">
-          Don't have an account?{" "}
-          <Link href="/signup" className="text-indigo-400 hover:text-indigo-300 font-medium">
-            Create one for free
+        <p className="text-center text-sm text-muted-foreground font-medium">
+          New Operative?{" "}
+          <Link href="/signup" className="text-primary hover:text-primary/80 font-bold transition-colors">
+            Initialize Account
           </Link>
         </p>
-      </div>
+      </motion.div>
     </div>
   );
 }

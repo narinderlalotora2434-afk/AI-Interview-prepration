@@ -50,7 +50,7 @@ const FeedbackPanel: React.FC<FeedbackPanelProps> = ({ feedback, onNext, isLastS
             Strengths
           </div>
           <ul className="space-y-3">
-            {feedback.strengths.map((s, i) => (
+            {(feedback.strengths || []).map((s, i) => (
               <li key={i} className="flex gap-3 text-slate-300 bg-emerald-500/5 p-3 rounded-xl border border-emerald-500/10">
                 <span className="text-emerald-500 font-bold">•</span>
                 {s}
@@ -66,7 +66,7 @@ const FeedbackPanel: React.FC<FeedbackPanelProps> = ({ feedback, onNext, isLastS
             Areas for Improvement
           </div>
           <ul className="space-y-3">
-            {feedback.weaknesses.map((w, i) => (
+            {(feedback.weaknesses || []).map((w, i) => (
               <li key={i} className="flex gap-3 text-slate-300 bg-rose-500/5 p-3 rounded-xl border border-rose-500/10">
                 <span className="text-rose-500 font-bold">•</span>
                 {w}
@@ -82,7 +82,7 @@ const FeedbackPanel: React.FC<FeedbackPanelProps> = ({ feedback, onNext, isLastS
           <Lightbulb className="w-5 h-5" />
           AI Suggested Better Answer
         </div>
-        <p className="text-slate-300 leading-relaxed italic">"{feedback.improvedAnswer}"</p>
+        <p className="text-slate-300 leading-relaxed italic">&quot;{feedback.improvedAnswer}&quot;</p>
       </div>
 
       {/* Next Step */}
