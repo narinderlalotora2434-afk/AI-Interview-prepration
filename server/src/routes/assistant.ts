@@ -1,10 +1,9 @@
 import { Router, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
+import prisma from '../db';
 import { authenticateToken, AuthRequest } from '../middleware/authMiddleware';
 import { generateAIResponse } from '../utils/ai';
 
 const router = Router();
-const prisma = new PrismaClient();
 
 router.post('/chat', authenticateToken, async (req: AuthRequest, res: Response): Promise<void> => {
   try {

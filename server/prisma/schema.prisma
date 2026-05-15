@@ -46,8 +46,10 @@ model Interview {
   difficulty  String?     // Easy, Medium, Hard
   questions   Question[]
   createdAt   DateTime    @default(now())
-}
 
+  @@index([userId])
+  @@index([createdAt])
+}
 
 model Question {
   id             String      @id @default(auto()) @map("_id") @db.ObjectId
@@ -58,6 +60,8 @@ model Question {
   expectedAnswer String?
   answers        Answer[]
   createdAt      DateTime    @default(now())
+
+  @@index([interviewId])
 }
 
 model Answer {
@@ -73,6 +77,8 @@ model Answer {
   totalTestCases  Int?
   executionTime   Float?      // in ms
   createdAt   DateTime    @default(now())
+
+  @@index([questionId])
 }
 
 model Resume {
@@ -83,6 +89,9 @@ model Resume {
   atsScore  Int?
   feedback  String?
   createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([createdAt])
 }
 
 model Analytics {
@@ -142,6 +151,9 @@ model AptitudeAttempt {
   details        String   // JSON string of user answers and time per question
   aiFeedback     String?  // JSON string or text for AI analysis
   createdAt      DateTime @default(now())
+
+  @@index([userId])
+  @@index([createdAt])
 }
 
 // --- Coding Arena Models ---
@@ -169,6 +181,9 @@ model CodingProblem {
   playlists       CodingPlaylist[]  @relation("PlaylistProblems", fields: [playlistIds], references: [id])
   createdAt       DateTime          @default(now())
   updatedAt       DateTime          @updatedAt
+
+  @@index([difficulty])
+  @@index([category])
 }
 
 model TestCase {
@@ -178,6 +193,8 @@ model TestCase {
   input           String
   expectedOutput  String
   isHidden        Boolean        @default(false)
+
+  @@index([problemId])
 }
 
 model CodeSubmission {
@@ -196,6 +213,10 @@ model CodeSubmission {
   failedTestCase  String?        // JSON of failed test case if any
   aiFeedback      String?
   createdAt       DateTime       @default(now())
+
+  @@index([userId])
+  @@index([problemId])
+  @@index([createdAt])
 }
 
 model UserSolvedProblem {
@@ -209,6 +230,7 @@ model UserSolvedProblem {
   createdAt       DateTime       @default(now())
 
   @@unique([userId, problemId])
+  @@index([userId])
 }
 
 model Contest {
@@ -231,6 +253,9 @@ model ContestSubmission {
   score           Int            @default(0)
   finishTime      DateTime
   createdAt       DateTime       @default(now())
+
+  @@index([contestId])
+  @@index([userId])
 }
 
 model CodingPlaylist {
@@ -242,6 +267,8 @@ model CodingPlaylist {
   problemIds      String[]       @db.ObjectId
   problems        CodingProblem[] @relation("PlaylistProblems", fields: [problemIds], references: [id])
   createdAt       DateTime       @default(now())
+
+  @@index([userId])
 }
 
 // --- Placement Roadmap Models ---
@@ -268,6 +295,8 @@ model Roadmap {
   modules         RoadmapModule[]
   companyTracks   CompanyTrack[]
   createdAt       DateTime       @default(now())
+
+  @@index([branchId])
 }
 
 model RoadmapModule {
@@ -277,6 +306,8 @@ model RoadmapModule {
   title           String
   orderIndex      Int
   topics          Topic[]
+
+  @@index([roadmapId])
 }
 
 model Topic {
@@ -288,6 +319,8 @@ model Topic {
   resources       LearningResource[]
   userProgress    UserProgress[]
   orderIndex      Int
+
+  @@index([moduleId])
 }
 
 model LearningResource {
@@ -297,6 +330,8 @@ model LearningResource {
   title           String
   type            String         // "Video", "Article", "Practice", "Book"
   url             String
+
+  @@index([topicId])
 }
 
 model CompanyTrack {
@@ -308,6 +343,8 @@ model CompanyTrack {
   topics          String         // JSON string of focus topics
   interviewRounds String         // JSON string array
   createdAt       DateTime       @default(now())
+
+  @@index([roadmapId])
 }
 
 model UserProgress {
@@ -319,6 +356,7 @@ model UserProgress {
   status          String         // "Pending", "In Progress", "Completed"
   completedAt     DateTime?
   @@unique([userId, topicId])
+  @@index([userId])
 }
 
 model ModuleProgress {
@@ -338,6 +376,7 @@ model ModuleProgress {
   recommendation  String?     // AI recommendation string
 
   @@unique([userId, moduleId])
+  @@index([lastActivity])
 }
 
 model AssistantChat {
@@ -346,4 +385,7 @@ model AssistantChat {
   role      String   // "user", "ai"
   content   String
   createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([createdAt])
 }

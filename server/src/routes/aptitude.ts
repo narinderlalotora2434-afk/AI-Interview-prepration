@@ -82,9 +82,15 @@ router.post('/submit', authenticateToken, async (req: AuthRequest, res: Response
 
     for (const [qId, ans] of Object.entries(answers)) {
       const answerVal = ans as string | null;
+      const q = questionMap.get(qId);
       if (answerVal === null || answerVal === undefined || answerVal === "") {
         skipped++;
-        detailedResults.push({ questionId: qId, answer: null, correct: false });
+        detailedResults.push({ 
+          questionId: qId, 
+          questionText: q?.questionText || "Question text not available",
+          answer: null, 
+          correct: false 
+        });
         continue;
       }
       
@@ -151,7 +157,21 @@ router.get('/history', authenticateToken, async (req: AuthRequest, res: Response
     const userId = req.user!.userId;
     const history = await prisma.aptitudeAttempt.findMany({
       where: { userId },
-      orderBy: { createdAt: 'desc' }
+      select: {
+        id: true,
+        category: true,
+        difficulty: true,
+        score: true,
+        totalQuestions: true,
+        correctAnswers: true,
+        wrongAnswers: true,
+        skipped: true,
+        timeTaken: true,
+        createdAt: true
+        // details excluded for performance
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 20 // Added limit for performance
     });
     res.json(history);
   } catch (error) {

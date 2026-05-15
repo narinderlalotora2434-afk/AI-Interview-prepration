@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Mail, ArrowRight, Loader2, Sparkles, ShieldCheck, Key, ArrowLeft } from "lucide-react";
+import { Mail, ArrowRight, Loader2, Sparkles, ShieldCheck, Key, ArrowLeft, Zap } from "lucide-react";
 import { getBaseUrl } from "@/lib/api";
 
 export default function ForgotPasswordPage() {

@@ -17,22 +17,26 @@ router.get('/dashboard', authenticateToken, async (req: AuthRequest, res: Respon
       }),
       prisma.interview.findMany({
         where: { userId },
+        select: { id: true, type: true, category: true, score: true, createdAt: true },
         take: 5,
         orderBy: { createdAt: 'desc' }
       }),
       prisma.resume.findMany({
         where: { userId },
-        take: 10,
+        select: { id: true, atsScore: true, createdAt: true },
+        take: 5,
         orderBy: { createdAt: 'desc' }
       }),
       prisma.aptitudeAttempt.findMany({
         where: { userId },
-        take: 20,
+        select: { id: true, category: true, score: true, createdAt: true },
+        take: 10,
         orderBy: { createdAt: 'desc' }
       }),
       prisma.codeSubmission.findMany({
         where: { userId },
-        take: 20,
+        select: { id: true, status: true, createdAt: true, problem: { select: { title: true } } },
+        take: 10,
         orderBy: { createdAt: 'desc' }
       }),
       prisma.user.findUnique({
@@ -41,6 +45,8 @@ router.get('/dashboard', authenticateToken, async (req: AuthRequest, res: Respon
       }),
       prisma.moduleProgress.findMany({
         where: { userId },
+        select: { id: true, title: true, progress: true, status: true, lastActivity: true, category: true },
+        take: 10,
         orderBy: { lastActivity: 'desc' }
       })
     ]);

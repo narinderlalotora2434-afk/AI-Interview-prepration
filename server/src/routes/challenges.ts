@@ -1,12 +1,9 @@
 import { Router, Response } from 'express';
 import prisma from '../db';
-import OpenAI from 'openai';
 import { authenticateToken, AuthRequest } from '../middleware/authMiddleware';
+import { generateAIResponse } from '../utils/ai';
 
 const router = Router();
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
 
 router.get('/daily', authenticateToken, async (req: AuthRequest, res: Response) => {
   try {
@@ -32,12 +29,10 @@ router.get('/daily', authenticateToken, async (req: AuthRequest, res: Response) 
         
         Return ONLY JSON with keys: codingProblem, techQuestion, behavioralQuestion. No other text.`;
 
-        const completion = await openai.chat.completions.create({
-          model: "gpt-4o-mini",
-          messages: [{ role: "user", content: prompt }],
+        const data = await generateAIResponse({
+          userPrompt: prompt,
+          jsonMode: true
         });
-
-        const data = JSON.parse(completion.choices[0]?.message?.content?.replace(/```json/g, '').replace(/```/g, '').trim() || "{}");
 
         challenge = await prisma.dailyChallenge.create({
           data: {

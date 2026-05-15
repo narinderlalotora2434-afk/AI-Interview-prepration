@@ -1,13 +1,10 @@
 import { Router, Request, Response } from 'express';
 import prisma from '../db';
-import OpenAI from 'openai';
 import { authenticateToken, AuthRequest } from '../middleware/authMiddleware';
 import { updateGamification } from '../utils/gamification';
+import { generateAIResponse } from '../utils/ai';
 
 const router = Router();
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
 
 // GET /problems
 router.get('/problems', async (req: Request, res: Response): Promise<void> => {
@@ -73,20 +70,16 @@ router.post('/run', authenticateToken, async (req: AuthRequest, res: Response): 
     const { code, language, input } = req.body;
     
     // Dry run via AI judge to simulate execution securely
-    const prompt = `Simulate a code execution engine for this ${language} code.
-    Input provided: ${input}
-    Code:
-    ${code}
-    
-    Return ONLY JSON with 'output' (string of printed output/returned value), 'status' ('Success', 'Runtime Error', 'Compilation Error'), and 'error' (string if any).`;
+    const systemPrompt = "Simulate a code execution engine for this " + language + " code.";
+    const userPrompt = `Input provided: ${input}\nCode:\n${code}\n\nReturn ONLY JSON with 'output' (string of printed output/returned value), 'status' ('Success', 'Runtime Error', 'Compilation Error'), and 'error' (string if any).`;
 
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [{ role: "user", content: prompt }],
+    const result = await generateAIResponse({
+      systemPrompt,
+      userPrompt,
+      jsonMode: true
     });
 
-    const cleanJson = (completion.choices[0]?.message?.content || "{}").replace(/```json/g, '').replace(/```/g, '').trim();
-    res.json(JSON.parse(cleanJson));
+    res.json(result);
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Failed to run code' });
@@ -110,11 +103,12 @@ router.post('/submit', authenticateToken, async (req: AuthRequest, res: Response
     }
 
     // AI Judge to evaluate all test cases and check time/space complexity
-    const prompt = `Act as an advanced coding judge (like LeetCode).
+    const systemPrompt = `Act as an advanced coding judge (like LeetCode).
     Evaluate the following ${language} code for the problem:
     Title: ${problem.title}
-    Description: ${problem.description}
-    Code:
+    Description: ${problem.description}`;
+    
+    const userPrompt = `Code:
     ${code}
     
     Check for correctness against typical edge cases and hidden test cases. Check time limit and memory.
@@ -127,29 +121,11 @@ router.post('/submit', authenticateToken, async (req: AuthRequest, res: Response
     'feedback' (string detailing the AI code review, suggesting optimizations),
     'failedTestCase' (string, optional if not Accepted).`;
 
-    let evaluation: {
-      status: string;
-      runtime: number;
-      memory: number;
-      passedCases: number;
-      totalCases: number;
-      feedback: string;
-      failedTestCase?: string;
-    };
-    try {
-      const completion = await openai.chat.completions.create({
-        model: "gpt-4o", // use better model for judging
-        messages: [{ role: "user", content: prompt }],
-      });
-      const cleanJson = (completion.choices[0]?.message?.content || "{}").replace(/```json/g, '').replace(/```/g, '').trim();
-      evaluation = JSON.parse(cleanJson);
-    } catch (_e) {
-      // Fallback
-      evaluation = {
-        status: "Accepted", runtime: 45, memory: 38.4, passedCases: 10, totalCases: 10,
-        feedback: "Code looks good. O(n) time complexity achieved."
-      };
-    }
+    const evaluation = await generateAIResponse({
+      systemPrompt,
+      userPrompt,
+      jsonMode: true
+    });
 
     // Save submission
     const submission = await prisma.codeSubmission.create({
