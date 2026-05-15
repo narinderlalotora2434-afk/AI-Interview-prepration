@@ -93,8 +93,6 @@ router.post('/submit', authenticateToken, async (req: AuthRequest, res: Response
         });
         continue;
       }
-      
-      const q = questionMap.get(qId);
       if (q) {
         if (q.correctAnswer === answerVal) {
           correctAnswers++;
