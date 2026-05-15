@@ -22,6 +22,7 @@ router.get('/dashboard', authenticateToken, async (req: AuthRequest, res: Respon
       }),
       prisma.resume.findMany({
         where: { userId },
+        take: 10,
         orderBy: { createdAt: 'desc' }
       }),
       prisma.aptitudeAttempt.findMany({

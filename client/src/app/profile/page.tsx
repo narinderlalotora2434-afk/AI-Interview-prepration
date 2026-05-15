@@ -19,7 +19,8 @@ import {
   Menu,
   ChevronRight,
   Code,
-  Bot
+  Bot,
+  ArrowRight
 } from "lucide-react";
 import Image from "next/image";
 import { getBaseUrl } from "@/lib/api";
@@ -128,8 +129,8 @@ export default function ProfilePage() {
   };
 
   if (loading && !data) return (
-    <div className="min-h-screen bg-background flex items-center justify-center">
-      <div className="w-16 h-16 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
+    <div className="min-h-screen bg-white flex items-center justify-center">
+      <div className="w-16 h-16 border-4 border-primary/10 border-t-primary rounded-full animate-spin" />
     </div>
   );
 
@@ -160,236 +161,236 @@ export default function ProfilePage() {
   const heatmapDays = generateHeatmapData();
 
   return (
-    <div className="min-h-screen bg-background text-foreground selection:bg-primary/30">
-      <div className="absolute inset-0 bg-grid opacity-10 pointer-events-none" />
-      <div className="absolute top-0 left-1/4 w-full max-w-4xl h-96 bg-primary/10 blur-[150px] pointer-events-none" />
+    <div className="min-h-screen bg-[#F8FAFC] text-text-primary selection:bg-primary/10 flex">
+      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
-      <div className="flex relative z-10">
-        <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      <main className="flex-1 flex flex-col h-screen overflow-hidden relative">
+        {/* Header */}
+        <header className="px-10 h-20 border-b border-slate-100 flex items-center justify-between bg-white/80 backdrop-blur-md sticky top-0 z-20">
+          <div className="flex items-center gap-6">
+            <button onClick={() => setSidebarOpen(true)} className="lg:hidden p-2 text-text-secondary hover:text-text-primary transition-colors">
+              <Menu className="w-6 h-6" />
+            </button>
+            <h1 className="text-2xl font-black tracking-tight text-text-primary">Agent Profile</h1>
+          </div>
+          <div className="flex items-center gap-4">
+             <div className="px-5 py-2 rounded-full bg-primary/5 border border-primary/10 text-primary text-[10px] font-black uppercase tracking-[0.2em] hidden sm:flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                Level {data ? Math.floor((data.analytics.xp || 0) / 500) + 1 : 1} Operative
+             </div>
+          </div>
+        </header>
 
-        <main className="flex-1 flex flex-col h-screen overflow-hidden">
-          {/* Header */}
-          <header className="px-8 h-20 border-b border-border flex items-center justify-between bg-background/50 backdrop-blur-md sticky top-0 z-20">
-            <div className="flex items-center gap-4">
-              <button onClick={() => setSidebarOpen(true)} className="md:hidden p-2 text-muted-foreground hover:text-white">
-                <Menu className="w-6 h-6" />
-              </button>
-              <h1 className="text-xl font-bold tracking-tight">Agent Profile</h1>
-            </div>
-            <div className="flex items-center gap-6">
-               <div className="px-4 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-[10px] font-bold uppercase tracking-widest hidden sm:block">
-                  Level {data ? Math.floor((data.analytics.xp || 0) / 500) + 1 : 1} Operative
-               </div>
-            </div>
-          </header>
-
-          <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
-            <div className="max-w-7xl mx-auto space-y-10 pb-20">
+        <div className="flex-1 overflow-y-auto p-10 no-scrollbar scroll-smooth">
+          <div className="max-w-7xl mx-auto space-y-12 pb-20">
+            
+            {/* Profile Header */}
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="saas-card p-12 flex flex-col lg:flex-row items-center gap-16 relative overflow-hidden bg-white shadow-xl shadow-slate-200/50"
+            >
+              <div className="absolute top-0 right-0 p-12 opacity-[0.02]">
+                 <Sparkles className="w-80 h-80 rotate-12" />
+              </div>
               
-              {/* Profile Header */}
-              <motion.div 
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="glass-card p-10 flex flex-col lg:flex-row items-center gap-12 relative overflow-hidden"
-              >
-                <div className="absolute top-0 right-0 p-8 opacity-5">
-                   <Sparkles className="w-64 h-64" />
+              <div className="relative group cursor-pointer shrink-0">
+                <div className="w-52 h-52 rounded-[48px] bg-slate-50 border-4 border-white shadow-2xl flex items-center justify-center text-6xl font-black overflow-hidden relative">
+                  {data?.user?.profilePic ? (
+                    <Image src={data.user.profilePic} alt="Profile" width={208} height={208} className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="text-primary">{data?.user?.name?.[0] || "U"}</span>
+                  )}
+                  <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 backdrop-blur-sm">
+                    <Camera className="w-10 h-10 text-white mb-2" />
+                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white">Change Avatar</span>
+                  </div>
+                </div>
+                <input type="file" className="absolute inset-0 opacity-0 cursor-pointer z-10" onChange={handlePhotoUpload} disabled={uploading} accept="image/*" />
+                {uploading && <div className="absolute inset-0 bg-white/80 flex items-center justify-center rounded-[48px] backdrop-blur-md z-20"><div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin shadow-lg shadow-primary/20" /></div>}
+                
+                {/* Streak badge on profile pic */}
+                <div className="absolute -bottom-4 -right-4 bg-white border border-slate-100 rounded-3xl p-4 shadow-2xl flex items-center gap-3 group-hover:scale-110 transition-transform duration-500">
+                   <Flame className="w-8 h-8 text-orange-500 fill-orange-500" />
+                   <span className="text-3xl font-black tabular-nums tracking-tighter text-text-primary">{data?.analytics.streak || 0}</span>
+                </div>
+              </div>
+
+              <div className="flex-1 text-center lg:text-left space-y-8">
+                <div>
+                  <h2 className="text-7xl font-black tracking-tighter text-text-primary uppercase leading-none mb-6">
+                    {data?.user?.name}
+                  </h2>
+                  <div className="flex flex-wrap justify-center lg:justify-start gap-4">
+                    <div className="flex items-center gap-3 bg-slate-50 px-5 py-2.5 rounded-2xl border border-slate-100 text-text-secondary font-bold text-xs">
+                      <Mail className="w-4 h-4 text-primary" /> {data?.user?.email}
+                    </div>
+                    <div className="flex items-center gap-3 bg-slate-50 px-5 py-2.5 rounded-2xl border border-slate-100 text-text-secondary font-bold text-xs">
+                      <Calendar className="w-4 h-4 text-emerald-500" /> Joined April 2024
+                    </div>
+                  </div>
                 </div>
                 
-                <div className="relative group cursor-pointer shrink-0">
-                  <div className="w-44 h-44 rounded-[40px] bg-secondary border border-border flex items-center justify-center text-5xl font-bold overflow-hidden shadow-2xl relative">
-                    {data?.user?.profilePic ? (
-                      <Image src={data.user.profilePic} alt="Profile" width={176} height={176} className="w-full h-full object-cover" />
-                    ) : (
-                      data?.user?.name?.[0] || "U"
-                    )}
-                    <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm">
-                      <Camera className="w-10 h-10 text-white mb-2" />
-                      <span className="text-[10px] font-bold uppercase tracking-widest">Update Photo</span>
-                    </div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-8 lg:gap-16 pt-4 border-t border-slate-50">
+                  <div className="space-y-2">
+                     <div className="text-[10px] text-text-secondary uppercase font-black tracking-[0.2em]">Neural XP</div>
+                     <div className="text-5xl font-black tabular-nums tracking-tighter text-primary">{data?.analytics.xp || 0}</div>
                   </div>
-                  <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" onChange={handlePhotoUpload} disabled={uploading} accept="image/*" />
-                  {uploading && <div className="absolute inset-0 bg-black/40 flex items-center justify-center rounded-[40px] backdrop-blur-md"><div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" /></div>}
-                  
-                  {/* Streak badge on profile pic */}
-                  <div className="absolute -bottom-4 -right-4 bg-[#0B1120] border border-border rounded-2xl p-3 shadow-2xl flex items-center gap-2 group-hover:scale-110 transition-transform">
-                     <Flame className="w-6 h-6 text-orange-500 fill-orange-500" />
-                     <span className="text-xl font-bold tabular-nums">{data?.analytics.streak || 0}</span>
+                  <div className="space-y-2">
+                     <div className="text-[10px] text-text-secondary uppercase font-black tracking-[0.2em]">Interviews</div>
+                     <div className="text-5xl font-black tabular-nums tracking-tighter text-text-primary">{data?.analytics.mockInterviewCount || 0}</div>
+                  </div>
+                  <div className="space-y-2 col-span-2 sm:col-span-1">
+                     <div className="text-[10px] text-text-secondary uppercase font-black tracking-[0.2em]">Code Rounds</div>
+                     <div className="text-5xl font-black tabular-nums tracking-tighter text-text-primary">{data?.analytics.codingRoundCount || 0}</div>
                   </div>
                 </div>
+              </div>
+            </motion.div>
 
-                <div className="flex-1 text-center lg:text-left space-y-6">
-                  <div>
-                    <h2 className="text-5xl font-bold tracking-tighter mb-4 accent-gradient-text uppercase">{data?.user?.name}</h2>
-                    <div className="flex flex-wrap justify-center lg:justify-start gap-6 text-muted-foreground font-bold uppercase tracking-[0.2em] text-[10px]">
-                      <div className="flex items-center gap-2 bg-secondary px-3 py-1.5 rounded-lg border border-border"><Mail className="w-4 h-4 text-primary" /> {data?.user?.email}</div>
-                      <div className="flex items-center gap-2 bg-secondary px-3 py-1.5 rounded-lg border border-border"><Calendar className="w-4 h-4 text-accent-cyan" /> Joined Q2 2024</div>
-                    </div>
+            <div className="grid lg:grid-cols-3 gap-12">
+              <div className="lg:col-span-2 space-y-12">
+                
+                {/* Contribution Heatmap */}
+                <div className="saas-card p-12 space-y-10 bg-white shadow-xl shadow-slate-200/50">
+                  <div className="flex items-center justify-between">
+                     <h3 className="text-2xl font-black tracking-tight flex items-center gap-3 text-text-primary"><History className="w-7 h-7 text-primary" /> Activity Pulse</h3>
+                     <div className="text-[9px] font-black text-text-secondary uppercase tracking-[0.3em] bg-slate-50 px-4 py-2 rounded-full border border-slate-100">Last 19 Weeks</div>
                   </div>
-                  
-                  <div className="flex flex-wrap justify-center lg:justify-start gap-12 pt-4">
-                    <div className="space-y-1">
-                       <div className="text-[10px] text-muted-foreground uppercase font-black tracking-widest">Neural XP</div>
-                       <div className="text-3xl font-bold tabular-nums">{data?.analytics.xp || 0}</div>
-                    </div>
-                    <div className="w-px h-12 bg-secondary hidden sm:block" />
-                    <div className="space-y-1">
-                       <div className="text-[10px] text-muted-foreground uppercase font-black tracking-widest">Interviews</div>
-                       <div className="text-3xl font-bold tabular-nums">{data?.analytics.mockInterviewCount || 0}</div>
-                    </div>
-                    <div className="w-px h-12 bg-secondary hidden sm:block" />
-                    <div className="space-y-1">
-                       <div className="text-[10px] text-muted-foreground uppercase font-black tracking-widest">Code Rounds</div>
-                       <div className="text-3xl font-bold tabular-nums">{data?.analytics.codingRoundCount || 0}</div>
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-
-              <div className="grid lg:grid-cols-3 gap-10">
-                <div className="lg:col-span-2 space-y-10">
-                  
-                  {/* Contribution Heatmap */}
-                  <div className="glass-card p-10 space-y-8">
-                    <div className="flex items-center justify-between">
-                       <h3 className="text-xl font-bold flex items-center gap-3"><History className="w-6 h-6 text-primary" /> Activity Pulse</h3>
-                       <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Last 19 Weeks</div>
-                    </div>
-                    <div className="flex gap-2 overflow-x-auto pb-6 scrollbar-none">
-                      <div className="grid grid-rows-7 grid-flow-col gap-2 min-w-max">
-                        {heatmapDays.map((day, i) => (
-                          <div 
-                            key={i} 
-                            className="w-4.5 h-4.5 rounded-md transition-all hover:scale-150 cursor-help border border-white/[0.03]" 
-                            style={{ backgroundColor: day.count > 0 ? `rgba(124, 58, 237, ${day.opacity})` : 'rgba(255,255,255,0.03)' }}
-                            title={`${day.count} activities on ${day.date}`}
-                          />
-                        ))}
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-between text-[10px] text-muted-foreground font-bold uppercase tracking-widest pt-4 border-t border-border">
-                      <span>Neural Dormancy</span>
-                      <div className="flex gap-2 items-center">
-                        {[0.05, 0.25, 0.5, 0.75, 1].map((op, i) => (
-                          <div key={i} className="w-3.5 h-3.5 rounded-sm" style={{ backgroundColor: `rgba(124, 58, 237, ${op})` }} />
-                        ))}
-                      </div>
-                      <span>Peak Activity</span>
-                    </div>
-                  </div>
-
-                  {/* Performance Log */}
-                  <div className="glass-card p-10 space-y-8">
-                    <h3 className="text-xl font-bold flex items-center gap-3"><TrendingUp className="w-6 h-6 text-accent-cyan" /> Assessment Logs</h3>
-                    <div className="space-y-4">
-                      {!data?.allActivity || data.allActivity.length === 0 ? (
-                        <div className="py-20 text-center text-muted-foreground font-bold uppercase tracking-widest text-xs border-2 border-dashed border-border rounded-3xl">No Records Synchronized</div>
-                      ) : (
-                        data.allActivity.slice(0, 8).map((act, i) => (
-                          <motion.div 
-                            initial={{ opacity: 0, x: -10 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: i * 0.05 }}
-                            key={i} 
-                            className="flex items-center justify-between p-6 bg-secondary border border-border rounded-2xl group hover:bg-white/[0.07] transition-all"
-                          >
-                             <div className="flex items-center gap-6">
-                                <div className="w-12 h-12 rounded-xl bg-secondary border border-border flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
-                                   {act.type.includes('Interview') ? <Bot className="w-6 h-6" /> : <Code className="w-6 h-6" />}
-                                </div>
-                                <div>
-                                   <h4 className="font-bold text-lg">{act.type} Round</h4>
-                                   <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{new Date(act.date).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}</div>
-                                </div>
-                             </div>
-                             <div className="text-right">
-                                <div className="text-2xl font-bold accent-gradient-text tabular-nums">{act.score}%</div>
-                                <div className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest">Certified</div>
-                             </div>
-                          </motion.div>
-                        ))
-                      )}
-                    </div>
-                    <button className="w-full btn-glass py-4 text-[10px] font-bold uppercase tracking-[0.2em]">Synchronize Full History</button>
-                  </div>
-                </div>
-
-                <div className="space-y-10">
-                  {/* Achievements */}
-                  <div className="glass-card p-8 space-y-8">
-                    <h3 className="text-lg font-bold flex items-center gap-3">
-                      <Award className="w-5 h-5 text-amber-500" /> Neural Badges
-                    </h3>
-                    <div className="grid grid-cols-3 gap-4">
-                      {(!data?.analytics.badges || JSON.parse(data.analytics.badges).length === 0) ? (
-                        <div className="col-span-3 py-10 text-center text-muted-foreground font-bold uppercase text-[10px] tracking-widest">Locked</div>
-                      ) : (
-                        JSON.parse(data.analytics.badges).map((b: string) => (
-                          <div key={b} className="group relative">
-                             <div className="aspect-square bg-gradient-to-br from-primary/20 to-primary/5 rounded-2xl border border-primary/20 flex items-center justify-center shadow-xl group-hover:scale-110 transition-all duration-500 group-hover:shadow-primary/20 group-hover:rotate-12">
-                                <Zap className="w-8 h-8 text-primary group-hover:text-white transition-colors" />
-                             </div>
-                             <div className="absolute -top-12 left-1/2 -translate-x-1/2 bg-[#0B1120] border border-border px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-widest whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 shadow-2xl">
-                                {b.replace('_', ' ')}
-                             </div>
-                          </div>
-                        ))
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Domain Mastery */}
-                  <div className="glass-card p-8 space-y-8">
-                    <h3 className="text-lg font-bold flex items-center gap-3">
-                      <Target className="w-5 h-5 text-accent-cyan" /> Field Competency
-                    </h3>
-                    <div className="space-y-8">
-                      {[
-                        { label: "Technical Logic", val: Math.min((data?.analytics.mockInterviewCount || 0) * 15, 100), color: "from-primary to-purple-600" },
-                        { label: "Algorithmic Speed", val: Math.min((data?.analytics.codingRoundCount || 0) * 12, 100), color: "from-amber-500 to-orange-500" },
-                        { label: "Neural Aptitude", val: 68, color: "from-accent-cyan to-blue-500" }
-                      ].map((skill, i) => (
-                        <div key={i} className="space-y-3">
-                          <div className="flex justify-between text-[10px] font-black uppercase tracking-widest">
-                            <span className="text-muted-foreground">{skill.label}</span>
-                            <span className="text-white tabular-nums">{skill.val}%</span>
-                          </div>
-                          <div className="w-full h-1.5 bg-secondary rounded-full overflow-hidden border border-border">
-                            <motion.div 
-                              initial={{ width: 0 }}
-                              animate={{ width: `${skill.val}%` }}
-                              transition={{ duration: 1.5, delay: i * 0.1 }}
-                              className={`h-full bg-gradient-to-r ${skill.color} rounded-full`} 
-                            />
-                          </div>
-                        </div>
+                  <div className="flex gap-2 overflow-x-auto pb-6 no-scrollbar">
+                    <div className="grid grid-rows-7 grid-flow-col gap-2.5 min-w-max">
+                      {heatmapDays.map((day, i) => (
+                        <div 
+                          key={i} 
+                          className="w-5 h-5 rounded-lg transition-all hover:scale-150 cursor-help border border-slate-100 shadow-sm" 
+                          style={{ backgroundColor: day.count > 0 ? `rgba(124, 58, 237, ${day.opacity})` : '#F1F5F9' }}
+                          title={`${day.count} activities on ${day.date}`}
+                        />
                       ))}
                     </div>
                   </div>
-
-                  {/* AI Strategist Card */}
-                  <div className="glass-card p-8 border-dashed border-2 border-primary/20 bg-primary/5 relative overflow-hidden group">
-                     <div className="absolute -top-10 -right-10 opacity-5 group-hover:opacity-20 transition-opacity">
-                        <Bot className="w-40 h-48" />
-                     </div>
-                     <div className="relative z-10 space-y-4">
-                        <div className="flex items-center gap-2 text-primary font-bold text-xs uppercase tracking-widest">
-                           <Brain className="w-4 h-4" /> AI Evaluation
-                        </div>
-                        <p className="text-sm text-muted-foreground leading-relaxed italic border-l-2 border-primary/50 pl-4">
-                           &quot;Agent performance shows a <span className="text-white font-bold">22% increase</span> in algorithmic efficiency. Recommend targeting Tier-1 system design roles for maximum impact.&quot;
-                        </p>
-                        <button className="flex items-center gap-2 text-[10px] font-bold text-primary uppercase tracking-[0.2em] group/btn">
-                           Full Analysis <ChevronRight className="w-3 h-3 group-hover/btn:translate-x-1 transition-transform" />
-                        </button>
-                     </div>
+                  <div className="flex items-center justify-between text-[9px] text-text-secondary font-black uppercase tracking-[0.2em] pt-8 border-t border-slate-50">
+                    <span>Neural Dormancy</span>
+                    <div className="flex gap-2 items-center">
+                      {[0.05, 0.25, 0.5, 0.75, 1].map((op, i) => (
+                        <div key={i} className="w-4 h-4 rounded-md border border-slate-100" style={{ backgroundColor: `rgba(124, 58, 237, ${op})` }} />
+                      ))}
+                    </div>
+                    <span>Peak Intensity</span>
                   </div>
+                </div>
+
+                {/* Performance Log */}
+                <div className="saas-card p-12 space-y-10 bg-white shadow-xl shadow-slate-200/50">
+                  <h3 className="text-2xl font-black tracking-tight flex items-center gap-3 text-text-primary"><TrendingUp className="w-7 h-7 text-secondary" /> Assessment Logs</h3>
+                  <div className="space-y-4">
+                    {!data?.allActivity || data.allActivity.length === 0 ? (
+                      <div className="py-24 text-center text-text-secondary font-black uppercase tracking-[0.3em] text-xs border-2 border-dashed border-slate-100 rounded-[40px] bg-slate-50/50">No Records Synchronized</div>
+                    ) : (
+                      data.allActivity.slice(0, 8).map((act, i) => (
+                        <motion.div 
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: i * 0.05 }}
+                          key={i} 
+                          className="flex items-center justify-between p-8 bg-slate-50/50 border border-slate-100 rounded-[32px] group hover:bg-white hover:shadow-xl hover:shadow-slate-200/50 transition-all duration-500"
+                        >
+                           <div className="flex items-center gap-8">
+                              <div className="w-14 h-14 rounded-2xl bg-white border border-slate-100 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-all duration-500 shadow-sm">
+                                 {act.type.includes('Interview') ? <Bot className="w-7 h-7" /> : <Code className="w-7 h-7" />}
+                              </div>
+                              <div>
+                                 <h4 className="font-black text-xl text-text-primary tracking-tight">{act.type} Round</h4>
+                                 <div className="text-[10px] font-black text-text-secondary uppercase tracking-[0.2em] mt-1">{new Date(act.date).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}</div>
+                              </div>
+                           </div>
+                           <div className="text-right">
+                              <div className="text-3xl font-black text-text-primary tracking-tighter tabular-nums">{act.score}%</div>
+                              <div className="text-[10px] font-black text-emerald-600 uppercase tracking-[0.2em] mt-1">Verified Score</div>
+                           </div>
+                        </motion.div>
+                      ))
+                    )}
+                  </div>
+                  <button className="w-full p-6 rounded-[32px] border border-slate-100 bg-slate-50 hover:bg-white hover:shadow-lg transition-all text-[11px] font-black uppercase tracking-[0.3em] text-text-secondary">View Full Assessment History</button>
+                </div>
+              </div>
+
+              <div className="space-y-12">
+                {/* Achievements */}
+                <div className="saas-card p-10 space-y-10 bg-white shadow-xl shadow-slate-200/50">
+                  <h3 className="text-xl font-black tracking-tight flex items-center gap-3 text-text-primary">
+                    <Award className="w-6 h-6 text-amber-500" /> Neural Badges
+                  </h3>
+                  <div className="grid grid-cols-3 gap-6">
+                    {(!data?.analytics.badges || JSON.parse(data.analytics.badges).length === 0) ? (
+                      <div className="col-span-3 py-12 text-center text-text-secondary font-black uppercase text-[10px] tracking-[0.3em] bg-slate-50 rounded-3xl border border-slate-100">Status: Locked</div>
+                    ) : (
+                      JSON.parse(data.analytics.badges).map((b: string) => (
+                        <div key={b} className="group relative">
+                           <div className="aspect-square bg-slate-50 rounded-3xl border border-slate-100 flex items-center justify-center shadow-sm group-hover:scale-110 transition-all duration-500 group-hover:bg-primary group-hover:border-primary group-hover:rotate-12 hover:shadow-xl hover:shadow-primary/20">
+                              <Zap className="w-10 h-10 text-primary group-hover:text-white transition-colors" />
+                           </div>
+                           <div className="absolute -top-12 left-1/2 -translate-x-1/2 bg-text-primary text-white px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none z-50 shadow-2xl">
+                              {b.replace('_', ' ')}
+                           </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+
+                {/* Domain Mastery */}
+                <div className="saas-card p-10 space-y-10 bg-white shadow-xl shadow-slate-200/50">
+                  <h3 className="text-xl font-black tracking-tight flex items-center gap-3 text-text-primary">
+                    <Target className="w-6 h-6 text-secondary" /> Field Competency
+                  </h3>
+                  <div className="space-y-10">
+                    {[
+                      { label: "Technical Logic", val: Math.min((data?.analytics.mockInterviewCount || 0) * 15, 100), color: "bg-primary" },
+                      { label: "Algorithmic Speed", val: Math.min((data?.analytics.codingRoundCount || 0) * 12, 100), color: "bg-amber-500" },
+                      { label: "Soft Skill Mastery", val: 68, color: "bg-emerald-500" }
+                    ].map((skill, i) => (
+                      <div key={i} className="space-y-4">
+                        <div className="flex justify-between text-[10px] font-black uppercase tracking-[0.2em] text-text-primary">
+                          <span>{skill.label}</span>
+                          <span className="tabular-nums">{skill.val}%</span>
+                        </div>
+                        <div className="w-full h-2.5 bg-slate-50 rounded-full overflow-hidden border border-slate-100 p-0.5">
+                          <motion.div 
+                            initial={{ width: 0 }}
+                            animate={{ width: `${skill.val}%` }}
+                            transition={{ duration: 1.5, delay: i * 0.1 }}
+                            className={`h-full ${skill.color} rounded-full shadow-sm`} 
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* AI Strategist Card */}
+                <div className="saas-card p-10 border-2 border-dashed border-primary/20 bg-primary/5 relative overflow-hidden group">
+                   <div className="absolute -top-10 -right-10 opacity-[0.03] group-hover:opacity-[0.08] transition-opacity duration-700">
+                      <Bot className="w-48 h-56 rotate-[-15deg]" />
+                   </div>
+                   <div className="relative z-10 space-y-6">
+                      <div className="flex items-center gap-3 text-primary font-black text-[10px] uppercase tracking-[0.3em]">
+                         <Brain className="w-5 h-5" /> Strategic Insight
+                      </div>
+                      <p className="text-base text-text-secondary leading-relaxed italic border-l-4 border-primary/20 pl-6 py-2 font-medium">
+                         &quot;Candidate trajectory shows a <span className="text-primary font-black">22% efficiency gain</span> in algorithmic problem solving. High readiness for Tier-1 architecture roles.&quot;
+                      </p>
+                      <button className="flex items-center gap-3 text-[11px] font-black text-primary uppercase tracking-[0.3em] group/btn hover:gap-5 transition-all">
+                         Read Deep Analysis <ArrowRight className="w-5 h-5" />
+                      </button>
+                   </div>
                 </div>
               </div>
             </div>
           </div>
-        </main>
-      </div>
+        </div>
+      </main>
     </div>
   );
 }

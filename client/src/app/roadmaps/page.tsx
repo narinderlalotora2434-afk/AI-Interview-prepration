@@ -15,7 +15,8 @@ import {
   Brain,
   Sparkles,
   TrendingUp,
-  Target
+  Target,
+  ArrowRight
 } from "lucide-react";
 import { getBaseUrl } from "@/lib/api";
 import Sidebar from "@/components/Sidebar";
@@ -76,183 +77,189 @@ export default function RoadmapsDashboard() {
   );
 
   return (
-    <div className="min-h-screen bg-background text-foreground selection:bg-primary/30">
-      {/* Background Grid */}
-      <div className="absolute inset-0 bg-grid opacity-10 pointer-events-none" />
-      <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/10 rounded-full blur-[120px] pointer-events-none" />
+    <div className="min-h-screen bg-[#F8FAFC] text-text-primary selection:bg-primary/10 flex">
+      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
-      <div className="flex relative z-10">
-        <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-
-        <main className="flex-1 flex flex-col h-screen overflow-hidden">
-          {/* Header */}
-          <header className="px-8 h-20 border-b border-border flex items-center justify-between bg-background/50 backdrop-blur-md sticky top-0 z-20">
-            <div className="flex items-center gap-4">
-              <button 
-                onClick={() => setSidebarOpen(true)}
-                className="md:hidden p-2 text-slate-400 hover:text-white transition-colors"
-              >
-                <Menu className="w-6 h-6" />
-              </button>
-              <div>
-                <h1 className="text-xl font-bold tracking-tight">Placement Roadmaps</h1>
-                <p className="text-xs text-slate-500 font-medium">Expert curated paths to top engineering roles</p>
-              </div>
+      <main className="flex-1 flex flex-col h-screen overflow-hidden relative">
+        {/* Header */}
+        <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-xl border-b border-slate-100 px-4 md:px-10 h-20 flex items-center justify-between">
+          <div className="flex items-center gap-6">
+            <button 
+              onClick={() => setSidebarOpen(true)}
+              className="lg:hidden p-2 text-text-secondary hover:text-text-primary transition-colors"
+            >
+              <Menu className="w-6 h-6" />
+            </button>
+            <div>
+              <h1 className="text-2xl font-black tracking-tight text-text-primary">Career Roadmaps</h1>
+              <p className="text-[10px] text-text-secondary font-black uppercase tracking-[0.2em]">Expert curated learning paths</p>
             </div>
+          </div>
+          
+          <div className="hidden lg:block relative w-[400px]">
+            <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-text-secondary" />
+            <input 
+              type="text"
+              placeholder="Search career paths..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3 pl-12 pr-6 text-sm focus:outline-none focus:border-primary/30 focus:bg-white focus:ring-4 focus:ring-primary/5 transition-all text-text-primary placeholder:text-text-secondary shadow-sm"
+            />
+          </div>
+
+          <div className="flex items-center gap-4">
+             <div className="px-4 py-2 rounded-full bg-primary/5 border border-primary/10 text-primary text-[10px] font-black uppercase tracking-widest hidden sm:flex items-center gap-2">
+                <Sparkles className="w-3.5 h-3.5" /> AI-Optimized Paths
+             </div>
+          </div>
+        </header>
+
+        {/* Content Area */}
+        <div className="flex-1 overflow-y-auto p-4 md:p-8 lg:p-10 no-scrollbar scroll-smooth">
+          <div className="max-w-7xl mx-auto space-y-16">
             
-            <div className="hidden lg:block relative w-96">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-              <input 
-                type="text"
-                placeholder="Search career paths..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-full bg-secondary border border-border rounded-xl py-2.5 pl-11 pr-4 text-sm focus:outline-none focus:border-primary/50 transition-all text-foreground placeholder:text-muted-foreground"
-              />
-            </div>
-
-            <div className="flex items-center gap-4">
-               <div className="px-4 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-[10px] font-bold uppercase tracking-widest hidden sm:block">
-                  AI-Optimized Learning
+            {/* Hero Banner */}
+            <div className="relative rounded-[32px] md:rounded-[40px] overflow-hidden bg-white border border-slate-100 p-8 md:p-16 shadow-xl shadow-slate-200/50 group">
+               <div className="absolute top-0 right-0 p-16 opacity-[0.03] group-hover:opacity-[0.05] transition-opacity">
+                  <TrendingUp className="w-80 h-80 rotate-12" />
+               </div>
+               <div className="relative z-10 max-w-3xl space-y-8">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-100 text-emerald-600 text-[10px] font-black uppercase tracking-widest">
+                    <Target className="w-4 h-4" /> Global Career Standards
+                  </div>
+                  <h2 className="text-3xl md:text-5xl lg:text-6xl font-black leading-[1.1] tracking-tighter text-text-primary">
+                    Bridge the gap between <span className="text-primary italic">Campus</span> and <span className="text-secondary italic">Corporate</span>.
+                  </h2>
+                  <p className="text-text-secondary text-xl font-medium max-w-xl leading-relaxed">
+                    Follow step-by-step career tracks architected by engineers from NVIDIA, Google, and Microsoft.
+                  </p>
+                  <div className="flex flex-col sm:flex-row items-center gap-6 pt-4">
+                     <button className="btn-primary w-full sm:w-auto px-10 py-4 text-xs font-black uppercase tracking-[0.2em] shadow-xl shadow-primary/20 flex items-center justify-center gap-2">
+                        Get Personalized Path <ArrowRight className="w-5 h-5" />
+                     </button>
+                     <span className="text-text-secondary text-sm font-bold flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                        12,400+ students active
+                     </span>
+                  </div>
                </div>
             </div>
-          </header>
 
-          {/* Content Area */}
-          <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
-            <div className="max-w-7xl mx-auto space-y-12">
-              
-              {/* Hero Banner */}
-              <div className="relative rounded-3xl overflow-hidden bg-gradient-to-br from-primary/20 to-accent-cyan/10 border border-border p-12">
-                 <div className="absolute top-0 right-0 p-12 opacity-10">
-                    <TrendingUp className="w-64 h-64" />
-                 </div>
-                 <div className="relative z-10 max-w-2xl space-y-6">
-                    <h2 className="text-4xl font-bold leading-tight">Master your core fundamentals and crack <span className="accent-gradient-text">Top Companies</span>.</h2>
-                    <p className="text-muted-foreground text-lg">Follow step-by-step career tracks designed by engineers from NVIDIA, Google, and Microsoft.</p>
-                    <div className="flex items-center gap-4">
-                       <button className="btn-primary px-8 py-3 rounded-xl flex items-center gap-2">
-                          Get Personalized Path <ChevronRight className="w-5 h-5" />
-                       </button>
-                    </div>
-                 </div>
-              </div>
+            {/* Grid Section */}
+            <div className="space-y-10">
+               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  <h3 className="text-xl md:text-2xl font-black tracking-tight flex items-center gap-3 text-text-primary">
+                     <MapIcon className="w-6 md:w-7 h-6 md:h-7 text-primary" /> Engineering Specializations
+                  </h3>
+                  <div className="flex items-center gap-2 text-[10px] font-black text-text-secondary uppercase tracking-[0.2em] bg-white border border-slate-100 px-4 py-2 rounded-full shadow-sm w-fit">
+                     Showing {filteredBranches.length + 1} Professional Paths
+                  </div>
+               </div>
 
-              {/* Grid Section */}
-              <div className="space-y-8">
-                 <div className="flex items-center justify-between">
-                    <h3 className="text-xl font-bold flex items-center gap-3">
-                       <Target className="w-6 h-6 text-primary" /> Engineering Tracks
-                    </h3>
-                    <div className="flex items-center gap-2 text-xs font-bold text-slate-500 uppercase tracking-widest">
-                       Showing {filteredBranches.length + 1} Paths
-                    </div>
-                 </div>
-
-                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
-                    <AnimatePresence mode="popLayout">
-                      {loading && branches.length === 0 ? (
-                        [1, 2, 3, 4, 5, 6].map(i => (
+               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-10">
+                  <AnimatePresence mode="popLayout">
+                    {loading && branches.length === 0 ? (
+                      [1, 2, 3, 4, 5, 6].map(i => (
+                        <motion.div 
+                          key={`skeleton-${i}`} 
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          className="saas-card h-[450px] animate-pulse bg-white border-slate-100 shadow-lg" 
+                        />
+                      ))
+                    ) : (
+                      [
+                        ...filteredBranches.map((branch, idx) => (
                           <motion.div 
-                            key={`skeleton-${i}`} 
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            className="glass-card h-80 animate-pulse bg-secondary border-border" 
-                          />
-                        ))
-                      ) : (
-                        [
-                          ...filteredBranches.map((branch, idx) => (
-                            <motion.div 
-                              key={branch.id}
-                              initial={{ opacity: 0, y: 20 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              transition={{ delay: idx * 0.05 }}
-                            >
-                              <Link href={`/roadmaps/${branch.slug}`} className="group block h-full">
-                                <div className="glass-card p-8 h-full flex flex-col hover:border-primary/50 transition-all duration-500 group-hover:shadow-[0_0_30px_rgba(124,58,237,0.1)]">
-                                  <div className="flex items-start justify-between mb-6">
-                                    <div className="w-14 h-14 rounded-2xl bg-foreground/5 flex items-center justify-center border border-border group-hover:bg-primary transition-all duration-500 shadow-xl group-hover:text-primary-foreground">
-                                      {branch.iconName === 'Code' ? <Code className="w-7 h-7" /> :
-                                       branch.iconName === 'Cpu' ? <Cpu className="w-7 h-7" /> :
-                                       branch.iconName === 'Wrench' ? <Wrench className="w-7 h-7" /> :
-                                       <MapIcon className="w-7 h-7" />}
-                                    </div>
-                                    <div className="px-3 py-1 rounded-full bg-foreground/5 border border-border text-[10px] font-bold text-muted-foreground uppercase tracking-[0.2em]">
-                                      {branch.difficulty}
-                                    </div>
-                                  </div>
-
-                                  <h3 className="text-2xl font-bold mb-3 group-hover:text-primary transition-colors">{branch.name}</h3>
-                                  <p className="text-muted-foreground text-sm mb-8 flex-1 line-clamp-3 leading-relaxed">{branch.description}</p>
-
-                                  <div className="space-y-6">
-                                    <div className="pt-6 border-t border-border flex items-center justify-between">
-                                       <div className="flex -space-x-3">
-                                          {(JSON.parse(branch.topRecruiters) as string[]).slice(0, 3).map((comp: string, i: number) => (
-                                            <div key={i} className="w-10 h-10 rounded-full bg-background border border-border flex items-center justify-center text-[10px] font-bold text-muted-foreground shadow-lg">
-                                               {comp.substring(0, 1)}
-                                            </div>
-                                          ))}
-                                       </div>
-                                       <div className="text-right">
-                                          <div className="text-[10px] text-slate-500 uppercase font-black tracking-widest mb-1">Avg Salary</div>
-                                          <div className="text-sm font-bold text-emerald-400">{branch.salaryRange}</div>
-                                       </div>
-                                    </div>
-                                    <div className="flex items-center justify-between text-sm font-bold text-primary group-hover:gap-2 transition-all">
-                                      <span>Explore Roadmap</span>
-                                      <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                                    </div>
-                                  </div>
-                                </div>
-                              </Link>
-                            </motion.div>
-                          )),
-                          
-                          <motion.div 
-                            key="aptitude"
+                            key={branch.id}
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: filteredBranches.length * 0.05 }}
+                            transition={{ delay: idx * 0.05 }}
                           >
-                            <Link href="/roadmaps/aptitude" className="group block h-full">
-                              <div className="glass-card p-8 h-full flex flex-col border-accent-pink/20 bg-accent-pink/5 hover:border-accent-pink/50 transition-all duration-500 group-hover:shadow-[0_0_30px_rgba(236,72,153,0.1)]">
-                                <div className="flex items-start justify-between mb-6">
-                                  <div className="w-14 h-14 rounded-2xl bg-accent-pink/20 flex items-center justify-center border border-accent-pink/30 group-hover:bg-accent-pink transition-all duration-500 shadow-xl">
-                                    <Brain className="w-7 h-7" />
+                            <Link href={`/roadmaps/${branch.slug}`} className="group block h-full">
+                              <div className="saas-card p-6 md:p-10 h-full flex flex-col hover:border-primary/30 transition-all duration-500 hover:shadow-2xl hover:shadow-slate-200/50 bg-white">
+                                <div className="flex items-start justify-between mb-10">
+                                  <div className="w-16 h-16 rounded-[24px] bg-slate-50 flex items-center justify-center border border-slate-100 group-hover:bg-primary group-hover:border-primary group-hover:shadow-lg group-hover:shadow-primary/20 transition-all duration-500 text-primary group-hover:text-white">
+                                    {branch.iconName === 'Code' ? <Code className="w-8 h-8" /> :
+                                     branch.iconName === 'Cpu' ? <Cpu className="w-8 h-8" /> :
+                                     branch.iconName === 'Wrench' ? <Wrench className="w-8 h-8" /> :
+                                     <MapIcon className="w-8 h-8" />}
                                   </div>
-                                  <div className="px-3 py-1 rounded-full bg-accent-pink/20 border border-accent-pink/30 text-[10px] font-bold text-accent-pink uppercase tracking-[0.2em]">
-                                    CORE PREP
+                                  <div className="px-4 py-1.5 rounded-full bg-slate-50 border border-slate-100 text-[9px] font-black text-text-secondary uppercase tracking-[0.2em] group-hover:bg-primary/5 group-hover:text-primary transition-colors">
+                                    {branch.difficulty}
                                   </div>
                                 </div>
 
-                                <h3 className="text-2xl font-bold mb-3 group-hover:text-accent-pink transition-colors">Aptitude Preparation</h3>
-                                <p className="text-muted-foreground text-sm mb-8 flex-1 leading-relaxed">Master Quantitative, Logical, and Verbal skills required for all major company assessment rounds.</p>
+                                <h3 className="text-3xl font-black mb-4 tracking-tight text-text-primary group-hover:text-primary transition-colors">{branch.name}</h3>
+                                <p className="text-text-secondary text-base mb-10 flex-1 line-clamp-3 leading-relaxed font-medium">{branch.description}</p>
 
-                                <div className="space-y-6">
-                                  <div className="pt-6 border-t border-border flex items-center gap-2">
-                                    {["AMCAT", "eLitmus", "TCS iQN"].map((comp, i) => (
-                                      <span key={i} className="text-[10px] px-3 py-1 bg-foreground/5 text-muted-foreground rounded-lg border border-border font-bold uppercase tracking-wider">{comp}</span>
-                                    ))}
+                                <div className="space-y-8">
+                                  <div className="pt-8 border-t border-slate-50 flex items-center justify-between">
+                                     <div className="flex -space-x-3">
+                                        {(JSON.parse(branch.topRecruiters) as string[]).slice(0, 3).map((comp: string, i: number) => (
+                                          <div key={i} className="w-11 h-11 rounded-full bg-white border-2 border-slate-50 flex items-center justify-center text-xs font-black text-text-primary shadow-sm hover:z-10 transition-all cursor-default">
+                                             {comp.substring(0, 1)}
+                                          </div>
+                                        ))}
+                                     </div>
+
                                   </div>
-                                  <div className="flex items-center justify-between text-sm font-bold text-accent-pink group-hover:gap-2 transition-all">
-                                    <span>Start Mastery</span>
-                                    <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                                  <div className="flex items-center justify-between text-[11px] font-black uppercase tracking-[0.3em] text-primary group-hover:gap-2 transition-all">
+                                    <span>Explore Roadmap</span>
+                                    <div className="w-10 h-10 rounded-xl bg-primary/5 flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-all">
+                                      <ChevronRight className="w-6 h-6" />
+                                    </div>
                                   </div>
                                 </div>
                               </div>
                             </Link>
                           </motion.div>
-                        ]
-                      )}
-                    </AnimatePresence>
-                 </div>
-              </div>
+                        )),
+                        
+                        <motion.div 
+                          key="aptitude"
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: filteredBranches.length * 0.05 }}
+                        >
+                          <Link href="/roadmaps/aptitude" className="group block h-full">
+                            <div className="saas-card p-6 md:p-10 h-full flex flex-col border-rose-100 bg-rose-50/20 hover:border-rose-300 transition-all duration-500 hover:shadow-2xl hover:shadow-rose-100 bg-white">
+                              <div className="flex items-start justify-between mb-10">
+                                <div className="w-16 h-16 rounded-[24px] bg-rose-50 flex items-center justify-center border border-rose-100 group-hover:bg-rose-500 group-hover:border-rose-500 group-hover:shadow-lg group-hover:shadow-rose-500/20 transition-all duration-500 text-rose-500 group-hover:text-white shadow-sm">
+                                  <Brain className="w-8 h-8" />
+                                </div>
+                                <div className="px-4 py-1.5 rounded-full bg-rose-100/50 border border-rose-200 text-[9px] font-black text-rose-600 uppercase tracking-[0.2em]">
+                                  CORE PREP
+                                </div>
+                              </div>
+
+                              <h3 className="text-3xl font-black mb-4 tracking-tight text-text-primary group-hover:text-rose-600 transition-colors">Aptitude Mastery</h3>
+                              <p className="text-text-secondary text-base mb-10 flex-1 leading-relaxed font-medium">Master Quantitative, Logical, and Verbal skills required for all major company assessment rounds.</p>
+
+                              <div className="space-y-8">
+                                <div className="pt-8 border-t border-rose-100 flex items-center gap-3">
+                                  {["AMCAT", "eLitmus", "TCS iQN"].map((comp, i) => (
+                                    <span key={i} className="text-[9px] px-3 py-1.5 bg-white text-text-secondary rounded-lg border border-rose-100 font-black uppercase tracking-widest shadow-sm">{comp}</span>
+                                  ))}
+                                </div>
+                                <div className="flex items-center justify-between text-[11px] font-black uppercase tracking-[0.3em] text-rose-600 group-hover:gap-2 transition-all">
+                                  <span>Start Mastery</span>
+                                  <div className="w-10 h-10 rounded-xl bg-rose-500/5 flex items-center justify-center group-hover:bg-rose-500 group-hover:text-white transition-all">
+                                    <ChevronRight className="w-6 h-6" />
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </Link>
+                        </motion.div>
+                      ]
+                    )}
+                  </AnimatePresence>
+               </div>
             </div>
           </div>
-        </main>
-      </div>
+        </div>
+      </main>
     </div>
   );
 }

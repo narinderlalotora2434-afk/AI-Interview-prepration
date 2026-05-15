@@ -25,9 +25,12 @@ import {
   FileText,
   Cpu,
   Microscope,
-  Layers
+  Layers,
+  Sparkles,
+  ArrowRight
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import Sidebar from "@/components/Sidebar";
 
 // --- Data Structure ---
 
@@ -162,11 +165,6 @@ export default function VLSITrackPage() {
     }
   }, [completedTopics, mounted]);
 
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    router.push("/login");
-  };
-
   const toggleTopic = (topicId: string) => {
     setCompletedTopics(prev => 
       prev.includes(topicId) 
@@ -190,120 +188,61 @@ export default function VLSITrackPage() {
   if (!mounted) return null;
 
   return (
-    <div className="min-h-screen bg-slate-950 flex flex-col md:flex-row font-sans relative">
-      {/* Mobile Header */}
-      <header className="md:hidden h-16 border-b border-white/5 bg-slate-950 flex items-center justify-between px-6 z-50 sticky top-0">
-        <Link href="/" className="flex items-center gap-2">
-          <div className="bg-indigo-600 p-1.5 rounded-lg">
-            <Bot className="w-4 h-4 text-white" />
-          </div>
-          <span className="text-lg font-bold tracking-tight text-white">PrepAI</span>
-        </Link>
-        <button 
-          onClick={() => setSidebarOpen(!sidebarOpen)}
-          className="p-2 text-slate-300 hover:text-white"
-        >
-          {sidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-        </button>
-      </header>
+    <div className="min-h-screen bg-[#F8FAFC] flex text-text-primary overflow-hidden">
+      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
-      {/* Sidebar Overlay */}
-      {sidebarOpen && (
-        <div 
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
+      <main className="flex-1 relative overflow-y-auto no-scrollbar scroll-smooth">
+        {/* Background Decorative Element */}
+        <div className="absolute top-0 left-0 w-full h-96 bg-gradient-to-b from-emerald-500/5 to-transparent pointer-events-none" />
 
-      {/* Sidebar */}
-      <aside className={`
-        fixed md:sticky top-0 left-0 h-screen w-72 md:w-64 border-r border-white/5 bg-slate-950 p-6 flex flex-col shrink-0 z-50 transition-transform duration-300
-        ${sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
-      `}>
-        <Link href="/" className="hidden md:flex items-center gap-2 mb-10">
-          <div className="bg-indigo-600 p-2 rounded-lg">
-            <Bot className="w-5 h-5 text-white" />
-          </div>
-          <span className="text-xl font-bold tracking-tight text-white">PrepAI</span>
-        </Link>
-        <nav className="space-y-1 flex-1">
-          {[
-            { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, color: "" },
-            { href: "/quests", label: "Daily Quests", icon: Zap, color: "text-amber-400" },
-            { href: "/roadmaps", label: "Placement Roadmaps", icon: MapIcon, color: "text-indigo-400", active: true },
-            { href: "/aptitude", label: "Aptitude Test", icon: Brain, color: "text-pink-400" },
-            { href: "/coding", label: "Coding Simulator", icon: Code, color: "" },
-            { href: "/interview", label: "Mock Interview", icon: MessageSquare, color: "" },
-            { href: "/resume", label: "Resume Analyzer", icon: FileText, color: "" },
-            { href: "/profile", label: "Profile", icon: User, color: "text-indigo-400" },
-          ].map((item) => (
-            <Link 
-              key={item.href}
-              href={item.href} 
-              onClick={() => setSidebarOpen(false)}
-              className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${
-                item.active ? 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20' : 'text-slate-400 hover:bg-white/5 hover:text-white'
-              }`}
-            >
-              <item.icon className={`w-5 h-5 ${item.color} shrink-0`} />
-              {item.label}
+        <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-xl border-b border-slate-100 px-10 pt-8 pb-4">
+          <div className="max-w-[1600px] mx-auto">
+            <Link href="/roadmaps/ece" className="inline-flex items-center gap-2 text-emerald-600 hover:gap-3 transition-all font-black uppercase tracking-widest text-[10px] mb-8 group">
+              <ArrowLeft className="w-4 h-4" /> Back to ECE Roadmap
             </Link>
-          ))}
-        </nav>
-        <button onClick={handleLogout} className="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-rose-400 transition-colors mt-auto">
-          <LogOut className="w-5 h-5" /> Logout
-        </button>
-      </aside>
-
-      <div className="flex-1 flex flex-col h-screen overflow-y-auto relative">
-        {/* Background Glows */}
-        <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10">
-          <div className="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] bg-emerald-600/10 rounded-full blur-[120px]" />
-          <div className="absolute bottom-[-10%] left-[-10%] w-[50%] h-[50%] bg-cyan-600/10 rounded-full blur-[120px]" />
-        </div>
-
-        <header className="sticky top-0 z-40 bg-slate-950/80 backdrop-blur-xl border-b border-white/5 pt-8 pb-4 px-6 md:px-12">
-          <Link href="/roadmaps/ece" className="inline-flex items-center gap-2 text-emerald-400 hover:text-emerald-300 font-medium mb-6 transition-colors group">
-            <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" /> Back to ECE Roadmap
-          </Link>
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
-            <div>
-              <h1 className="text-3xl md:text-5xl font-black text-white mb-4 tracking-tight">VLSI Design Track</h1>
-              <p className="text-lg text-slate-400 max-w-2xl">Elite pathways for Frontend (RTL) and Backend (Physical Design) roles at top semiconductor firms.</p>
-            </div>
-          </div>
-
-          {/* Dashboard Summary Section */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-            <div className="glass-card p-4 border border-white/10 bg-white/5 flex flex-col items-center justify-center text-center">
-              <div className="text-2xl font-black text-emerald-400">{VLSI_TRACK.length}</div>
-              <div className="text-[10px] text-slate-500 uppercase tracking-widest font-bold mt-1">Total Tracks</div>
-            </div>
-            <div className="glass-card p-4 border border-white/10 bg-white/5 flex flex-col items-center justify-center text-center">
-              <div className="text-2xl font-black text-white">{totalTopics}</div>
-              <div className="text-[10px] text-slate-500 uppercase tracking-widest font-bold mt-1">Total Topics</div>
-            </div>
-            <div className="glass-card p-4 border border-white/10 bg-white/5 flex flex-col items-center justify-center text-center">
-              <div className="text-2xl font-black text-cyan-400">{completedCount}</div>
-              <div className="text-[10px] text-slate-500 uppercase tracking-widest font-bold mt-1">Completed</div>
-            </div>
-            <div className="glass-card p-4 border border-white/10 bg-white/5 flex flex-col items-center justify-center text-center relative overflow-hidden">
-              <div className="relative z-10">
-                <div className="text-2xl font-black text-amber-400">{progressPercent}%</div>
-                <div className="text-[10px] text-slate-500 uppercase tracking-widest font-bold mt-1">Overall Progress</div>
+            
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-10 mb-12">
+              <div>
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="w-12 h-12 rounded-2xl bg-emerald-50 flex items-center justify-center border border-emerald-100">
+                    <Layers className="w-6 h-6 text-emerald-600" />
+                  </div>
+                  <span className="text-[10px] font-black text-text-secondary uppercase tracking-[0.3em]">VLSI Track</span>
+                </div>
+                <h1 className="text-4xl md:text-6xl font-black text-text-primary tracking-tighter mb-4">Silicon Design</h1>
+                <p className="text-lg text-text-secondary max-w-3xl font-medium leading-relaxed">Elite pathways for Frontend (RTL) and Backend (Physical Design) roles at top semiconductor firms.</p>
               </div>
-              <motion.div 
-                className="absolute bottom-0 left-0 h-1 bg-amber-500/30"
-                initial={{ width: 0 }}
-                animate={{ width: `${progressPercent}%` }}
-                transition={{ duration: 1, ease: "easeOut" }}
-              />
+            </div>
+
+            {/* Dashboard Summary Section */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+              {[
+                { label: "Core Pathways", value: VLSI_TRACK.length, color: "text-emerald-600" },
+                { label: "Silicon Topics", value: totalTopics, color: "text-text-primary" },
+                { label: "Steps Mastered", value: completedCount, color: "text-emerald-600" },
+                { label: "Silicon Readiness", value: `${progressPercent}%`, color: "text-emerald-600", isProgress: true },
+              ].map((stat, i) => (
+                <div key={i} className="saas-card p-6 bg-white shadow-xl shadow-slate-200/50 flex flex-col justify-center relative overflow-hidden">
+                  <div className="relative z-10">
+                    <div className={`text-3xl font-black tracking-tighter ${stat.color}`}>{stat.value}</div>
+                    <div className="text-[10px] text-text-secondary uppercase tracking-widest font-black mt-2">{stat.label}</div>
+                  </div>
+                  {stat.isProgress && (
+                    <motion.div 
+                      className="absolute bottom-0 left-0 h-1.5 bg-emerald-500/20"
+                      initial={{ width: 0 }}
+                      animate={{ width: `${progressPercent}%` }}
+                      transition={{ duration: 1.5, ease: "circOut" }}
+                    />
+                  )}
+                </div>
+              ))}
             </div>
           </div>
         </header>
 
-        <main className="w-full px-6 md:px-12 py-12">
-          <div className="space-y-8">
+        <div className="px-10 py-16 max-w-[1600px] mx-auto">
+          <div className="space-y-12">
             {VLSI_TRACK.map((pathway, pIdx) => {
               const isExpanded = expandedPathway === pathway.id;
               const pathwayTopics = pathway.categories.flatMap(c => c.topics);
@@ -318,39 +257,41 @@ export default function VLSITrackPage() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: pIdx * 0.1 }}
-                  className={`glass-card border overflow-hidden transition-all duration-500 ${isExpanded ? 'border-emerald-500/50 shadow-[0_0_40px_rgba(16,185,129,0.15)]' : 'border-white/5 hover:border-white/20'}`}
+                  className={`saas-card overflow-hidden transition-all duration-500 bg-white ${isExpanded ? 'ring-2 ring-emerald-500/20 shadow-2xl shadow-slate-200' : 'hover:shadow-xl hover:shadow-slate-200/50 shadow-lg shadow-slate-200/30'}`}
                 >
                   {/* Pathway Header */}
                   <div 
-                    className={`p-8 cursor-pointer flex items-center justify-between transition-colors ${isExpanded ? 'bg-emerald-500/5' : 'bg-white/[0.02] hover:bg-white/[0.04]'}`}
+                    className={`p-8 cursor-pointer flex items-center justify-between transition-colors ${isExpanded ? 'bg-emerald-50/20' : 'hover:bg-slate-50/50'}`}
                     onClick={() => setExpandedPathway(isExpanded ? null : pathway.id)}
                   >
                     <div className="flex items-center gap-8 flex-1">
-                      <div className={`w-14 h-14 rounded-2xl flex items-center justify-center border transition-all duration-500 ${allPathwayDone ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400' : 'bg-white/5 border-white/10 text-cyan-400'}`}>
+                      <div className={`w-16 h-16 rounded-[24px] flex items-center justify-center border transition-all duration-500 ${allPathwayDone ? 'bg-emerald-50 border-emerald-100 text-emerald-600 shadow-lg shadow-emerald-500/10' : 'bg-white border-slate-100 text-emerald-600 shadow-lg shadow-slate-200/50'}`}>
                         {allPathwayDone ? <CheckCircle2 className="w-8 h-8" /> : <Icon className="w-8 h-8" />}
                       </div>
                       <div className="flex-1">
                         <div className="flex items-center gap-4 mb-2">
-                          <h2 className="text-2xl font-black text-white tracking-tight">{pathway.title}</h2>
+                          <h2 className="text-2xl font-black text-text-primary tracking-tighter">{pathway.title}</h2>
                           {allPathwayDone && (
-                            <span className="px-3 py-1 bg-emerald-500/10 text-emerald-500 text-[10px] font-black uppercase rounded border border-emerald-500/20">Certified Ready</span>
+                            <span className="px-3 py-1 bg-emerald-50 text-emerald-700 text-[10px] font-black uppercase rounded-full border border-emerald-100">Certified Silicon Engineer</span>
                           )}
                         </div>
                         <div className="flex items-center gap-6">
-                          <div className="w-48 h-2 bg-white/5 rounded-full overflow-hidden">
+                          <div className="w-48 h-2 bg-slate-100 rounded-full overflow-hidden shadow-inner">
                             <motion.div 
-                              className="h-full bg-emerald-500 shadow-[0_0_10px_#10b981]"
+                              className="h-full bg-emerald-600 shadow-[0_0_15px_rgba(16,185,129,0.3)]"
                               initial={{ width: 0 }}
                               animate={{ width: `${pathwayPercent}%` }}
                               transition={{ duration: 1 }}
                             />
                           </div>
-                          <span className="text-xs font-bold text-slate-500">{pathwayPercent}% Mastery reached</span>
+                          <span className="text-[10px] font-black text-text-secondary uppercase tracking-widest">{pathwayPercent}% Completion</span>
                         </div>
                       </div>
                     </div>
-                    <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center text-slate-500 transition-transform duration-300" style={{ transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)' }}>
-                      <ChevronDown className="w-6 h-6" />
+                    <div className="flex items-center gap-4">
+                      <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-slate-400 border border-slate-100 transition-all duration-500 ${isExpanded ? 'bg-white shadow-md' : 'bg-transparent'}`} style={{ transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)' }}>
+                        <ChevronDown className="w-6 h-6" />
+                      </div>
                     </div>
                   </div>
 
@@ -361,30 +302,30 @@ export default function VLSITrackPage() {
                         initial={{ height: 0, opacity: 0 }}
                         animate={{ height: "auto", opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
-                        transition={{ duration: 0.5, ease: "easeInOut" }}
+                        transition={{ duration: 0.5, ease: "circOut" }}
                       >
-                        <div className="px-8 pb-8 pt-4 border-t border-white/5 bg-slate-950/40">
-                          <div className="flex justify-between items-center mb-8 pt-2">
-                            <span className="text-xs text-emerald-400 font-black uppercase tracking-[0.2em]">Curriculum Architecture</span>
+                        <div className="px-8 pb-10 pt-4 border-t border-slate-100 space-y-12 bg-slate-50/30">
+                          <div className="flex justify-between items-center pt-4">
+                            <span className="text-[10px] text-text-secondary uppercase tracking-[0.3em] font-black">Silicon Architecture Syllabus</span>
                             <button 
                               onClick={(e) => {
                                 e.stopPropagation();
                                 markPathwayComplete(pathway);
                               }}
-                              className="text-[10px] text-emerald-500 hover:text-emerald-400 font-black uppercase tracking-widest transition-colors flex items-center gap-2 py-2 px-4 rounded-lg bg-emerald-500/5 border border-emerald-500/20"
+                              className="px-5 py-2 rounded-xl bg-white border border-slate-200 text-[10px] text-emerald-600 hover:bg-emerald-600 hover:text-white hover:border-emerald-600 font-black uppercase tracking-widest transition-all shadow-sm flex items-center gap-2"
                             >
-                              <Check className="w-3 h-3" /> Mark All Complete
+                              <Check className="w-4 h-4" /> Mark All Complete
                             </button>
                           </div>
                           
-                          <div className="space-y-10">
+                          <div className="space-y-12">
                             {pathway.categories.map((cat, cIdx) => (
                               <div key={cat.id} className="relative">
-                                <h3 className="text-sm font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-3">
-                                  <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                                <h3 className="text-sm font-black text-text-primary uppercase tracking-[0.2em] mb-6 flex items-center gap-4">
+                                  <div className="w-1.5 h-6 bg-emerald-600 rounded-full" />
                                   {cat.title}
                                 </h3>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                                   {cat.topics.map((topic, tIdx) => {
                                     const isDone = completedTopics.includes(topic.id);
                                     return (
@@ -394,32 +335,34 @@ export default function VLSITrackPage() {
                                         animate={{ opacity: 1, y: 0 }}
                                         transition={{ delay: tIdx * 0.05 + cIdx * 0.1 }}
                                         onClick={() => toggleTopic(topic.id)}
-                                        className={`p-4 rounded-2xl border cursor-pointer transition-all duration-300 flex items-center justify-between group ${isDone ? 'bg-emerald-500/5 border-emerald-500/30' : 'bg-white/[0.03] border-white/5 hover:bg-white/[0.06] hover:border-emerald-500/40'}`}
+                                        className={`p-6 rounded-[32px] border cursor-pointer transition-all duration-500 flex items-center justify-between group ${isDone ? 'bg-emerald-50/30 border-emerald-100' : 'bg-white border-slate-100 hover:border-emerald-600/30 hover:shadow-xl hover:shadow-slate-200/50'}`}
                                       >
-                                        <div className="flex items-center gap-4">
-                                          <div className={`w-6 h-6 rounded-lg flex items-center justify-center border transition-all ${isDone ? 'bg-emerald-500 border-emerald-500 text-white shadow-[0_0_10px_rgba(16,185,129,0.5)]' : 'bg-white/5 border-white/20 text-transparent group-hover:border-emerald-500/50'}`}>
-                                            <Check className="w-4 h-4" />
+                                        <div className="flex items-center gap-5">
+                                          <div className={`w-10 h-10 rounded-2xl flex items-center justify-center border transition-all duration-500 ${isDone ? 'bg-emerald-500 border-emerald-500 text-white shadow-lg shadow-emerald-500/20' : 'bg-slate-50 border-slate-100 text-transparent group-hover:border-emerald-600/50'}`}>
+                                            <Check className="w-5 h-5" />
                                           </div>
                                           <div>
-                                            <h4 className={`text-sm font-bold transition-colors ${isDone ? 'text-slate-500 line-through' : 'text-slate-200 group-hover:text-white'}`}>
+                                            <h4 className={`text-base font-black tracking-tight transition-colors ${isDone ? 'text-text-secondary line-through decoration-emerald-500/50' : 'text-text-primary group-hover:text-emerald-600'}`}>
                                               {topic.title}
                                             </h4>
-                                            <div className="flex items-center gap-3 mt-1">
-                                              <span className="flex items-center gap-1 text-[10px] text-slate-500 font-medium">
-                                                <Clock className="w-3 h-3" /> {topic.estimatedTime}
+                                            <div className="flex items-center gap-4 mt-2">
+                                              <span className="flex items-center gap-1.5 text-[10px] text-text-secondary font-black uppercase tracking-widest">
+                                                <Clock className="w-3.5 h-3.5" /> {topic.estimatedTime}
                                               </span>
-                                              <span className={`text-[9px] px-1.5 py-0.5 rounded font-black uppercase tracking-tighter ${
-                                                topic.difficulty === 'Beginner' ? 'text-blue-400 bg-blue-500/10' :
-                                                topic.difficulty === 'Intermediate' ? 'text-amber-400 bg-amber-500/10' :
-                                                'text-rose-400 bg-rose-500/10'
+                                              <span className={`text-[9px] px-2.5 py-1 rounded-full font-black uppercase tracking-widest ${
+                                                topic.difficulty === 'Beginner' ? 'text-blue-600 bg-blue-50 border border-blue-100' :
+                                                topic.difficulty === 'Intermediate' ? 'text-amber-600 bg-amber-50 border border-amber-100' :
+                                                'text-rose-600 bg-rose-50 border border-rose-100'
                                               }`}>
                                                 {topic.difficulty}
                                               </span>
                                             </div>
                                           </div>
                                         </div>
-                                        <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                                          <Zap className="w-4 h-4 text-emerald-400" />
+                                        <div className="opacity-0 group-hover:opacity-100 transition-all duration-500 transform translate-x-4 group-hover:translate-x-0">
+                                          <div className="w-10 h-10 rounded-2xl bg-emerald-600/10 flex items-center justify-center text-emerald-600 shadow-sm border border-emerald-600/5">
+                                            <ArrowRight className="w-5 h-5" />
+                                          </div>
                                         </div>
                                       </motion.div>
                                     );
@@ -439,22 +382,34 @@ export default function VLSITrackPage() {
 
           {/* Bottom CTA */}
           <motion.div 
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            className="mt-20 p-12 glass-card text-center border border-emerald-500/20 bg-gradient-to-br from-emerald-600/10 to-transparent relative overflow-hidden"
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="mt-20 p-16 saas-card bg-white border border-slate-100 shadow-2xl shadow-slate-200/50 text-center relative overflow-hidden group"
           >
-            <div className="relative z-10">
-              <Trophy className="w-16 h-16 text-amber-400 mx-auto mb-6 drop-shadow-[0_0_15px_rgba(251,191,36,0.3)]" />
-              <h3 className="text-3xl font-black text-white mb-4 tracking-tight">Semiconductor Career Path</h3>
-              <p className="text-slate-400 mb-10 max-w-lg mx-auto text-lg leading-relaxed">Preparation for high-value silicon roles at companies like Qualcomm, Intel, Broadcom, and MediaTek starts here.</p>
-              <Link href="/roadmaps/ece" className="btn-primary inline-flex items-center gap-3 bg-emerald-600 hover:bg-emerald-700 border-emerald-500 text-lg py-4 px-8 shadow-[0_0_20px_rgba(16,185,129,0.3)]">
-                Return to ECE Hub <ArrowLeft className="w-6 h-6 rotate-180" />
-              </Link>
+            <div className="absolute top-0 right-0 p-16 opacity-[0.02] group-hover:opacity-[0.05] transition-all duration-1000 rotate-12">
+               <Layers className="w-96 h-96" />
             </div>
-            <div className="absolute -bottom-24 -right-24 w-64 h-64 bg-emerald-500/10 rounded-full blur-[100px]" />
+            
+            <div className="relative z-10 max-w-3xl mx-auto">
+              <div className="w-20 h-20 bg-emerald-600/10 rounded-[32px] flex items-center justify-center mx-auto mb-10 shadow-xl shadow-emerald-600/5">
+                <Sparkles className="w-10 h-10 text-emerald-600" />
+              </div>
+              <h3 className="text-4xl font-black text-text-primary tracking-tighter mb-6">Master Silicon Engineering</h3>
+              <p className="text-lg text-text-secondary mb-10 font-medium leading-relaxed">The semiconductor industry is the backbone of modern technology. Mastering VLSI design opens doors to the most prestigious engineering roles at Qualcomm, Intel, Broadcom, and MediaTek.</p>
+              
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
+                <Link href="/roadmaps/ece" className="w-full sm:w-auto px-10 py-5 rounded-[24px] bg-emerald-600 text-white font-black uppercase tracking-[0.2em] text-xs shadow-xl shadow-emerald-600/20 hover:shadow-2xl hover:shadow-emerald-600/30 transition-all flex items-center justify-center gap-3">
+                   ECE Hub <ArrowRight className="w-5 h-5" />
+                </Link>
+                <button className="w-full sm:w-auto px-10 py-5 rounded-[24px] bg-white text-text-primary border border-slate-200 font-black uppercase tracking-[0.2em] text-xs hover:bg-slate-50 transition-all flex items-center justify-center gap-3">
+                  Silicon Reference <FileText className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
           </motion.div>
-        </main>
-      </div>
+        </div>
+      </main>
     </div>
   );
 }

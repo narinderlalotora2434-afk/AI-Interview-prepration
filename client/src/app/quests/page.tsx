@@ -79,9 +79,9 @@ export default function QuestsPage() {
   }, [router]);
 
   if (loading) return (
-    <div className="min-h-screen bg-background flex items-center justify-center">
+    <div className="min-h-screen bg-white flex items-center justify-center">
       <div className="relative">
-        <div className="w-16 h-16 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
+        <div className="w-16 h-16 border-4 border-primary/10 border-t-primary rounded-full animate-spin" />
         <Bot className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-6 h-6 text-primary" />
       </div>
     </div>
@@ -89,11 +89,11 @@ export default function QuestsPage() {
 
   if (!challenges || challenges.error) {
     return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center text-foreground p-6">
-        <ShieldCheck className="w-16 h-16 text-rose-500 mb-6 opacity-50" />
-        <h2 className="text-3xl font-bold mb-2 tracking-tight">Access Restricted</h2>
-        <p className="text-muted-foreground mb-8 max-w-md text-center">{challenges?.error || "We couldn't synchronize your daily quests with the neural network."}</p>
-        <button onClick={() => window.location.reload()} className="btn-primary py-3 px-10 rounded-xl font-bold transition-all shadow-[0_0_20px_rgba(124,58,237,0.3)]">
+      <div className="min-h-screen bg-[#F8FAFC] flex flex-col items-center justify-center text-text-primary p-6">
+        <ShieldCheck className="w-20 h-20 text-rose-500 mb-8 opacity-20" />
+        <h2 className="text-4xl font-black mb-4 tracking-tighter">Access Restricted</h2>
+        <p className="text-text-secondary mb-10 max-w-md text-center font-medium leading-relaxed">{challenges?.error || "We couldn't synchronize your daily quests with the neural network."}</p>
+        <button onClick={() => window.location.reload()} className="btn-primary py-4 px-12 rounded-2xl font-black uppercase tracking-[0.2em] transition-all shadow-xl shadow-primary/20">
           Retry Sync
         </button>
       </div>
@@ -103,214 +103,215 @@ export default function QuestsPage() {
   const codingProblem = challenges?.codingProblem ? JSON.parse(challenges.codingProblem) : null;
 
   return (
-    <div className="min-h-screen bg-background text-foreground selection:bg-primary/30">
-      <div className="absolute inset-0 bg-grid opacity-10 pointer-events-none" />
-      <div className="absolute top-0 right-1/4 w-[500px] h-[500px] bg-amber-500/10 rounded-full blur-[120px] pointer-events-none" />
+    <div className="min-h-screen bg-[#F8FAFC] text-text-primary selection:bg-primary/10 flex">
+      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
-      <div className="flex relative z-10">
-        <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-
-        <main className="flex-1 flex flex-col h-screen overflow-hidden">
-          {/* Header */}
-          <header className="px-8 h-20 border-b border-border flex items-center justify-between bg-background/50 backdrop-blur-md sticky top-0 z-20">
-            <div className="flex items-center gap-4">
-              <button 
-                onClick={() => setSidebarOpen(true)}
-                className="md:hidden p-2 text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <Menu className="w-6 h-6" />
-              </button>
-              <div className="flex items-center gap-3 text-amber-400 font-bold">
-                <Calendar className="w-4 h-4" />
-                <span className="text-sm uppercase tracking-widest">{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}</span>
-              </div>
+      <main className="flex-1 flex flex-col h-screen overflow-hidden relative">
+        {/* Header */}
+        <header className="px-10 h-20 border-b border-slate-100 flex items-center justify-between bg-white/80 backdrop-blur-md sticky top-0 z-20">
+          <div className="flex items-center gap-6">
+            <button 
+              onClick={() => setSidebarOpen(true)}
+              className="lg:hidden p-2 text-text-secondary hover:text-text-primary transition-colors"
+            >
+              <Menu className="w-6 h-6" />
+            </button>
+            <div className="flex items-center gap-3 text-amber-600 font-black">
+              <Calendar className="w-5 h-5" />
+              <span className="text-xs uppercase tracking-[0.2em]">{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}</span>
             </div>
+          </div>
+          
+          <div className="flex items-center gap-6">
+             <div className="flex items-center gap-3 px-5 py-2 rounded-full bg-white border border-slate-100 shadow-sm">
+                <Flame className="w-5 h-5 text-orange-500" />
+                <span className="text-sm font-black tabular-nums text-text-primary tracking-tight">7-DAY STREAK</span>
+             </div>
+          </div>
+        </header>
+
+        {/* Content Area */}
+        <div className="flex-1 overflow-y-auto p-10 no-scrollbar scroll-smooth">
+          <div className="max-w-7xl mx-auto space-y-16">
             
-            <div className="flex items-center gap-6">
-               <div className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-secondary border border-border shadow-xl">
-                  <Flame className="w-4 h-4 text-orange-500" />
-                  <span className="text-sm font-bold tabular-nums">Neural Streak</span>
-               </div>
-            </div>
-          </header>
-
-          {/* Content Area */}
-          <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
-            <div className="max-w-7xl mx-auto space-y-10">
-              
-              <div className="space-y-2">
-                <h1 className="text-5xl font-bold tracking-tight accent-gradient-text">Neural Quests</h1>
-                <p className="text-muted-foreground text-lg">Daily high-impact missions to accelerate your engineering career.</p>
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/5 border border-primary/10 text-primary text-[10px] font-black uppercase tracking-widest">
+                <Zap className="w-4 h-4" /> Daily Missions
               </div>
+              <h1 className="text-6xl font-black tracking-tighter text-text-primary">Daily <span className="text-primary italic">Neural</span> Quests</h1>
+              <p className="text-text-secondary text-xl font-medium max-w-2xl leading-relaxed">High-impact missions designed by AI to accelerate your placement readiness today.</p>
+            </motion.div>
 
-              <div className="grid lg:grid-cols-3 gap-10">
-                {/* Main Quests */}
-                <div className="lg:col-span-2 space-y-8">
-                  
-                  {/* Mission 1: Coding */}
+            <div className="grid lg:grid-cols-3 gap-10 pb-20">
+              {/* Main Quests */}
+              <div className="lg:col-span-2 space-y-10">
+                
+                {/* Mission 1: Coding */}
+                <motion.div 
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="saas-card p-12 overflow-hidden relative group border-l-[6px] border-l-primary bg-white shadow-xl shadow-slate-200/50"
+                >
+                  <div className="absolute top-0 right-0 p-12 opacity-[0.03] group-hover:opacity-[0.06] transition-opacity">
+                     <Code className="w-64 h-64 rotate-12" />
+                  </div>
+                  <div className="relative z-10 space-y-10">
+                     <div className="flex justify-between items-center">
+                        <div className="px-4 py-1.5 rounded-full bg-primary/5 border border-primary/10 text-primary text-[10px] font-black uppercase tracking-widest">
+                           Primary Objective: Algorithms
+                        </div>
+                        <div className="flex items-center gap-2 text-text-secondary text-xs font-black uppercase tracking-[0.2em]">
+                           <Clock className="w-4 h-4" /> 25 Mins
+                        </div>
+                     </div>
+
+                     <div className="space-y-6">
+                        <h2 className="text-4xl font-black text-text-primary group-hover:text-primary transition-colors tracking-tighter">{codingProblem?.title}</h2>
+                        <p className="text-text-secondary leading-relaxed text-xl font-medium line-clamp-3">
+                           {codingProblem?.description}
+                        </p>
+                     </div>
+
+                     <div className="flex items-center justify-between pt-10 border-t border-slate-50">
+                        <div className="flex items-center gap-8">
+                           <div className="flex items-center gap-3 text-amber-500 font-black">
+                              <Star className="w-5 h-5 fill-current" />
+                              <span className="text-lg tracking-tight">+50 XP</span>
+                           </div>
+                           <div className="px-4 py-1.5 rounded-xl bg-slate-50 border border-slate-100 text-[10px] font-black text-text-secondary uppercase tracking-[0.2em]">
+                              {codingProblem?.difficulty || 'Medium'}
+                           </div>
+                        </div>
+                        <Link href="/coding" className="btn-primary px-10 py-4 text-xs font-black uppercase tracking-[0.2em] shadow-xl shadow-primary/20 flex items-center gap-2 transition-all">
+                           Launch Arena <ArrowRight className="w-5 h-5" />
+                        </Link>
+                     </div>
+                  </div>
+                </motion.div>
+
+                <div className="grid md:grid-cols-2 gap-10">
+                  {/* Mission 2: Theory */}
                   <motion.div 
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="glass-card p-10 overflow-hidden relative group border-l-4 border-l-primary"
+                    transition={{ delay: 0.1 }}
+                    className="saas-card p-10 border-l-[6px] border-l-secondary group relative overflow-hidden bg-white shadow-lg"
                   >
-                    <div className="absolute top-0 right-0 p-10 opacity-5 group-hover:opacity-10 transition-opacity">
-                       <Code className="w-48 h-48" />
-                    </div>
-                    <div className="relative z-10 space-y-8">
-                       <div className="flex justify-between items-center">
-                          <div className="px-4 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-[10px] font-bold uppercase tracking-widest">
-                             Priority Mission 01: Algorithms
-                          </div>
-                          <div className="flex items-center gap-2 text-slate-500 text-xs font-bold uppercase tracking-widest">
-                             <Clock className="w-4 h-4" /> 25 Mins
-                          </div>
-                       </div>
-
-                       <div className="space-y-4">
-                          <h2 className="text-3xl font-bold group-hover:text-primary transition-colors">{codingProblem?.title}</h2>
-                          <p className="text-muted-foreground leading-relaxed text-lg line-clamp-3">
-                             {codingProblem?.description}
-                          </p>
-                       </div>
-
-                       <div className="flex items-center justify-between pt-8 border-t border-border">
-                          <div className="flex items-center gap-6">
-                             <div className="flex items-center gap-2 text-amber-400">
-                                <Star className="w-4 h-4 fill-current" />
-                                <span className="text-sm font-bold">+50 XP</span>
-                             </div>
-                             <div className="px-3 py-1 rounded-lg bg-secondary border border-border text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
-                                {codingProblem?.difficulty || 'Medium'}
-                             </div>
-                          </div>
-                          <Link href="/coding" className="btn-primary px-8 py-3 rounded-xl flex items-center gap-2 group-hover:shadow-[0_0_20px_rgba(124,58,237,0.4)] transition-all">
-                             Launch Arena <ChevronRight className="w-5 h-5" />
-                          </Link>
-                       </div>
-                    </div>
+                     <div className="absolute top-0 right-0 p-8 opacity-[0.03]">
+                        <Brain className="w-32 h-32" />
+                     </div>
+                     <div className="relative z-10 space-y-8 flex flex-col h-full">
+                        <div className="px-3 py-1 rounded-full bg-secondary/5 border border-secondary/10 text-secondary text-[10px] font-black uppercase tracking-widest self-start">
+                           Theory Objective
+                        </div>
+                        <h3 className="text-2xl font-black text-text-primary tracking-tight">System Architecture</h3>
+                        <p className="text-text-secondary text-base italic flex-1 leading-relaxed border-l-4 border-slate-100 pl-6 py-2 font-medium">
+                           &quot;{challenges?.techQuestion}&quot;
+                        </p>
+                        <div className="flex items-center justify-between pt-8">
+                           <span className="text-xs font-black text-secondary uppercase tracking-widest">+25 XP</span>
+                           <Link href="/interview" className="text-xs font-black text-text-secondary hover:text-secondary uppercase tracking-[0.2em] flex items-center gap-2 transition-all">
+                              Start Prep <ChevronRight className="w-4 h-4" />
+                           </Link>
+                        </div>
+                     </div>
                   </motion.div>
 
-                  <div className="grid md:grid-cols-2 gap-8">
-                    {/* Mission 2: Theory */}
-                    <motion.div 
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.1 }}
-                      className="glass-card p-8 border-l-4 border-l-accent-cyan group relative overflow-hidden"
-                    >
-                       <div className="absolute top-0 right-0 p-6 opacity-5">
-                          <Brain className="w-24 h-24" />
-                       </div>
-                       <div className="relative z-10 space-y-6 flex flex-col h-full">
-                          <div className="px-3 py-1 rounded-full bg-accent-cyan/10 border border-accent-cyan/20 text-accent-cyan text-[10px] font-bold uppercase tracking-widest self-start">
-                             Mission 02: Theory
-                          </div>
-                          <h3 className="text-xl font-bold">System Architecture</h3>
-                          <p className="text-slate-400 text-sm italic flex-1 leading-relaxed border-l-2 border-white/5 pl-4">
-                             &quot;{challenges?.techQuestion}&quot;
-                          </p>
-                          <div className="flex items-center justify-between pt-6">
-                             <span className="text-xs font-bold text-accent-cyan">+25 XP</span>
-                             <Link href="/interview" className="text-sm font-bold text-slate-400 hover:text-white flex items-center gap-2 transition-colors">
-                                Start Preparation <ArrowRight className="w-4 h-4 text-accent-cyan" />
-                             </Link>
-                          </div>
-                       </div>
-                    </motion.div>
+                  {/* Mission 3: Behavioral */}
+                  <motion.div 
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.2 }}
+                    className="saas-card p-10 border-l-[6px] border-l-rose-500 group relative overflow-hidden bg-white shadow-lg"
+                  >
+                     <div className="absolute top-0 right-0 p-8 opacity-[0.03]">
+                        <Target className="w-32 h-32" />
+                     </div>
+                     <div className="relative z-10 space-y-8 flex flex-col h-full">
+                        <div className="px-3 py-1 rounded-full bg-rose-50 border border-rose-100 text-rose-600 text-[10px] font-black uppercase tracking-widest self-start">
+                           Behavioral Objective
+                        </div>
+                        <h3 className="text-2xl font-black text-text-primary tracking-tight">Conflict Resolution</h3>
+                        <p className="text-text-secondary text-base italic flex-1 leading-relaxed border-l-4 border-slate-100 pl-6 py-2 font-medium">
+                           &quot;{challenges?.behavioralQuestion}&quot;
+                        </p>
+                        <div className="flex items-center justify-between pt-8">
+                           <span className="text-xs font-black text-rose-600 uppercase tracking-widest">+25 XP</span>
+                           <Link href="/interview" className="text-xs font-black text-text-secondary hover:text-rose-600 uppercase tracking-[0.2em] flex items-center gap-2 transition-all">
+                              Start Prep <ChevronRight className="w-4 h-4" />
+                           </Link>
+                        </div>
+                     </div>
+                  </motion.div>
+                </div>
+              </div>
 
-                    {/* Mission 3: Behavioral */}
-                    <motion.div 
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.2 }}
-                      className="glass-card p-8 border-l-4 border-l-accent-pink group relative overflow-hidden"
-                    >
-                       <div className="absolute top-0 right-0 p-6 opacity-5">
-                          <Target className="w-24 h-24" />
-                       </div>
-                       <div className="relative z-10 space-y-6 flex flex-col h-full">
-                          <div className="px-3 py-1 rounded-full bg-accent-pink/10 border border-accent-pink/20 text-accent-pink text-[10px] font-bold uppercase tracking-widest self-start">
-                             Mission 03: Soft Skills
-                          </div>
-                          <h3 className="text-xl font-bold">Conflict Resolution</h3>
-                          <p className="text-slate-400 text-sm italic flex-1 leading-relaxed border-l-2 border-white/5 pl-4">
-                             &quot;{challenges?.behavioralQuestion}&quot;
-                          </p>
-                          <div className="flex items-center justify-between pt-6">
-                             <span className="text-xs font-bold text-accent-pink">+25 XP</span>
-                             <Link href="/interview" className="text-sm font-bold text-slate-400 hover:text-white flex items-center gap-2 transition-colors">
-                                Start Prep <ArrowRight className="w-4 h-4 text-accent-pink" />
-                             </Link>
-                          </div>
-                       </div>
-                    </motion.div>
-                  </div>
+              {/* Sidebar Stats */}
+              <div className="space-y-10">
+                <div className="saas-card p-10 bg-white border-slate-100 shadow-xl">
+                   <h3 className="text-[10px] font-black text-text-secondary uppercase tracking-[0.2em] mb-12 flex items-center gap-3">
+                      <Trophy className="w-5 h-5 text-amber-500" /> Neural Progress
+                   </h3>
+                   <div className="space-y-10">
+                      {[
+                        { id: 1, label: "Coding Mission", icon: Code, color: "text-primary", bg: "bg-primary/5" },
+                        { id: 2, label: "Technical Theory", icon: Brain, color: "text-secondary", bg: "bg-secondary/5" },
+                        { id: 3, label: "Behavioral Mastery", icon: Target, color: "text-rose-500", bg: "bg-rose-50" },
+                      ].map((mission) => (
+                        <div key={mission.id} className="flex items-center gap-6 group cursor-default">
+                           <div className={`w-14 h-14 rounded-2xl border border-slate-100 ${mission.bg} flex items-center justify-center transition-all group-hover:scale-110 shadow-sm`}>
+                              <mission.icon className={`w-6 h-6 ${mission.color} opacity-40`} />
+                           </div>
+                           <div className="flex-1">
+                              <div className="text-sm font-black text-text-primary tracking-tight">{mission.label}</div>
+                              <div className="text-[9px] text-text-secondary uppercase tracking-[0.2em] font-black mt-1">Pending Sync</div>
+                           </div>
+                           <div className="w-2.5 h-2.5 rounded-full bg-slate-100" />
+                        </div>
+                      ))}
+                   </div>
+                   
+                   <div className="mt-16 p-10 bg-slate-50 rounded-[32px] border border-slate-100 text-center relative overflow-hidden group">
+                      <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                      <div className="relative z-10">
+                         <div className="text-6xl font-black mb-2 text-text-primary tracking-tighter tabular-nums">0 <span className="text-2xl text-text-secondary">/ 3</span></div>
+                         <div className="text-[10px] text-text-secondary uppercase tracking-[0.3em] font-black">Daily Objective Sync</div>
+                      </div>
+                   </div>
                 </div>
 
-                {/* Sidebar Stats */}
-                <div className="space-y-8">
-                  <div className="glass-card p-8 bg-gradient-to-br from-primary/10 to-transparent">
-                     <h3 className="text-lg font-bold mb-8 flex items-center gap-3">
-                        <Trophy className="w-5 h-5 text-amber-500" /> Neural Progress
-                     </h3>
-                     <div className="space-y-8">
-                        {[
-                          { id: 1, label: "Coding Mission", icon: Code, color: "text-primary" },
-                          { id: 2, label: "Technical Theory", icon: Brain, color: "text-accent-cyan" },
-                          { id: 3, label: "Behavioral Mastery", icon: Target, color: "text-accent-pink" },
-                        ].map((mission) => (
-                          <div key={mission.id} className="flex items-center gap-5">
-                             <div className="w-12 h-12 rounded-xl border-2 border-border bg-secondary flex items-center justify-center text-muted-foreground group-hover:border-primary transition-all">
-                                <mission.icon className={`w-5 h-5 ${mission.color} opacity-40`} />
-                             </div>
-                             <div className="flex-1">
-                                <div className="text-sm font-bold">{mission.label}</div>
-                                <div className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Incomplete</div>
-                             </div>
-                             <div className="w-2 h-2 rounded-full bg-foreground/10" />
-                          </div>
-                        ))}
-                     </div>
-                     
-                     <div className="mt-12 p-8 bg-black/40 rounded-3xl border border-white/5 text-center relative overflow-hidden group">
-                        <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity" />
-                        <div className="relative z-10">
-                           <div className="text-5xl font-bold mb-2 accent-gradient-text tabular-nums tracking-tighter">0 / 3</div>
-                           <div className="text-[10px] text-slate-500 uppercase tracking-[0.2em] font-black">Daily Quests Sync</div>
-                        </div>
-                     </div>
-                  </div>
+                <div className="saas-card p-10 bg-slate-50 border-slate-100 relative overflow-hidden">
+                   <h3 className="text-[10px] font-black text-text-secondary uppercase tracking-[0.2em] mb-8 flex items-center gap-3">
+                      <BrainCircuit className="w-5 h-5 text-primary" /> Strategist Insight
+                   </h3>
+                   <p className="text-base text-text-secondary leading-relaxed italic border-l-4 border-primary/20 pl-6 py-2 font-medium">
+                      &quot;Today&apos;s objective cluster optimizes for <span className="text-primary font-black">architectural scalability</span> and <span className="text-rose-600 font-black">stakeholder alignment</span>. High probability of matching NVIDIA&apos;s Q3 technical benchmarks.&quot;
+                   </p>
+                </div>
 
-                  <div className="glass-card p-8 border-dashed border-2 border-white/5">
-                     <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-6 flex items-center gap-2">
-                        <BrainCircuit className="w-5 h-5 text-primary" /> Strategist Insight
-                     </h3>
-                     <p className="text-sm text-slate-400 leading-relaxed italic border-l-2 border-primary/30 pl-4 py-1">
-                        &quot;Today&apos;s objective cluster optimizes for <span className="text-primary font-bold">architectural scalability</span> and <span className="text-accent-pink font-bold">stakeholder alignment</span>. High probability of matching NVIDIA&apos;s Q3 technical benchmarks.&quot;
-                     </p>
-                  </div>
-
-                  <div className="glass-card p-8 bg-white/5 border-white/5">
-                     <div className="flex items-center gap-4 mb-6">
-                        <div className="w-10 h-10 rounded-xl bg-orange-500/20 flex items-center justify-center text-orange-500">
-                           <Flame className="w-6 h-6" />
+                <div className="saas-card p-10 bg-white border-slate-100 shadow-lg">
+                   <div className="flex items-center gap-4 mb-8">
+                      <div className="w-12 h-12 rounded-2xl bg-orange-50 flex items-center justify-center text-orange-500 border border-orange-100">
+                         <Flame className="w-7 h-7" />
+                      </div>
+                      <div>
+                        <h4 className="font-black text-text-primary tracking-tight">Daily Continuity</h4>
+                        <p className="text-[9px] text-text-secondary uppercase tracking-widest font-black">Past 7 Days</p>
+                      </div>
+                   </div>
+                   <div className="grid grid-cols-7 gap-3">
+                      {[1, 2, 3, 4, 5, 6, 7].map(day => (
+                        <div key={day} className={`aspect-square rounded-xl border flex items-center justify-center text-[10px] font-black transition-all ${day < 7 ? 'bg-orange-500 border-orange-600 text-white shadow-lg shadow-orange-500/20 scale-105' : 'bg-slate-50 border-slate-100 text-text-secondary opacity-50'}`}>
+                           {day < 7 ? '✓' : day}
                         </div>
-                        <h4 className="font-bold">Neural Streak</h4>
-                     </div>
-                     <div className="grid grid-cols-7 gap-2">
-                        {[1, 2, 3, 4, 5, 6, 7].map(day => (
-                          <div key={day} className={`aspect-square rounded-lg border flex items-center justify-center text-[10px] font-bold ${day < 7 ? 'bg-orange-500 border-orange-600 text-white shadow-[0_0_10px_rgba(249,115,22,0.3)]' : 'bg-white/5 border-white/10 text-slate-500'}`}>
-                             {day < 7 ? '✓' : day}
-                          </div>
-                        ))}
-                     </div>
-                  </div>
+                      ))}
+                   </div>
                 </div>
               </div>
             </div>
           </div>
-        </main>
-      </div>
+        </div>
+      </main>
     </div>
   );
 }

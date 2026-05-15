@@ -130,8 +130,19 @@ function getMockTextResponse(prompt: string): string {
   return "That's a great point! I'm processing a lot of requests right now, but generally, I recommend keeping your resume to one page and using a clean, ATS-friendly format. What else can I help with?";
 }
 
+const aiCache = new Map<string, { data: any, timestamp: number }>();
+const CACHE_TTL = 1000 * 60 * 60; // 1 hour
+
 export async function generateAIResponse(options: AIRequestOptions): Promise<any> {
   const { systemPrompt, userPrompt, jsonMode = true } = options;
+  
+  // Cache key based on prompts and mode
+  const cacheKey = `${systemPrompt || ''}:${userPrompt}:${jsonMode}`;
+  const cached = aiCache.get(cacheKey);
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+    return cached.data;
+  }
+
   const openAIKeys = getKeys(process.env.OPENAI_API_KEY);
   const geminiKeys = getKeys(process.env.GEMINI_API_KEY);
 
@@ -149,7 +160,9 @@ export async function generateAIResponse(options: AIRequestOptions): Promise<any
       });
 
       const content = completion.choices[0]?.message?.content || "";
-      return jsonMode ? parseAIJSON(content) : content;
+      const result = jsonMode ? parseAIJSON(content) : content;
+      aiCache.set(cacheKey, { data: result, timestamp: Date.now() });
+      return result;
     } catch (error: any) {
       console.warn(`OpenAI Key Failed (ending in ...${key.slice(-4)}):`, error.message);
       if (error.status === 429 || error.status === 401) continue; // Try next key
@@ -174,8 +187,9 @@ export async function generateAIResponse(options: AIRequestOptions): Promise<any
         const result = await model.generateContent(prompt);
         const response = await result.response;
         const text = response.text();
-        
-        return jsonMode ? parseAIJSON(text) : text;
+        const finalResult = jsonMode ? parseAIJSON(text) : text;
+        aiCache.set(cacheKey, { data: finalResult, timestamp: Date.now() });
+        return finalResult;
       } catch (error: any) {
         const errorMsg = error.message || "";
         console.warn(`Gemini Error (${modelName}, ...${key.slice(-4)}):`, errorMsg);
@@ -190,10 +204,14 @@ export async function generateAIResponse(options: AIRequestOptions): Promise<any
     }
   }
 
-  // --- FINAL FALLBACK: Mock Mode ---
+  // Cache the successful response
   if (jsonMode) {
-    return getMockResponse(userPrompt + (systemPrompt || ""));
+    const response = getMockResponse(userPrompt + (systemPrompt || ""));
+    aiCache.set(cacheKey, { data: response, timestamp: Date.now() });
+    return response;
   }
 
-  return getMockTextResponse(userPrompt + (systemPrompt || ""));
+  const response = getMockTextResponse(userPrompt + (systemPrompt || ""));
+  aiCache.set(cacheKey, { data: response, timestamp: Date.now() });
+  return response;
 }

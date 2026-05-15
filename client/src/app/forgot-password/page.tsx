@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Mail, ArrowRight, Loader2, Sparkles, ShieldCheck, Key } from "lucide-react";
+import { Mail, ArrowRight, Loader2, Sparkles, ShieldCheck, Key, ArrowLeft } from "lucide-react";
 import { getBaseUrl } from "@/lib/api";
 
 export default function ForgotPasswordPage() {
@@ -41,38 +41,41 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background text-white selection:bg-primary/30 flex items-center justify-center p-6 relative overflow-hidden">
-      {/* Background Decor */}
-      <div className="absolute inset-0 bg-grid opacity-10 pointer-events-none" />
-      <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-primary/20 rounded-full blur-[150px] animate-glow pointer-events-none" />
+    <div className="min-h-screen bg-[#F8FAFC] text-text-primary selection:bg-primary/10 flex items-center justify-center p-8 relative overflow-hidden">
+      {/* Decorative Elements */}
+      <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary via-secondary to-accent" />
+      <div className="absolute -top-[20%] -left-[10%] w-[600px] h-[600px] bg-primary/5 rounded-full blur-[120px] pointer-events-none" />
 
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-md z-10 space-y-10"
+        className="w-full max-w-lg z-10 space-y-12"
       >
-        <div className="text-center space-y-4">
-           <Link href="/" className="inline-flex items-center gap-3 group mb-4">
-             <div className="w-12 h-12 rounded-2xl bg-primary flex items-center justify-center group-hover:rotate-12 transition-all shadow-[0_0_30px_rgba(124,58,237,0.4)]">
-               <Sparkles className="w-7 h-7 text-white" />
+        <div className="text-center space-y-6">
+           <Link href="/" className="inline-flex items-center gap-4 group mb-4">
+             <div className="w-16 h-16 rounded-[24px] bg-primary flex items-center justify-center group-hover:rotate-12 transition-all shadow-xl shadow-primary/20">
+               <Sparkles className="w-8 h-8 text-white" />
              </div>
-             <span className="text-3xl font-bold tracking-tighter">PrepAI</span>
+             <span className="text-4xl font-black tracking-tighter text-text-primary">PrepAI</span>
            </Link>
-           <h1 className="text-4xl font-bold tracking-tight accent-gradient-text">Neural Recovery</h1>
-           <p className="text-slate-400 font-medium tracking-wide">Request a master key reset</p>
+           <div className="space-y-3">
+             <h1 className="text-5xl font-black tracking-tighter text-text-primary">Password Recovery</h1>
+             <p className="text-text-secondary text-lg font-medium">Request a secure reset link for your account.</p>
+           </div>
         </div>
 
-        <div className="glass-card p-10 space-y-8 relative overflow-hidden group">
-           <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
-              <Key className="w-32 h-32" />
+        <div className="saas-card p-12 space-y-10 relative overflow-hidden bg-white shadow-2xl shadow-slate-200/50">
+           <div className="absolute top-0 right-0 p-12 opacity-[0.02] group-hover:opacity-[0.05] transition-opacity">
+              <Key className="w-48 h-48 rotate-[-15deg]" />
            </div>
 
            {error && (
              <motion.div 
                initial={{ opacity: 0, scale: 0.95 }}
                animate={{ opacity: 1, scale: 1 }}
-               className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-sm font-bold"
+               className="p-5 rounded-2xl bg-rose-50 border border-rose-100 text-rose-600 text-sm font-black flex items-center gap-4 shadow-sm"
              >
+               <Zap className="w-5 h-5 shrink-0" />
                {error}
              </motion.div>
            )}
@@ -81,24 +84,28 @@ export default function ForgotPasswordPage() {
              <motion.div 
                initial={{ opacity: 0, scale: 0.95 }}
                animate={{ opacity: 1, scale: 1 }}
-               className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm font-bold"
+               className="p-6 rounded-[32px] bg-emerald-50 border border-emerald-100 text-emerald-700 text-center space-y-4"
              >
-               {message}
+                <ShieldCheck className="w-12 h-12 mx-auto" />
+                <p className="font-black text-lg tracking-tight">{message}</p>
+                <Link href="/login" className="inline-flex items-center gap-2 text-sm font-black text-emerald-800 hover:gap-3 transition-all">
+                  Return to login <ArrowRight className="w-4 h-4" />
+                </Link>
              </motion.div>
            )}
 
            {!message && (
-             <form onSubmit={handleSubmit} className="space-y-6 relative z-10">
-               <div className="space-y-3">
-                 <label className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] ml-1">Authentication Email</label>
+             <form onSubmit={handleSubmit} className="space-y-8 relative z-10">
+               <div className="space-y-4">
+                 <label className="text-[10px] font-black text-text-secondary uppercase tracking-[0.3em] ml-1">Authentication Email</label>
                  <div className="relative group/input">
-                   <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500 group-focus-within/input:text-primary transition-colors" />
+                   <Mail className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within/input:text-primary transition-colors" />
                    <input
                      type="email"
                      required
                      value={email}
                      onChange={(e) => setEmail(e.target.value)}
-                     className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-4 focus:border-primary/50 focus:bg-white/10 outline-none transition-all text-white font-medium"
+                     className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-5 pl-14 pr-6 focus:border-primary/50 focus:bg-white focus:shadow-xl focus:shadow-primary/5 outline-none transition-all text-text-primary font-bold placeholder:text-slate-400 placeholder:font-medium"
                      placeholder="agent@prepai.io"
                    />
                  </div>
@@ -107,13 +114,13 @@ export default function ForgotPasswordPage() {
                <button
                  type="submit"
                  disabled={loading}
-                 className="w-full btn-primary py-4 rounded-2xl flex items-center justify-center gap-3 group-hover:shadow-[0_0_30px_rgba(124,58,237,0.3)] transition-all"
+                 className="w-full btn-primary py-5 rounded-[24px] flex items-center justify-center gap-4 shadow-xl shadow-primary/20 hover:shadow-2xl hover:shadow-primary/30 transition-all"
                >
                  {loading ? (
-                   <Loader2 className="w-6 h-6 animate-spin" />
+                   <Loader2 className="w-7 h-7 animate-spin" />
                  ) : (
                    <>
-                     <span className="font-bold tracking-widest uppercase text-sm">Send Master Key</span>
+                     <span className="font-black tracking-[0.2em] uppercase text-xs">Send Recovery Link</span>
                      <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                    </>
                  )}
@@ -122,10 +129,10 @@ export default function ForgotPasswordPage() {
            )}
         </div>
 
-        <p className="text-center text-sm text-slate-500 font-medium">
-          Remembered your key?{" "}
-          <Link href="/login" className="text-primary hover:text-primary/80 font-bold transition-colors">
-            Return to Authentication
+        <p className="text-center text-sm text-text-secondary font-bold">
+          Remembered your credentials?{" "}
+          <Link href="/login" className="text-primary hover:text-primary/80 font-black transition-all border-b-2 border-primary/20 hover:border-primary inline-flex items-center gap-1">
+            <ArrowLeft className="w-4 h-4" /> Back to Login
           </Link>
         </p>
       </motion.div>

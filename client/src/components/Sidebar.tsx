@@ -34,12 +34,12 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
 
   const menuItems = [
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-    { href: "/quests", label: "Daily Quests", icon: Zap, color: "text-amber-400" },
+    { href: "/quests", label: "Daily Quests", icon: Zap, color: "text-amber-500" },
     { href: "/roadmaps", label: "Roadmaps", icon: MapIcon, color: "text-primary" },
-    { href: "/aptitude", label: "Aptitude", icon: Brain, color: "text-accent-pink" },
-    { href: "/coding", label: "Coding Arena", icon: Code, color: "text-emerald-400" },
+    { href: "/aptitude", label: "Aptitude", icon: Brain, color: "text-accent" },
+    { href: "/coding", label: "Coding Arena", icon: Code, color: "text-emerald-500" },
     { href: "/interview", label: "AI Interview", icon: MessageSquare, color: "text-primary" },
-    { href: "/analytics", label: "Performance", icon: BarChart2, color: "text-accent-cyan" },
+    { href: "/analytics", label: "Performance", icon: BarChart2, color: "text-secondary" },
     { href: "/resume", label: "Resume Pro", icon: FileText, color: "text-primary" },
     { href: "/profile", label: "Profile", icon: User },
   ];
@@ -86,27 +86,26 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-background/80 backdrop-blur-sm z-[60] md:hidden"
+            className="fixed inset-0 bg-slate-900/20 backdrop-blur-sm z-[60] md:hidden"
           />
         )}
       </AnimatePresence>
 
       {/* Sidebar Content */}
       <aside className={`
-        fixed md:sticky top-0 left-0 h-screen w-72 md:w-64 border-r border-border bg-background p-6 flex flex-col shrink-0 z-[70] transition-transform duration-500 ease-out
+        fixed md:sticky top-0 left-0 h-screen w-72 md:w-64 border-r border-border bg-white p-6 flex flex-col shrink-0 z-[70] transition-transform duration-500 ease-out
         ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
       `}>
         {/* Logo */}
         <div className="flex items-center justify-between mb-10">
           <Link href="/dashboard" className="flex items-center gap-3 group">
-            <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center group-hover:rotate-12 transition-transform shadow-[0_0_20px_rgba(124,58,237,0.3)]">
+            <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center group-hover:rotate-12 transition-transform shadow-sm">
               <Sparkles className="w-6 h-6 text-white" />
             </div>
-            <span className="text-xl font-bold tracking-tight text-foreground">PrepAI</span>
+            <span className="text-xl font-bold tracking-tight text-text-primary">PrepAI</span>
           </Link>
           <div className="flex items-center gap-2 md:hidden">
-            <ThemeToggle />
-            <button onClick={onClose} className="p-2 text-muted-foreground hover:text-foreground transition-colors">
+            <button onClick={onClose} className="p-2 text-text-secondary hover:text-text-primary transition-colors">
               <X className="w-6 h-6" />
             </button>
           </div>
@@ -121,10 +120,10 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                 key={item.href}
                 href={item.href} 
                 onClick={onClose}
-                className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all group relative ${
+                className={`flex items-center gap-3 px-4 py-2.5 rounded-lg font-medium transition-all group relative ${
                   isActive 
-                    ? 'bg-primary/10 text-primary border border-primary/20 shadow-[0_0_20px_rgba(124,58,237,0.1)]' 
-                    : 'text-muted-foreground hover:text-foreground hover:bg-secondary border border-transparent'
+                    ? 'bg-primary/5 text-primary' 
+                    : 'text-text-secondary hover:text-text-primary hover:bg-slate-50'
                 }`}
               >
                 <item.icon className={`w-5 h-5 transition-transform group-hover:scale-110 ${item.color || ''}`} />
@@ -145,21 +144,20 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         <div className="pt-6 border-t border-border space-y-4">
           {user && (
             <div className="flex items-center gap-3 px-2">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-accent-cyan flex items-center justify-center font-bold text-white border border-border shadow-sm">
+              <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center font-bold text-primary border border-border shadow-sm">
                 {user.name?.[0] || 'U'}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-bold truncate text-foreground">{user.name}</p>
-                <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Level {level} Member</p>
+                <p className="text-sm font-bold truncate text-text-primary">{user.name}</p>
+                <p className="text-[10px] text-text-secondary font-semibold uppercase tracking-wider">Level {level} Member</p>
               </div>
             </div>
           )}
           
           <div className="flex items-center justify-between gap-2">
-            <ThemeToggle />
             <button 
               onClick={handleLogout}
-              className="flex-1 flex items-center justify-center gap-2 px-4 py-2 text-xs font-bold text-muted-foreground hover:text-rose-500 hover:bg-rose-500/5 rounded-lg transition-all group border border-transparent hover:border-rose-500/20"
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-2 text-xs font-bold text-text-secondary hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all group border border-transparent hover:border-rose-100"
             >
               <LogOut className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
               Logout

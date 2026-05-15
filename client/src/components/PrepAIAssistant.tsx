@@ -17,7 +17,8 @@ import {
   Minimize2,
   Trash2,
   Command,
-  History
+  History,
+  ChevronDown
 } from "lucide-react";
 import { getBaseUrl } from "@/lib/api";
 import ReactMarkdown from 'react-markdown';
@@ -119,11 +120,11 @@ export const PrepAIAssistant = () => {
   };
 
   const quickActions = [
-    { label: "Fix My Code", icon: Code, color: "text-blue-400" },
-    { label: "Generate Study Plan", icon: Zap, color: "text-amber-400" },
-    { label: "Explain Concept", icon: Brain, color: "text-purple-400" },
-    { label: "Improve ATS Score", icon: FileText, color: "text-emerald-400" },
-    { label: "Mock Interview", icon: MessageSquare, color: "text-pink-400" },
+    { label: "Fix My Code", icon: Code, color: "text-blue-500", bg: "bg-blue-50" },
+    { label: "Generate Study Plan", icon: Zap, color: "text-amber-500", bg: "bg-amber-50" },
+    { label: "Explain Concept", icon: Brain, color: "text-purple-500", bg: "bg-purple-50" },
+    { label: "Improve ATS Score", icon: FileText, color: "text-emerald-500", bg: "bg-emerald-50" },
+    { label: "Mock Interview", icon: MessageSquare, color: "text-pink-500", bg: "bg-pink-50" },
   ];
 
   return (
@@ -131,18 +132,17 @@ export const PrepAIAssistant = () => {
       <AnimatePresence>
         {!isOpen && (
           <motion.button
-            initial={{ scale: 0, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0, opacity: 0 }}
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
+            initial={{ scale: 0, opacity: 0, y: 20 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            exit={{ scale: 0, opacity: 0, y: 20 }}
+            whileHover={{ scale: 1.05, y: -5 }}
+            whileTap={{ scale: 0.95 }}
             onClick={() => setIsOpen(true)}
-            className="w-16 h-16 rounded-full bg-primary flex items-center justify-center shadow-[0_0_30px_rgba(124,58,237,0.5)] border border-white/20 group relative overflow-hidden"
+            className="w-16 h-16 rounded-[24px] bg-primary flex items-center justify-center shadow-2xl shadow-primary/30 border-2 border-white group relative overflow-hidden"
           >
-            <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
             <Bot className="w-8 h-8 text-white relative z-10" />
             <motion.div 
-               className="absolute -top-1 -right-1 w-4 h-4 bg-emerald-500 rounded-full border-2 border-slate-950"
+               className="absolute -top-1 -right-1 w-5 h-5 bg-emerald-500 rounded-full border-4 border-white"
                animate={{ scale: [1, 1.2, 1] }}
                transition={{ repeat: Infinity, duration: 2 }}
             />
@@ -159,45 +159,45 @@ export const PrepAIAssistant = () => {
               y: 0, 
               scale: 1, 
               x: 0,
-              width: isExpanded ? "800px" : "400px",
-              height: isExpanded ? "700px" : "600px"
+              width: isExpanded ? "800px" : "420px",
+              height: isExpanded ? "700px" : "620px"
             }}
             exit={{ opacity: 0, y: 100, scale: 0.9, x: 50 }}
-            className="glass-card flex flex-col border border-white/10 shadow-[0_40px_100px_-20px_rgba(0,0,0,0.5)] overflow-hidden"
+            className="saas-card flex flex-col bg-white border border-slate-100 shadow-[0_40px_100px_-20px_rgba(0,0,0,0.15)] overflow-hidden rounded-[40px]"
           >
             {/* Header */}
-            <div className="p-5 border-b border-white/5 bg-white/[0.02] flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center border border-primary/30">
-                  <Bot className="w-6 h-6 text-primary" />
+            <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center border border-primary/20">
+                  <Bot className="w-7 h-7 text-primary" />
                 </div>
                 <div>
-                  <h3 className="font-black text-sm tracking-tight text-white uppercase">PrepAI Assistant</h3>
+                  <h3 className="font-black text-sm tracking-tight text-text-primary uppercase">PrepAI Assistant</h3>
                   <div className="flex items-center gap-1.5">
-                    <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
-                    <span className="text-[10px] font-bold text-emerald-500/80 uppercase tracking-widest">AI Mentor Online</span>
+                    <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+                    <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">Neural Sync Active</span>
                   </div>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1">
                 <button 
                   onClick={() => setIsExpanded(!isExpanded)} 
-                  className="p-2 hover:bg-white/5 rounded-lg text-muted-foreground hover:text-white transition-colors"
+                  className="p-2 hover:bg-white rounded-xl text-text-secondary hover:text-primary transition-all hover:shadow-sm"
                 >
                   {isExpanded ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
                 </button>
                 <button 
                   onClick={clearHistory} 
-                  className="p-2 hover:bg-white/5 rounded-lg text-muted-foreground hover:text-rose-500 transition-colors"
-                  title="Clear Chat"
+                  className="p-2 hover:bg-white rounded-xl text-text-secondary hover:text-rose-500 transition-all hover:shadow-sm"
+                  title="Clear Neural History"
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>
                 <button 
                   onClick={() => setIsOpen(false)} 
-                  className="p-2 hover:bg-white/5 rounded-lg text-muted-foreground hover:text-white transition-colors"
+                  className="p-2 hover:bg-white rounded-xl text-text-secondary hover:text-text-primary transition-all hover:shadow-sm ml-1"
                 >
-                  <X className="w-5 h-5" />
+                  <ChevronDown className="w-5 h-5" />
                 </button>
               </div>
             </div>
@@ -205,32 +205,34 @@ export const PrepAIAssistant = () => {
             {/* Chat Area */}
             <div 
               ref={scrollRef}
-              className="flex-1 overflow-y-auto p-6 space-y-6 scrollbar-thin scrollbar-thumb-white/10"
+              className="flex-1 overflow-y-auto p-8 space-y-8 scroll-smooth no-scrollbar"
             >
               {messages.length === 0 && (
-                <div className="text-center py-10 space-y-4">
-                  <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4 border border-primary/20">
-                    <Sparkles className="w-8 h-8 text-primary animate-pulse" />
+                <div className="text-center py-16 space-y-6">
+                  <div className="w-20 h-20 bg-primary/5 rounded-[32px] flex items-center justify-center mx-auto mb-6 border border-primary/10">
+                    <Sparkles className="w-10 h-10 text-primary animate-pulse" />
                   </div>
-                  <h4 className="text-lg font-black tracking-tight">Your AI Placement Mentor</h4>
-                  <p className="text-xs text-muted-foreground max-w-[250px] mx-auto uppercase tracking-widest leading-loose">
-                    Solve doubts, fix code, and optimize your roadmap for top companies.
-                  </p>
+                  <div className="space-y-2">
+                    <h4 className="text-xl font-black tracking-tight text-text-primary uppercase">Placement Intelligence</h4>
+                    <p className="text-[10px] text-text-secondary max-w-[280px] mx-auto uppercase font-black tracking-[0.2em] leading-loose">
+                      Neural-mapped mentorship for engineering excellence.
+                    </p>
+                  </div>
                 </div>
               )}
 
               {messages.map((msg, i) => (
                 <motion.div
                   key={i}
-                  initial={{ opacity: 0, x: msg.role === 'user' ? 20 : -20 }}
-                  animate={{ opacity: 1, x: 0 }}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
                   className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
                 >
                   <div className={`
-                    max-w-[85%] p-4 rounded-2xl text-sm leading-relaxed
+                    max-w-[85%] p-5 rounded-[28px] text-sm leading-relaxed font-medium
                     ${msg.role === 'user' 
-                      ? 'bg-primary text-white rounded-tr-none shadow-[0_10px_20px_rgba(124,58,237,0.3)]' 
-                      : 'bg-white/5 border border-white/5 text-slate-200 rounded-tl-none'}
+                      ? 'bg-primary text-white rounded-tr-none shadow-xl shadow-primary/20' 
+                      : 'bg-slate-50 border border-slate-100 text-text-primary rounded-tl-none'}
                   `}>
                     <div className="markdown-content">
                       <ReactMarkdown>
@@ -243,65 +245,65 @@ export const PrepAIAssistant = () => {
 
               {loading && (
                 <div className="flex justify-start">
-                  <div className="bg-white/5 border border-white/5 p-4 rounded-2xl rounded-tl-none flex items-center gap-3">
-                    <div className="flex gap-1">
+                  <div className="bg-slate-50 border border-slate-100 p-5 rounded-[28px] rounded-tl-none flex items-center gap-4">
+                    <div className="flex gap-1.5">
                       {[0, 1, 2].map(n => (
                         <motion.div
                           key={n}
-                          className="w-1.5 h-1.5 bg-primary rounded-full"
-                          animate={{ y: [0, -5, 0] }}
-                          transition={{ repeat: Infinity, duration: 0.6, delay: n * 0.1 }}
+                          className="w-2 h-2 bg-primary/40 rounded-full"
+                          animate={{ scale: [1, 1.5, 1], opacity: [0.4, 1, 0.4] }}
+                          transition={{ repeat: Infinity, duration: 1, delay: n * 0.2 }}
                         />
                       ))}
                     </div>
-                    <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Thinking...</span>
+                    <span className="text-[10px] font-black text-text-secondary uppercase tracking-widest">Neural Processing...</span>
                   </div>
                 </div>
               )}
             </div>
 
             {/* Quick Actions */}
-            <div className="px-6 pb-2 overflow-x-auto flex gap-2 scrollbar-none">
+            <div className="px-8 pb-4 overflow-x-auto flex gap-3 no-scrollbar shrink-0">
               {quickActions.map(action => (
                 <button
                   key={action.label}
                   onClick={() => handleSend(action.label)}
-                  className="flex items-center gap-2 px-3 py-2 bg-white/5 hover:bg-white/10 border border-white/5 rounded-xl whitespace-nowrap transition-all group shrink-0"
+                  className={`flex items-center gap-3 px-5 py-2.5 ${action.bg} border border-transparent hover:border-slate-200 rounded-2xl whitespace-nowrap transition-all group shrink-0 shadow-sm`}
                 >
-                  <action.icon className={`w-3.5 h-3.5 ${action.color}`} />
-                  <span className="text-[10px] font-bold uppercase tracking-widest">{action.label}</span>
+                  <action.icon className={`w-4 h-4 ${action.color}`} />
+                  <span className={`text-[10px] font-black uppercase tracking-widest ${action.color}`}>{action.label}</span>
                 </button>
               ))}
             </div>
 
             {/* Input Area */}
-            <div className="p-6 pt-2">
-              <div className="relative">
+            <div className="p-8 pt-4 bg-slate-50/50 border-t border-slate-100">
+              <div className="relative group">
                 <input
                   type="text"
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && handleSend()}
-                  placeholder="Ask anything about placements..."
-                  className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-5 pr-14 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all placeholder:text-muted-foreground/50"
+                  placeholder="Ask nexus intelligence..."
+                  className="w-full bg-white border border-slate-200 rounded-[24px] py-5 pl-6 pr-20 text-sm focus:outline-none focus:border-primary/50 focus:shadow-xl focus:shadow-primary/5 transition-all placeholder:text-slate-400 font-medium"
                 />
-                <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
-                  <button className="p-2 hover:bg-white/10 rounded-xl text-muted-foreground transition-colors">
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
+                  <button className="p-2.5 hover:bg-slate-50 rounded-xl text-slate-400 hover:text-primary transition-all">
                     <Mic className="w-4 h-4" />
                   </button>
                   <button 
                     onClick={() => handleSend()}
                     disabled={!input.trim() || loading}
-                    className="p-2.5 bg-primary rounded-xl text-white shadow-lg shadow-primary/20 disabled:opacity-50 disabled:grayscale transition-all hover:scale-105 active:scale-95"
+                    className="p-3 bg-primary rounded-xl text-white shadow-lg shadow-primary/20 disabled:opacity-50 transition-all hover:scale-105 active:scale-95"
                   >
                     <Send className="w-4 h-4" />
                   </button>
                 </div>
               </div>
-              <div className="mt-3 flex items-center justify-center gap-4 text-[9px] font-black text-muted-foreground uppercase tracking-[0.2em]">
-                <div className="flex items-center gap-1.5"><Command className="w-3 h-3" /> COMMANDS</div>
-                <div className="w-1 h-1 bg-white/10 rounded-full" />
-                <div className="flex items-center gap-1.5"><History className="w-3 h-3" /> MEMORY ACTIVE</div>
+              <div className="mt-4 flex items-center justify-center gap-6 text-[9px] font-black text-text-secondary uppercase tracking-[0.2em]">
+                <div className="flex items-center gap-2"><Command className="w-3 h-3 text-primary/40" /> NEURAL CMDS</div>
+                <div className="w-1 h-1 bg-slate-200 rounded-full" />
+                <div className="flex items-center gap-2"><History className="w-3 h-3 text-primary/40" /> SYNCED HISTORY</div>
               </div>
             </div>
           </motion.div>
@@ -310,30 +312,30 @@ export const PrepAIAssistant = () => {
 
       <style jsx global>{`
         .markdown-content pre {
-          background: rgba(0,0,0,0.3);
-          padding: 1rem;
-          border-radius: 0.75rem;
-          margin: 0.5rem 0;
+          background: #0F172A;
+          padding: 1.25rem;
+          border-radius: 1rem;
+          margin: 0.75rem 0;
           overflow-x: auto;
-          border: 1px solid rgba(255,255,255,0.05);
+          color: #f8fafc;
         }
         .markdown-content code {
           font-family: 'JetBrains Mono', monospace;
-          font-size: 0.8rem;
-          color: #a78bfa;
+          font-size: 0.85rem;
+          color: #8b5cf6;
         }
         .markdown-content p {
-          margin-bottom: 0.5rem;
+          margin-bottom: 0.75rem;
         }
         .markdown-content p:last-child {
           margin-bottom: 0;
         }
         .markdown-content ul, .markdown-content ol {
-          padding-left: 1.25rem;
-          margin: 0.5rem 0;
+          padding-left: 1.5rem;
+          margin: 0.75rem 0;
         }
         .markdown-content li {
-          margin-bottom: 0.25rem;
+          margin-bottom: 0.4rem;
         }
       `}</style>
     </div>

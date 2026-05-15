@@ -25,9 +25,12 @@ import {
   FileText,
   Calculator,
   Languages,
-  BarChart3
+  BarChart3,
+  ArrowRight,
+  Sparkles
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import Sidebar from "@/components/Sidebar";
 
 // --- Data Structure ---
 
@@ -142,11 +145,6 @@ export default function AptitudeRoadmapPage() {
     }
   }, [completedTopics, mounted]);
 
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    router.push("/login");
-  };
-
   const toggleTopic = (topicId: string) => {
     setCompletedTopics(prev => 
       prev.includes(topicId) 
@@ -170,120 +168,61 @@ export default function AptitudeRoadmapPage() {
   if (!mounted) return null;
 
   return (
-    <div className="min-h-screen bg-slate-950 flex flex-col md:flex-row font-sans relative">
-      {/* Mobile Header */}
-      <header className="md:hidden h-16 border-b border-white/5 bg-slate-950 flex items-center justify-between px-6 z-50 sticky top-0">
-        <Link href="/" className="flex items-center gap-2">
-          <div className="bg-indigo-600 p-1.5 rounded-lg">
-            <Bot className="w-4 h-4 text-white" />
-          </div>
-          <span className="text-lg font-bold tracking-tight text-white">PrepAI</span>
-        </Link>
-        <button 
-          onClick={() => setSidebarOpen(!sidebarOpen)}
-          className="p-2 text-slate-300 hover:text-white"
-        >
-          {sidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-        </button>
-      </header>
+    <div className="min-h-screen bg-[#F8FAFC] flex text-text-primary overflow-hidden">
+      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
-      {/* Sidebar Overlay */}
-      {sidebarOpen && (
-        <div 
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
+      <main className="flex-1 relative overflow-y-auto no-scrollbar scroll-smooth">
+        {/* Background Decorative Element */}
+        <div className="absolute top-0 left-0 w-full h-96 bg-gradient-to-b from-primary/5 to-transparent pointer-events-none" />
 
-      {/* Sidebar */}
-      <aside className={`
-        fixed md:sticky top-0 left-0 h-screen w-72 md:w-64 border-r border-white/5 bg-slate-950 p-6 flex flex-col shrink-0 z-50 transition-transform duration-300
-        ${sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
-      `}>
-        <Link href="/" className="hidden md:flex items-center gap-2 mb-10">
-          <div className="bg-indigo-600 p-2 rounded-lg">
-            <Bot className="w-5 h-5 text-white" />
-          </div>
-          <span className="text-xl font-bold tracking-tight text-white">PrepAI</span>
-        </Link>
-        <nav className="space-y-1 flex-1">
-          {[
-            { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, color: "" },
-            { href: "/quests", label: "Daily Quests", icon: Zap, color: "text-amber-400" },
-            { href: "/roadmaps", label: "Placement Roadmaps", icon: MapIcon, color: "text-indigo-400", active: true },
-            { href: "/aptitude", label: "Aptitude Test", icon: Brain, color: "text-pink-400" },
-            { href: "/coding", label: "Coding Simulator", icon: Code, color: "" },
-            { href: "/interview", label: "Mock Interview", icon: MessageSquare, color: "" },
-            { href: "/resume", label: "Resume Analyzer", icon: FileText, color: "" },
-            { href: "/profile", label: "Profile", icon: User, color: "text-indigo-400" },
-          ].map((item) => (
-            <Link 
-              key={item.href}
-              href={item.href} 
-              onClick={() => setSidebarOpen(false)}
-              className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${
-                item.active ? 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20' : 'text-slate-400 hover:bg-white/5 hover:text-white'
-              }`}
-            >
-              <item.icon className={`w-5 h-5 ${item.color} shrink-0`} />
-              {item.label}
+        <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-xl border-b border-slate-100 px-4 md:px-10 pt-8 pb-4">
+          <div className="max-w-[1600px] mx-auto">
+            <Link href="/roadmaps" className="inline-flex items-center gap-2 text-primary hover:gap-3 transition-all font-black uppercase tracking-widest text-[10px] mb-8 group">
+              <ArrowLeft className="w-4 h-4" /> Back to Roadmaps
             </Link>
-          ))}
-        </nav>
-        <button onClick={handleLogout} className="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-rose-400 transition-colors mt-auto">
-          <LogOut className="w-5 h-5" /> Logout
-        </button>
-      </aside>
-
-      <div className="flex-1 flex flex-col h-screen overflow-y-auto relative">
-        {/* Background Glows */}
-        <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10">
-          <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-pink-600/10 rounded-full blur-[120px]" />
-          <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-indigo-600/10 rounded-full blur-[120px]" />
-        </div>
-
-        <header className="sticky top-0 z-40 bg-slate-950/80 backdrop-blur-xl border-b border-white/5 pt-8 pb-4 px-6 md:px-12">
-          <Link href="/roadmaps" className="inline-flex items-center gap-2 text-pink-400 hover:text-pink-300 font-medium mb-6 transition-colors group">
-            <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" /> Back to Roadmaps
-          </Link>
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
-            <div>
-              <h1 className="text-3xl md:text-5xl font-black text-white mb-4 tracking-tight">Aptitude Preparation</h1>
-              <p className="text-lg text-slate-400 max-w-2xl">Master Quantitative, Logical, and Verbal skills required for AMCAT, eLitmus, and major company recruitment rounds.</p>
-            </div>
-          </div>
-
-          {/* Dashboard Summary Section */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-            <div className="glass-card p-4 border border-white/10 bg-white/5 flex flex-col items-center justify-center text-center">
-              <div className="text-2xl font-black text-pink-400">{APTITUDE_TRACK.length}</div>
-              <div className="text-[10px] text-slate-500 uppercase tracking-widest font-bold mt-1">Total Categories</div>
-            </div>
-            <div className="glass-card p-4 border border-white/10 bg-white/5 flex flex-col items-center justify-center text-center">
-              <div className="text-2xl font-black text-white">{totalTopics}</div>
-              <div className="text-[10px] text-slate-500 uppercase tracking-widest font-bold mt-1">Total Topics</div>
-            </div>
-            <div className="glass-card p-4 border border-white/10 bg-white/5 flex flex-col items-center justify-center text-center">
-              <div className="text-2xl font-black text-emerald-400">{completedCount}</div>
-              <div className="text-[10px] text-slate-500 uppercase tracking-widest font-bold mt-1">Completed</div>
-            </div>
-            <div className="glass-card p-4 border border-white/10 bg-white/5 flex flex-col items-center justify-center text-center relative overflow-hidden">
-              <div className="relative z-10">
-                <div className="text-2xl font-black text-pink-500">{progressPercent}%</div>
-                <div className="text-[10px] text-slate-500 uppercase tracking-widest font-bold mt-1">Overall Mastery</div>
+            
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-10 mb-12">
+              <div>
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center border border-primary/10">
+                    <Brain className="w-6 h-6 text-primary" />
+                  </div>
+                  <span className="text-[10px] font-black text-text-secondary uppercase tracking-[0.3em]">Master Track</span>
+                </div>
+                <h1 className="text-3xl md:text-5xl lg:text-6xl font-black text-text-primary tracking-tighter mb-4">Aptitude Preparation</h1>
+                <p className="text-base md:text-lg text-text-secondary max-w-3xl font-medium leading-relaxed">Master Quantitative, Logical, and Verbal skills required for AMCAT, eLitmus, and major company recruitment rounds.</p>
               </div>
-              <motion.div 
-                className="absolute bottom-0 left-0 h-1 bg-pink-500/30"
-                initial={{ width: 0 }}
-                animate={{ width: `${progressPercent}%` }}
-                transition={{ duration: 1, ease: "easeOut" }}
-              />
+            </div>
+
+            {/* Dashboard Summary Section */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8">
+              {[
+                { label: "Total Categories", value: APTITUDE_TRACK.length, color: "text-primary" },
+                { label: "Curriculum Topics", value: totalTopics, color: "text-text-primary" },
+                { label: "Milestones Reached", value: completedCount, color: "text-emerald-600" },
+                { label: "Overall Mastery", value: `${progressPercent}%`, color: "text-primary", isProgress: true },
+              ].map((stat, i) => (
+                <div key={i} className="saas-card p-6 bg-white shadow-xl shadow-slate-200/50 flex flex-col justify-center relative overflow-hidden">
+                  <div className="relative z-10">
+                    <div className={`text-xl md:text-3xl font-black tracking-tighter ${stat.color}`}>{stat.value}</div>
+                    <div className="text-[8px] md:text-[10px] text-text-secondary uppercase tracking-widest font-black mt-2">{stat.label}</div>
+                  </div>
+                  {stat.isProgress && (
+                    <motion.div 
+                      className="absolute bottom-0 left-0 h-1.5 bg-primary/20"
+                      initial={{ width: 0 }}
+                      animate={{ width: `${progressPercent}%` }}
+                      transition={{ duration: 1.5, ease: "circOut" }}
+                    />
+                  )}
+                </div>
+              ))}
             </div>
           </div>
         </header>
 
-        <main className="w-full px-6 md:px-12 py-12">
-          <div className="space-y-6">
+        <div className="px-4 md:px-10 py-8 md:py-16 max-w-[1600px] mx-auto">
+          <div className="space-y-8">
             {APTITUDE_TRACK.map((subject, sIdx) => {
               const isExpanded = expandedSubject === subject.id;
               const subjectCompletedCount = subject.topics.filter(t => completedTopics.includes(t.id)).length;
@@ -297,40 +236,40 @@ export default function AptitudeRoadmapPage() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: sIdx * 0.1 }}
-                  className={`glass-card border overflow-hidden transition-all duration-500 ${isExpanded ? 'border-pink-500/50 shadow-[0_0_30px_rgba(236,72,153,0.1)]' : 'border-white/5 hover:border-white/20'}`}
+                  className={`saas-card overflow-hidden transition-all duration-500 bg-white ${isExpanded ? 'ring-2 ring-primary/20 shadow-2xl shadow-slate-200' : 'hover:shadow-xl hover:shadow-slate-200/50 shadow-lg shadow-slate-200/30'}`}
                 >
                   {/* Subject Header */}
                   <div 
-                    className={`p-6 cursor-pointer flex items-center justify-between transition-colors ${isExpanded ? 'bg-pink-500/5' : 'bg-white/[0.02] hover:bg-white/[0.04]'}`}
+                    className={`p-4 md:p-8 cursor-pointer flex flex-col md:flex-row md:items-center justify-between transition-colors ${isExpanded ? 'bg-slate-50' : 'hover:bg-slate-50/50'}`}
                     onClick={() => setExpandedSubject(isExpanded ? null : subject.id)}
                   >
-                    <div className="flex items-center gap-6 flex-1">
-                      <div className={`w-12 h-12 rounded-2xl flex items-center justify-center border transition-all duration-500 ${allSubjectDone ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400' : 'bg-white/5 border-white/10 text-pink-400'}`}>
-                        {allSubjectDone ? <CheckCircle2 className="w-6 h-6" /> : <Icon className="w-6 h-6" />}
+                    <div className="flex items-center gap-8 flex-1">
+                      <div className={`w-16 h-16 rounded-[24px] flex items-center justify-center border transition-all duration-500 ${allSubjectDone ? 'bg-emerald-50 border-emerald-100 text-emerald-600 shadow-lg shadow-emerald-500/10' : 'bg-white border-slate-100 text-primary shadow-lg shadow-slate-200/50'}`}>
+                        {allSubjectDone ? <CheckCircle2 className="w-8 h-8" /> : <Icon className="w-8 h-8" />}
                       </div>
                       <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-1">
-                          <h2 className="text-xl font-bold text-white tracking-tight">{subject.title}</h2>
+                        <div className="flex items-center gap-4 mb-2">
+                          <h2 className="text-xl md:text-2xl font-black text-text-primary tracking-tighter">{subject.title}</h2>
                           {allSubjectDone && (
-                            <span className="px-2 py-0.5 bg-emerald-500/10 text-emerald-500 text-[10px] font-black uppercase rounded border border-emerald-500/20">Aptitude Ace</span>
+                            <span className="px-3 py-1 bg-emerald-50 text-emerald-700 text-[10px] font-black uppercase rounded-full border border-emerald-100">Aptitude Ace</span>
                           )}
                         </div>
-                        <div className="flex items-center gap-4">
-                          <div className="w-32 h-1.5 bg-white/5 rounded-full overflow-hidden">
+                        <div className="flex items-center gap-6">
+                          <div className="w-full md:w-48 h-2 bg-slate-100 rounded-full overflow-hidden shadow-inner">
                             <motion.div 
-                              className="h-full bg-pink-500 shadow-[0_0_10px_#ec4899]"
+                              className="h-full bg-primary shadow-[0_0_15px_rgba(124,58,237,0.3)]"
                               initial={{ width: 0 }}
                               animate={{ width: `${subjectPercent}%` }}
-                              transition={{ duration: 0.8 }}
+                              transition={{ duration: 1 }}
                             />
                           </div>
-                          <span className="text-xs font-bold text-slate-500">{subjectPercent}% Mastery</span>
+                          <span className="text-[10px] font-black text-text-secondary uppercase tracking-widest">{subjectPercent}% Mastery</span>
                         </div>
                       </div>
                     </div>
                     <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-slate-500 transition-transform duration-300" style={{ transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)' }}>
-                        <ChevronDown className="w-5 h-5" />
+                      <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-slate-400 border border-slate-100 transition-all duration-500 ${isExpanded ? 'bg-white shadow-md' : 'bg-transparent'}`} style={{ transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)' }}>
+                        <ChevronDown className="w-6 h-6" />
                       </div>
                     </div>
                   </div>
@@ -342,59 +281,59 @@ export default function AptitudeRoadmapPage() {
                         initial={{ height: 0, opacity: 0 }}
                         animate={{ height: "auto", opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
-                        transition={{ duration: 0.4, ease: "easeInOut" }}
+                        transition={{ duration: 0.5, ease: "circOut" }}
                       >
-                        <div className="px-6 pb-6 pt-2 border-t border-white/5 space-y-3 bg-slate-950/30">
-                          <div className="flex justify-between items-center mb-4 pt-2 px-2">
-                            <span className="text-[10px] text-slate-500 uppercase tracking-widest font-black">Curriculum Breakdown</span>
+                        <div className="px-8 pb-10 pt-4 border-t border-slate-100 space-y-6 bg-slate-50/30">
+                          <div className="flex justify-between items-center mb-6 pt-4">
+                            <span className="text-[10px] text-text-secondary uppercase tracking-[0.3em] font-black">Core Curriculum Breakdown</span>
                             <button 
                               onClick={(e) => {
                                 e.stopPropagation();
                                 markSubjectComplete(subject);
                               }}
-                              className="text-[10px] text-pink-400 hover:text-pink-300 font-black uppercase tracking-widest transition-colors flex items-center gap-1.5"
+                              className="px-5 py-2 rounded-xl bg-white border border-slate-200 text-[10px] text-primary hover:bg-primary hover:text-white hover:border-primary font-black uppercase tracking-widest transition-all shadow-sm flex items-center gap-2"
                             >
-                              <Check className="w-3 h-3" /> Mark All Complete
+                              <Check className="w-4 h-4" /> Mark All Complete
                             </button>
                           </div>
                           
-                          <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+                          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                             {subject.topics.map((topic, tIdx) => {
                               const isDone = completedTopics.includes(topic.id);
                               return (
                                 <motion.div
                                   key={topic.id}
-                                  initial={{ opacity: 0, x: -10 }}
-                                  animate={{ opacity: 1, x: 0 }}
+                                  initial={{ opacity: 0, y: 10 }}
+                                  animate={{ opacity: 1, y: 0 }}
                                   transition={{ delay: tIdx * 0.05 }}
                                   onClick={() => toggleTopic(topic.id)}
-                                  className={`p-4 rounded-xl border cursor-pointer transition-all duration-300 flex items-center justify-between group ${isDone ? 'bg-emerald-500/5 border-emerald-500/20' : 'bg-white/[0.02] border-white/5 hover:bg-white/[0.04] hover:border-pink-500/30'}`}
+                                  className={`p-6 rounded-[32px] border cursor-pointer transition-all duration-500 flex items-center justify-between group ${isDone ? 'bg-emerald-50/30 border-emerald-100' : 'bg-white border-slate-100 hover:border-primary/30 hover:shadow-xl hover:shadow-slate-200/50'}`}
                                 >
-                                  <div className="flex items-center gap-4">
-                                    <div className={`w-6 h-6 rounded-lg flex items-center justify-center border transition-all ${isDone ? 'bg-emerald-500 border-emerald-500 text-white shadow-[0_0_10px_rgba(16,185,129,0.3)]' : 'bg-white/5 border-white/20 text-transparent group-hover:border-pink-500/50'}`}>
-                                      <Check className="w-4 h-4" />
+                                  <div className="flex items-center gap-5">
+                                    <div className={`w-10 h-10 rounded-2xl flex items-center justify-center border transition-all duration-500 ${isDone ? 'bg-emerald-500 border-emerald-500 text-white shadow-lg shadow-emerald-500/20' : 'bg-slate-50 border-slate-100 text-transparent group-hover:border-primary/50'}`}>
+                                      <Check className="w-5 h-5" />
                                     </div>
                                     <div>
-                                      <h4 className={`text-sm font-bold transition-colors ${isDone ? 'text-slate-400 line-through decoration-emerald-500/50' : 'text-slate-200 group-hover:text-white'}`}>
+                                      <h4 className={`text-base font-black tracking-tight transition-colors ${isDone ? 'text-text-secondary line-through decoration-emerald-500/50' : 'text-text-primary group-hover:text-primary'}`}>
                                         {topic.title}
                                       </h4>
-                                      <div className="flex items-center gap-3 mt-1">
-                                        <span className="flex items-center gap-1 text-[10px] text-slate-500 font-medium">
-                                          <Clock className="w-3 h-3" /> {topic.estimatedTime}
+                                      <div className="flex items-center gap-4 mt-2">
+                                        <span className="flex items-center gap-1.5 text-[10px] text-text-secondary font-black uppercase tracking-widest">
+                                          <Clock className="w-3.5 h-3.5" /> {topic.estimatedTime}
                                         </span>
-                                        <span className={`text-[9px] px-1.5 py-0.5 rounded font-black uppercase tracking-tighter ${
-                                          topic.difficulty === 'Beginner' ? 'text-blue-400 bg-blue-500/10' :
-                                          topic.difficulty === 'Intermediate' ? 'text-amber-400 bg-amber-500/10' :
-                                          'text-rose-400 bg-rose-500/10'
+                                        <span className={`text-[9px] px-2.5 py-1 rounded-full font-black uppercase tracking-widest ${
+                                          topic.difficulty === 'Beginner' ? 'text-blue-600 bg-blue-50 border border-blue-100' :
+                                          topic.difficulty === 'Intermediate' ? 'text-amber-600 bg-amber-50 border border-amber-100' :
+                                          'text-rose-600 bg-rose-50 border border-rose-100'
                                         }`}>
                                           {topic.difficulty}
                                         </span>
                                       </div>
                                     </div>
                                   </div>
-                                  <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <div className="w-8 h-8 rounded-full bg-pink-500/10 flex items-center justify-center text-pink-400">
-                                      <Zap className="w-4 h-4" />
+                                  <div className="opacity-0 group-hover:opacity-100 transition-all duration-500 transform translate-x-4 group-hover:translate-x-0">
+                                    <div className="w-10 h-10 rounded-2xl bg-primary/10 flex items-center justify-center text-primary shadow-sm border border-primary/5">
+                                      <ArrowRight className="w-5 h-5" />
                                     </div>
                                   </div>
                                 </motion.div>
@@ -412,22 +351,34 @@ export default function AptitudeRoadmapPage() {
 
           {/* Bottom CTA */}
           <motion.div 
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            className="mt-16 p-10 glass-card text-center border border-white/10 bg-gradient-to-br from-pink-600/10 to-transparent relative overflow-hidden"
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="mt-20 p-16 saas-card bg-white border border-slate-100 shadow-2xl shadow-slate-200/50 text-center relative overflow-hidden group"
           >
-            <div className="relative z-10">
-              <Trophy className="w-12 h-12 text-pink-400 mx-auto mb-6 shadow-[0_0_20px_#ec4899]" />
-              <h3 className="text-2xl font-bold text-white mb-4">Cracking Corporate Tests</h3>
-              <p className="text-slate-400 mb-8 max-w-md mx-auto">Mastering aptitude is the first barrier to any major company recruitment. This roadmap ensures you clear AMCAT, eLitmus, and company assessments with ease.</p>
-              <Link href="/roadmaps" className="btn-primary inline-flex items-center gap-2 bg-pink-600 hover:bg-pink-700 border-pink-500 shadow-[0_0_20px_rgba(236,72,153,0.3)]">
-                Back to Dashboard <ArrowLeft className="w-5 h-5 rotate-180" />
-              </Link>
+            <div className="absolute top-0 right-0 p-16 opacity-[0.02] group-hover:opacity-[0.05] transition-all duration-1000 rotate-12">
+               <Trophy className="w-96 h-96" />
             </div>
-            <div className="absolute -bottom-12 -right-12 w-48 h-48 bg-pink-500/10 rounded-full blur-3xl" />
+            
+            <div className="relative z-10 max-w-3xl mx-auto">
+              <div className="w-20 h-20 bg-primary/10 rounded-[32px] flex items-center justify-center mx-auto mb-10 shadow-xl shadow-primary/5">
+                <Sparkles className="w-10 h-10 text-primary" />
+              </div>
+              <h3 className="text-4xl font-black text-text-primary tracking-tighter mb-6">Mastering Corporate Entrance Assessments</h3>
+              <p className="text-lg text-text-secondary mb-10 font-medium leading-relaxed">The aptitude round is the critical first barrier in elite tech recruitment. This curriculum is engineered to ensure you clear AMCAT, eLitmus, and major company assessments with a 99th percentile score.</p>
+              
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
+                <Link href="/roadmaps" className="w-full sm:w-auto px-10 py-5 rounded-[24px] bg-primary text-white font-black uppercase tracking-[0.2em] text-xs shadow-xl shadow-primary/20 hover:shadow-2xl hover:shadow-primary/30 transition-all flex items-center justify-center gap-3">
+                  Back to Dashboard <ArrowRight className="w-5 h-5" />
+                </Link>
+                <button className="w-full sm:w-auto px-10 py-5 rounded-[24px] bg-white text-text-primary border border-slate-200 font-black uppercase tracking-[0.2em] text-xs hover:bg-slate-50 transition-all flex items-center justify-center gap-3">
+                  Download Guide <FileText className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
           </motion.div>
-        </main>
-      </div>
+        </div>
+      </main>
     </div>
   );
 }

@@ -27,27 +27,36 @@ const Github = ({ className }: { className?: string }) => (
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [user, setUser] = useState<{ name?: string } | null>(null);
 
   useEffect(() => {
     const handleScroll = () => {
       setScrolled(window.scrollY > 20);
     };
     window.addEventListener('scroll', handleScroll);
+    
+    const savedUser = localStorage.getItem("user");
+    if (savedUser) {
+      try {
+        setUser(JSON.parse(savedUser));
+      } catch (e) {}
+    }
+    
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   return (
-    <nav className={`fixed top-0 w-full z-[100] transition-all duration-500 ${scrolled ? 'py-4' : 'py-8'}`}>
+    <nav className={`fixed top-0 w-full z-[100] transition-all duration-500 ${scrolled ? 'py-3' : 'py-6'}`}>
       <div className="max-w-7xl mx-auto px-6">
         <div className={`
-          relative flex items-center justify-between px-6 py-3 rounded-2xl border transition-all duration-500
-          ${scrolled ? 'bg-background/80 backdrop-blur-xl border-border shadow-2xl' : 'bg-transparent border-transparent'}
+          relative flex items-center justify-between px-6 py-2.5 rounded-2xl border transition-all duration-500
+          ${scrolled ? 'bg-white/90 backdrop-blur-md border-border shadow-soft' : 'bg-transparent border-transparent'}
         `}>
           <Link href="/" className="flex items-center gap-2 group">
-            <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center group-hover:rotate-12 transition-transform shadow-[0_0_15px_rgba(124,58,237,0.4)]">
+            <div className="w-9 h-9 rounded-lg bg-primary flex items-center justify-center group-hover:rotate-12 transition-transform shadow-sm">
               <Sparkles className="w-5 h-5 text-white" />
             </div>
-            <span className="text-2xl font-bold tracking-tight text-foreground">PrepAI</span>
+            <span className="text-2xl font-bold tracking-tight text-text-primary">PrepAI</span>
           </Link>
           
           {/* Desktop Links */}
@@ -55,8 +64,8 @@ export default function Navbar() {
             {['Features', 'Roadmaps', 'Pricing', 'About'].map((item) => (
               <Link 
                 key={item}
-                href={`#${item.toLowerCase()}`} 
-                className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors relative group"
+                href={item === 'Roadmaps' ? '/roadmaps' : `#${item.toLowerCase()}`} 
+                className="text-sm font-medium text-text-secondary hover:text-primary transition-colors relative group"
               >
                 {item}
                 <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary transition-all group-hover:w-full" />
@@ -67,25 +76,37 @@ export default function Navbar() {
           <div className="flex items-center gap-4">
             <Link 
               href="https://github.com" 
-              className="hidden lg:flex p-2 text-muted-foreground hover:text-foreground transition-colors"
+              className="hidden lg:flex p-2 text-text-secondary hover:text-text-primary transition-colors"
             >
               <Github className="w-5 h-5" />
             </Link>
-            <Link 
-              href="/login" 
-              className="hidden sm:block text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Login
-            </Link>
-            <Link 
-              href="/signup" 
-              className="btn-primary flex items-center gap-2 text-sm"
-            >
-              Get Started <ArrowRight className="w-4 h-4" />
-            </Link>
+            
+            {user ? (
+              <Link 
+                href="/dashboard" 
+                className="btn-primary flex items-center gap-2 text-sm px-5 py-2 shadow-lg shadow-primary/20"
+              >
+                Dashboard <ArrowRight className="w-4 h-4" />
+              </Link>
+            ) : (
+              <>
+                <Link 
+                  href="/login" 
+                  className="hidden sm:block text-sm font-semibold text-text-secondary hover:text-text-primary transition-colors"
+                >
+                  Login
+                </Link>
+                <Link 
+                  href="/signup" 
+                  className="btn-primary flex items-center gap-2 text-sm px-5 py-2"
+                >
+                  Get Started <ArrowRight className="w-4 h-4" />
+                </Link>
+              </>
+            )}
             
             <button 
-              className="md:hidden p-2 text-slate-400 hover:text-white transition-colors"
+              className="md:hidden p-2 text-text-secondary hover:text-text-primary transition-colors"
               onClick={() => setIsOpen(!isOpen)}
             >
               {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -100,27 +121,37 @@ export default function Navbar() {
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
-              className="md:hidden absolute top-full left-6 right-6 mt-4 glass-card p-6 border-white/10"
+              className="md:hidden absolute top-full left-6 right-6 mt-4 saas-card p-6 bg-white border-border"
             >
               <div className="flex flex-col gap-6">
                 {['Features', 'Roadmaps', 'Pricing', 'About'].map((item) => (
                   <Link 
                     key={item}
-                    href={`#${item.toLowerCase()}`} 
+                    href={item === 'Roadmaps' ? '/roadmaps' : `#${item.toLowerCase()}`} 
                     onClick={() => setIsOpen(false)}
-                    className="text-lg font-medium text-slate-300 hover:text-primary transition-colors"
+                    className="text-lg font-medium text-text-secondary hover:text-primary transition-colors"
                   >
                     {item}
                   </Link>
                 ))}
-                <hr className="border-white/5" />
-                <Link 
-                  href="/login" 
-                  onClick={() => setIsOpen(false)}
-                  className="text-lg font-medium text-slate-300 hover:text-primary transition-colors"
-                >
-                  Login
-                </Link>
+                <hr className="border-border" />
+                {user ? (
+                  <Link 
+                    href="/dashboard" 
+                    onClick={() => setIsOpen(false)}
+                    className="text-lg font-bold text-primary flex items-center gap-2"
+                  >
+                    My Dashboard <ArrowRight className="w-5 h-5" />
+                  </Link>
+                ) : (
+                  <Link 
+                    href="/login" 
+                    onClick={() => setIsOpen(false)}
+                    className="text-lg font-medium text-text-secondary hover:text-primary transition-colors"
+                  >
+                    Login
+                  </Link>
+                )}
               </div>
             </motion.div>
           )}
