@@ -26,6 +26,7 @@ model User {
   resetPasswordExpires DateTime?
   userProgresses     UserProgress[]
   moduleProgresses   ModuleProgress[]
+  aptitudeTopicProgresses AptitudeTopicProgress[]
   createdAt          DateTime    @default(now())
   updatedAt          DateTime    @updatedAt
 }
@@ -154,6 +155,58 @@ model AptitudeAttempt {
 
   @@index([userId])
   @@index([createdAt])
+}
+
+model AptitudeTopic {
+  id          String      @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  slug        String      @unique
+  description String
+  level       String      // Beginner, Intermediate, Advanced
+  duration    String      // e.g. "2 hours"
+  lessons     AptitudeLesson[]
+  practiceQuestions AptitudePracticeQuestion[]
+  topicProgresses AptitudeTopicProgress[]
+  createdAt   DateTime    @default(now())
+}
+
+model AptitudeLesson {
+  id          String      @id @default(auto()) @map("_id") @db.ObjectId
+  topicId     String      @db.ObjectId
+  topic       AptitudeTopic @relation(fields: [topicId], references: [id])
+  title       String
+  content     String
+  formula     String?
+  example     String?
+  shortcut    String?
+  commonMistake String?
+  difficulty  String?
+  orderIndex  Int
+  createdAt   DateTime    @default(now())
+}
+
+model AptitudePracticeQuestion {
+  id              String      @id @default(auto()) @map("_id") @db.ObjectId
+  topicId         String      @db.ObjectId
+  topic           AptitudeTopic @relation(fields: [topicId], references: [id])
+  questionText    String
+  options         String      // JSON string array
+  correctAnswer   String
+  explanation     String?
+  difficulty      String
+  examTags        String[]
+  createdAt       DateTime    @default(now())
+}
+
+model AptitudeTopicProgress {
+  id              String      @id @default(auto()) @map("_id") @db.ObjectId
+  userId          String      @db.ObjectId
+  user            User        @relation(fields: [userId], references: [id])
+  topicId         String      @db.ObjectId
+  topic           AptitudeTopic @relation(fields: [topicId], references: [id])
+  completedLessons String[]   // array of lesson IDs
+  progressPercent Float       @default(0)
+  @@unique([userId, topicId])
 }
 
 // --- Coding Arena Models ---

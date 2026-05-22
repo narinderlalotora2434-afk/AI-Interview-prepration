@@ -306,12 +306,15 @@ export default function AptitudeRoadmapPage() {
                                   initial={{ opacity: 0, y: 10 }}
                                   animate={{ opacity: 1, y: 0 }}
                                   transition={{ delay: tIdx * 0.05 }}
-                                  onClick={() => toggleTopic(topic.id)}
+                                  onClick={() => router.push(`/aptitude/learn/${topic.title.toLowerCase().replace(/\s+/g, '-')}`)}
                                   className={`p-6 rounded-[32px] border cursor-pointer transition-all duration-500 flex items-center justify-between group ${isDone ? 'bg-emerald-50/30 border-emerald-100' : 'bg-white border-slate-100 hover:border-primary/30 hover:shadow-xl hover:shadow-slate-200/50'}`}
                                 >
                                   <div className="flex items-center gap-5">
-                                    <div className={`w-10 h-10 rounded-2xl flex items-center justify-center border transition-all duration-500 ${isDone ? 'bg-emerald-500 border-emerald-500 text-white shadow-lg shadow-emerald-500/20' : 'bg-slate-50 border-slate-100 text-transparent group-hover:border-primary/50'}`}>
-                                      <Check className="w-5 h-5" />
+                                    <div 
+                                      onClick={(e) => { e.stopPropagation(); toggleTopic(topic.id); }}
+                                      className={`w-10 h-10 rounded-2xl flex items-center justify-center border transition-all duration-500 hover:scale-110 ${isDone ? 'bg-emerald-500 border-emerald-500 text-white shadow-lg shadow-emerald-500/20' : 'bg-slate-50 border-slate-100 text-transparent group-hover:border-emerald-200'}`}
+                                    >
+                                      <Check className={`w-5 h-5 ${isDone ? '' : 'text-emerald-300 opacity-0 hover:opacity-100'}`} />
                                     </div>
                                     <div>
                                       <h4 className={`text-base font-black tracking-tight transition-colors ${isDone ? 'text-text-secondary line-through decoration-emerald-500/50' : 'text-text-primary group-hover:text-primary'}`}>

@@ -4,12 +4,24 @@ import { authenticateToken, AuthRequest } from '../middleware/authMiddleware';
 
 const router = Router();
 
+// In-memory caches for static database seeded roadmaps (10-minute cache)
+const branchesCache = { data: null as any, timestamp: 0 };
+const branchDetailCache = new Map<string, { data: any, timestamp: number }>();
+const CACHE_TTL = 1000 * 60 * 10; // 10 minutes
+
 // Get all branches
 router.get('/branches', async (req: Request, res: Response) => {
   try {
+    if (branchesCache.data && (Date.now() - branchesCache.timestamp < CACHE_TTL)) {
+      return res.json(branchesCache.data);
+    }
+
     const branches = await prisma.branch.findMany({
       orderBy: { name: 'asc' }
     });
+
+    branchesCache.data = branches;
+    branchesCache.timestamp = Date.now();
     res.json(branches);
   } catch (error) {
     console.error(error);
@@ -21,6 +33,13 @@ router.get('/branches', async (req: Request, res: Response) => {
 router.get('/branches/:slug', async (req: Request, res: Response): Promise<void> => {
   try {
     const slug = String(req.params.slug);
+
+    const cached = branchDetailCache.get(slug);
+    if (cached && (Date.now() - cached.timestamp < CACHE_TTL)) {
+      res.json(cached.data);
+      return;
+    }
+
     const branch = await prisma.branch.findUnique({
       where: { slug },
       include: {
@@ -48,6 +67,7 @@ router.get('/branches/:slug', async (req: Request, res: Response): Promise<void>
       return;
     }
 
+    branchDetailCache.set(slug, { data: branch, timestamp: Date.now() });
     res.json(branch);
   } catch (error) {
     console.error(error);

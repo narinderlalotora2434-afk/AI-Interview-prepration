@@ -13,6 +13,7 @@ import aptitudeRoutes from './routes/aptitude';
 import roadmapsRoutes from './routes/roadmaps';
 import learningRoutes from './routes/learning';
 import assistantRoutes from './routes/assistant';
+import aptitudeLearnRoutes from './routes/aptitude-learn';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -33,6 +34,8 @@ app.use('/api/aptitude', aptitudeRoutes);
 app.use('/api/roadmaps', roadmapsRoutes);
 app.use('/api/learning', learningRoutes);
 app.use('/api/assistant', assistantRoutes);
+app.use('/api/aptitude-learn', aptitudeLearnRoutes);
+app.use('/api/topics', aptitudeLearnRoutes);
 
 
 app.get('/health', (req, res) => {

@@ -73,8 +73,14 @@ export default function AptitudeDashboard() {
     const cachedLeaderboard = localStorage.getItem("aptitude_leaderboard_cache");
     
     try {
-      if (cachedHistory) setHistory(JSON.parse(cachedHistory));
-      if (cachedLeaderboard) setLeaderboard(JSON.parse(cachedLeaderboard));
+      if (cachedHistory) {
+        const parsedHistory = JSON.parse(cachedHistory);
+        setHistory(Array.isArray(parsedHistory) ? parsedHistory : []);
+      }
+      if (cachedLeaderboard) {
+        const parsedLeaderboard = JSON.parse(cachedLeaderboard);
+        setLeaderboard(Array.isArray(parsedLeaderboard) ? parsedLeaderboard : []);
+      }
       if (cachedHistory) setLoading(false);
     } catch (e) { }
 
@@ -87,8 +93,8 @@ export default function AptitudeDashboard() {
       }).then(res => res.json())
     ])
     .then(([historyData, leaderboardData]) => {
-      setHistory(historyData);
-      setLeaderboard(leaderboardData);
+      setHistory(Array.isArray(historyData) ? historyData : []);
+      setLeaderboard(Array.isArray(leaderboardData) ? leaderboardData : []);
       try {
         localStorage.setItem("aptitude_history_cache", JSON.stringify(historyData));
         localStorage.setItem("aptitude_leaderboard_cache", JSON.stringify(leaderboardData));

@@ -61,7 +61,7 @@ export default function Navbar() {
           
           {/* Desktop Links */}
           <div className="hidden md:flex items-center gap-8">
-            {['Features', 'Roadmaps', 'Pricing', 'About'].map((item) => (
+            {['Features', 'Roadmaps', 'About'].map((item) => (
               <Link 
                 key={item}
                 href={item === 'Roadmaps' ? '/roadmaps' : `#${item.toLowerCase()}`} 
@@ -124,7 +124,7 @@ export default function Navbar() {
               className="md:hidden absolute top-full left-6 right-6 mt-4 saas-card p-6 bg-white border-border"
             >
               <div className="flex flex-col gap-6">
-                {['Features', 'Roadmaps', 'Pricing', 'About'].map((item) => (
+                {['Features', 'Roadmaps', 'About'].map((item) => (
                   <Link 
                     key={item}
                     href={item === 'Roadmaps' ? '/roadmaps' : `#${item.toLowerCase()}`} 

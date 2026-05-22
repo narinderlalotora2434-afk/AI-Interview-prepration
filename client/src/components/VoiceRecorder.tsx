@@ -92,7 +92,7 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({
           // If already started, just sync the UI state
           setIsRecording(true);
         } else {
-          console.error("Failed to start speech recognition:", e);
+          console.warn("Failed to start speech recognition:", e);
         }
       }
     }
@@ -136,7 +136,7 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({
           };
 
           recognitionRef.current.onerror = (event: SpeechRecognitionErrorEvent) => {
-            console.error('Speech recognition error', event.error);
+            console.warn('Speech recognition error:', event.error);
             
             if (event.error === 'network') {
               // Try to restart if it's a transient network error

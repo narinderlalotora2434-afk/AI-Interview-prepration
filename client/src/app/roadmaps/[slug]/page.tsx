@@ -108,25 +108,50 @@ export default function BranchRoadmapPage() {
 
     if (!slug) return;
 
-    Promise.all([
-      fetch(`${getBaseUrl()}/api/roadmaps/branches/${slug}`, {
-        headers: { "Authorization": `Bearer ${token}` }
-      }).then(res => res.json()),
-    ])
-      .then(([branchData]) => {
+    // Load from local storage cache first for instantaneous rendering
+    const cachedBranch = localStorage.getItem(`branch_cache_${slug}`);
+    if (cachedBranch) {
+      try {
+        const branchData = JSON.parse(cachedBranch);
+        setBranch(branchData);
+        if (branchData.roadmaps?.[0]?.modules?.[0]) {
+          setExpandedModules(prev => {
+            if (Object.keys(prev).length === 0) {
+              return { [branchData.roadmaps[0].modules[0].id]: true };
+            }
+            return prev;
+          });
+        }
+        setLoading(false);
+      } catch (e) {
+        localStorage.removeItem(`branch_cache_${slug}`);
+      }
+    }
+
+    fetch(`${getBaseUrl()}/api/roadmaps/branches/${slug}`, {
+      headers: { "Authorization": `Bearer ${token}` }
+    })
+      .then(res => res.json())
+      .then(branchData => {
         if (branchData.error) throw new Error(branchData.error);
         setBranch(branchData);
+        localStorage.setItem(`branch_cache_${slug}`, JSON.stringify(branchData));
         
-        if (branchData.roadmaps?.[0]?.modules?.[0]) {
-          setExpandedModules({ [branchData.roadmaps[0].modules[0].id]: true });
-        }
+        setExpandedModules(prev => {
+          if (Object.keys(prev).length === 0 && branchData.roadmaps?.[0]?.modules?.[0]) {
+            return { [branchData.roadmaps[0].modules[0].id]: true };
+          }
+          return prev;
+        });
 
         return fetch(`${getBaseUrl()}/api/roadmaps/progress/${branchData.id}`, {
           headers: { "Authorization": `Bearer ${token}` }
         }).then(res => res.json());
       })
       .then(progressData => {
-        setProgress(progressData);
+        if (progressData) {
+          setProgress(progressData);
+        }
         setLoading(false);
       })
       .catch(err => {

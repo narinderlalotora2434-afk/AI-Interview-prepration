@@ -80,7 +80,7 @@ export const useSpeech = () => {
         };
         
         recognitionInstance.onerror = (event: SpeechRecognitionErrorEvent) => {
-          console.error('Speech recognition error', event.error);
+          console.warn('Speech recognition error:', event.error);
           setIsListening(false);
         };
 
@@ -96,7 +96,7 @@ export const useSpeech = () => {
         recognition.start();
         setIsListening(true);
       } catch (e) {
-        console.error("Recognition start error", e);
+        console.warn("Recognition start error:", e);
       }
     }
   }, [recognition, isListening]);

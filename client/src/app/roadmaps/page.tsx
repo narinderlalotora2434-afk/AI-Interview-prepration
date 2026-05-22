@@ -237,12 +237,7 @@ export default function RoadmapsDashboard() {
                               <p className="text-text-secondary text-base mb-10 flex-1 leading-relaxed font-medium">Master Quantitative, Logical, and Verbal skills required for all major company assessment rounds.</p>
 
                               <div className="space-y-8">
-                                <div className="pt-8 border-t border-rose-100 flex items-center gap-3">
-                                  {["AMCAT", "eLitmus", "TCS iQN"].map((comp, i) => (
-                                    <span key={i} className="text-[9px] px-3 py-1.5 bg-white text-text-secondary rounded-lg border border-rose-100 font-black uppercase tracking-widest shadow-sm">{comp}</span>
-                                  ))}
-                                </div>
-                                <div className="flex items-center justify-between text-[11px] font-black uppercase tracking-[0.3em] text-rose-600 group-hover:gap-2 transition-all">
+                                <div className="pt-8 border-t border-rose-100 flex items-center justify-between text-[11px] font-black uppercase tracking-[0.3em] text-rose-600 group-hover:gap-2 transition-all">
                                   <span>Start Mastery</span>
                                   <div className="w-10 h-10 rounded-xl bg-rose-500/5 flex items-center justify-center group-hover:bg-rose-500 group-hover:text-white transition-all">
                                     <ChevronRight className="w-6 h-6" />

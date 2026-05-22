@@ -133,6 +133,12 @@ function getMockTextResponse(prompt: string): string {
 const aiCache = new Map<string, { data: any, timestamp: number }>();
 const CACHE_TTL = 1000 * 60 * 60; // 1 hour
 
+// Circuit Breakers for broken/rate-limited keys
+const brokenOpenAIKeys = new Map<string, number>(); // key -> expiration timestamp
+const brokenGeminiKeys = new Map<string, number>(); // key -> expiration timestamp
+const brokenKeyModels = new Map<string, number>(); // key:model -> expiration timestamp
+const BROKEN_CACHE_TTL = 1000 * 60 * 15; // 15 minutes cache for broken status
+
 export async function generateAIResponse(options: AIRequestOptions): Promise<any> {
   const { systemPrompt, userPrompt, jsonMode = true } = options;
   
@@ -148,6 +154,10 @@ export async function generateAIResponse(options: AIRequestOptions): Promise<any
 
   // --- Try OpenAI Keys ---
   for (const key of openAIKeys) {
+    if (brokenOpenAIKeys.has(key) && (brokenOpenAIKeys.get(key) || 0) > Date.now()) {
+      console.log(`[AI Circuit Breaker] Skipping broken OpenAI key ending in ...${key.slice(-4)}`);
+      continue;
+    }
     try {
       const openai = new OpenAI({ apiKey: key });
       const completion = await openai.chat.completions.create({
@@ -165,6 +175,8 @@ export async function generateAIResponse(options: AIRequestOptions): Promise<any
       return result;
     } catch (error: any) {
       console.warn(`OpenAI Key Failed (ending in ...${key.slice(-4)}):`, error.message);
+      // Mark key as broken
+      brokenOpenAIKeys.set(key, Date.now() + BROKEN_CACHE_TTL);
       if (error.status === 429 || error.status === 401) continue; // Try next key
       break; // Non-quota error, move to Gemini
     }
@@ -174,28 +186,67 @@ export async function generateAIResponse(options: AIRequestOptions): Promise<any
   const modelsToTry = ["gemini-flash-latest", "gemini-1.5-flash", "gemini-1.5-pro", "gemini-pro"];
   
   for (const key of geminiKeys) {
+    if (brokenGeminiKeys.has(key) && (brokenGeminiKeys.get(key) || 0) > Date.now()) {
+      console.log(`[AI Circuit Breaker] Skipping broken Gemini key ending in ...${key.slice(-4)}`);
+      continue;
+    }
     const genAI = new GoogleGenerativeAI(key);
     
     for (const modelName of modelsToTry) {
+      const keyModel = `${key}:${modelName}`;
+      if (brokenKeyModels.has(keyModel) && (brokenKeyModels.get(keyModel) || 0) > Date.now()) {
+        continue;
+      }
       try {
         const model = genAI.getGenerativeModel({ 
           model: modelName,
           generationConfig: jsonMode ? { responseMimeType: "application/json" } : undefined
         });
 
-        const prompt = systemPrompt ? `System: ${systemPrompt}\n\nUser: ${userPrompt}` : userPrompt;
-        const result = await model.generateContent(prompt);
-        const response = await result.response;
-        const text = response.text();
-        const finalResult = jsonMode ? parseAIJSON(text) : text;
+        let retries = 3;
+        let success = false;
+        let finalResult: any = null;
+
+        while (retries > 0 && !success) {
+          try {
+            const prompt = systemPrompt ? `System: ${systemPrompt}\n\nUser: ${userPrompt}` : userPrompt;
+            const result = await model.generateContent(prompt);
+            const response = await result.response;
+            const text = response.text();
+            finalResult = jsonMode ? parseAIJSON(text) : text;
+            success = true;
+          } catch (err: any) {
+            const errText = err.message || "";
+            if (errText.includes("429") || errText.includes("quota")) {
+              retries--;
+              if (retries > 0) {
+                const waitTime = (3 - retries) * 3000; // 3 seconds, then 6 seconds delay
+                console.warn(`Gemini hit rate limit (429) for ${modelName}. Retrying in ${waitTime}ms... (${retries} attempts left)`);
+                await new Promise(r => setTimeout(r, waitTime));
+                continue;
+              }
+            }
+            throw err; // Propagate non-429 errors or final failure after retries
+          }
+        }
+
         aiCache.set(cacheKey, { data: finalResult, timestamp: Date.now() });
         return finalResult;
       } catch (error: any) {
         const errorMsg = error.message || "";
         console.warn(`Gemini Error (${modelName}, ...${key.slice(-4)}):`, errorMsg);
         
+        // Mark specific key-model combination as broken
+        brokenKeyModels.set(keyModel, Date.now() + BROKEN_CACHE_TTL);
+        
         if (errorMsg.includes("429") || errorMsg.includes("quota")) {
+           brokenGeminiKeys.set(key, Date.now() + BROKEN_CACHE_TTL); // Entire key is out of quota
            break; // Break model loop to try next GEMINI KEY
+        }
+        
+        if (errorMsg.includes("API_KEY_INVALID") || errorMsg.includes("API key not valid") || errorMsg.includes("403") || errorMsg.includes("400")) {
+          brokenGeminiKeys.set(key, Date.now() + BROKEN_CACHE_TTL); // Key itself is invalid/unauthorized
+          break; // Break model loop to try next GEMINI KEY
         }
         
         if (errorMsg.includes("404") || errorMsg.includes("not found")) continue;
