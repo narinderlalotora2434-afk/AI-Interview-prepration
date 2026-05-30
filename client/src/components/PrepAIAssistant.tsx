@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { getBaseUrl } from "@/lib/api";
 import ReactMarkdown from 'react-markdown';
+import { useInterviewStore } from "@/store/useInterviewStore";
 
 interface Message {
   role: 'user' | 'ai';
@@ -37,6 +38,8 @@ export const PrepAIAssistant = () => {
   const [isOnline, setIsOnline] = useState(true);
   
   const scrollRef = useRef<HTMLDivElement>(null);
+  const submittingRef = useRef(false);
+  const { role, interviewType } = useInterviewStore();
 
   // Auto-scroll to bottom
   useEffect(() => {
@@ -71,9 +74,11 @@ export const PrepAIAssistant = () => {
   };
 
   const handleSend = async (msg?: string) => {
+    if (submittingRef.current || loading) return;
     const text = msg || input;
     if (!text.trim()) return;
 
+    submittingRef.current = true;
     const userMsg: Message = { role: 'user', content: text };
     setMessages(prev => [...prev, userMsg]);
     setInput("");
@@ -91,7 +96,8 @@ export const PrepAIAssistant = () => {
       });
 
       if (!res.ok) {
-        throw new Error("Assistant API failed");
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(`Assistant API failed: ${errorData.error || res.statusText}`);
       }
 
       const data = await res.json();
@@ -103,6 +109,7 @@ export const PrepAIAssistant = () => {
       setMessages(prev => [...prev, { role: 'ai', content: "I'm having a bit of trouble connecting to my brain. Please try again in a moment! 🧠" }]);
     } finally {
       setLoading(false);
+      submittingRef.current = false;
     }
   };
 
@@ -120,11 +127,11 @@ export const PrepAIAssistant = () => {
   };
 
   const quickActions = [
+    { label: `Help with ${role || 'engineering'} concepts`, icon: Brain, color: "text-purple-500", bg: "bg-purple-50" },
+    { label: `Tips for ${interviewType || 'interviews'}`, icon: MessageSquare, color: "text-pink-500", bg: "bg-pink-50" },
     { label: "Fix My Code", icon: Code, color: "text-blue-500", bg: "bg-blue-50" },
     { label: "Generate Study Plan", icon: Zap, color: "text-amber-500", bg: "bg-amber-50" },
-    { label: "Explain Concept", icon: Brain, color: "text-purple-500", bg: "bg-purple-50" },
     { label: "Improve ATS Score", icon: FileText, color: "text-emerald-500", bg: "bg-emerald-50" },
-    { label: "Mock Interview", icon: MessageSquare, color: "text-pink-500", bg: "bg-pink-50" },
   ];
 
   return (
@@ -283,7 +290,12 @@ export const PrepAIAssistant = () => {
                   type="text"
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && handleSend()}
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleSend();
+                    }
+                  }}
                   placeholder="Ask nexus intelligence..."
                   className="w-full bg-white border border-slate-200 rounded-[24px] py-5 pl-6 pr-20 text-sm focus:outline-none focus:border-primary/50 focus:shadow-xl focus:shadow-primary/5 transition-all placeholder:text-slate-400 font-medium"
                 />

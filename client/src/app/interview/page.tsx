@@ -53,6 +53,9 @@ import { useInterviewStore } from "@/store/useInterviewStore";
 import { WebcamAI } from "@/components/WebcamAI";
 import dynamic from 'next/dynamic';
 import Sidebar from "@/components/Sidebar";
+import toast from 'react-hot-toast';
+import { useRef } from 'react';
+import FeedbackPanel from '@/components/FeedbackPanel';
 
 // Dynamic import for Monaco Editor to avoid SSR issues
 const Editor = dynamic(() => import('@monaco-editor/react'), { ssr: false });
@@ -104,6 +107,7 @@ export default function InterviewPage() {
     isAnalyzing, setAnalyzing,
     analysisProgress,
     currentQuestionIndex,
+    incrementQuestion,
     reset
   } = useInterviewStore();
 
@@ -120,6 +124,9 @@ export default function InterviewPage() {
   const [code, setCode] = useState("// Write your code here\n");
   
   const [aiState, setAiState] = useState<"idle" | "listening" | "thinking" | "generating">("idle");
+  const [currentFeedback, setCurrentFeedback] = useState<any>(null);
+  const isSubmittingRef = useRef(false);
+  const handleSubmitRef = useRef<() => Promise<void>>();
   
   const router = useRouter();
 
@@ -143,9 +150,9 @@ export default function InterviewPage() {
     if (step === "chat" || step === "coding") {
       timer = setInterval(() => {
         setTimeLeft((prev) => {
-          if (prev <= 0) {
+          if (prev <= 1) {
             clearInterval(timer);
-            handleSubmit();
+            if (handleSubmitRef.current) handleSubmitRef.current();
             return 0;
           }
           return prev - 1;
@@ -164,22 +171,28 @@ export default function InterviewPage() {
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (token) {
-      const cachedDashboard = localStorage.getItem("dashboard_cache");
-      if (cachedDashboard) {
+      const cache = localStorage.getItem("dashboard_cache");
+      const cacheTime = localStorage.getItem("dashboard_cache_time");
+      const isStale = !cacheTime || Date.now() - Number(cacheTime) > 5 * 60 * 1000;
+      
+      if (cache) {
         try {
-          const data = JSON.parse(cachedDashboard);
+          const data = JSON.parse(cache);
           setResumes(data.recentResumes || []);
         } catch { }
       }
 
-      fetch(`${getBaseUrl()}/api/user/dashboard`, {
-        headers: { "Authorization": `Bearer ${token}` },
-      })
-        .then(res => res.json())
-        .then(data => {
-          setResumes(data.recentResumes || []);
+      if (isStale) {
+        fetch(`${getBaseUrl()}/api/user/dashboard`, {
+          headers: { "Authorization": `Bearer ${token}` },
         })
-        .catch(err => console.error("Failed to fetch resumes", err));
+          .then(res => res.json())
+          .then(data => {
+            setResumes(data.recentResumes || []);
+            localStorage.setItem("dashboard_cache_time", Date.now().toString());
+          })
+          .catch(err => console.error("Failed to fetch resumes", err));
+      }
     }
   }, []);
 
@@ -188,6 +201,12 @@ export default function InterviewPage() {
       speak(questions[currentQuestionIndex].content);
     }
   }, [currentQuestionIndex, step, questions, speak]);
+
+  useEffect(() => {
+    if (step === "coding" && questions[currentQuestionIndex]?.starterCode) {
+      setCode(questions[currentQuestionIndex].starterCode);
+    }
+  }, [step, currentQuestionIndex, questions]);
 
   const handleStart = async () => {
     setLoading(true);
@@ -257,13 +276,27 @@ export default function InterviewPage() {
     } catch (err: any) {
       console.error(err);
       if (err.message?.includes("quota")) {
-        alert("API Quota Exceeded: Please check your billing details or wait for the limit to reset.");
+        toast.error("API Quota Exceeded: Please check your billing details or wait for the limit to reset.");
       } else {
-        alert(err.message || "Failed to start the interview. Please try again.");
+        toast.error(err.message || "Failed to start the interview. Please try again.");
       }
     } finally {
       setLoading(false);
     }
+  };
+
+  const proceedToNext = () => {
+    setCurrentAnswer("");
+    setCurrentFeedback(null);
+    setAiState("generating");
+    setTimeout(() => setAiState("idle"), 2000);
+    
+    if (features.coding && currentQuestionIndex === 2) {
+      setStep("coding");
+    } else {
+      setStep("chat");
+    }
+    incrementQuestion();
   };
 
   const handleNext = async () => {
@@ -289,7 +322,7 @@ export default function InterviewPage() {
       if (!res.ok) throw new Error(data.error || "Failed to progress");
 
       if (data.isFinished) {
-         handleSubmit();
+         await handleSubmit();
          return;
       }
 
@@ -299,28 +332,28 @@ export default function InterviewPage() {
         content: step === "coding" ? code : currentAnswer 
       });
       
-      setCurrentAnswer("");
-      setAiState("generating");
-      setTimeout(() => setAiState("idle"), 2000);
-      
-      // If coding round is enabled and we are at a certain point, switch to coding
-      if (features.coding && currentQuestionIndex === 2) {
-        setStep("coding");
+      if (data.evaluation) {
+        setCurrentFeedback({
+          score: data.evaluation.score,
+          strengths: [data.evaluation.feedback],
+          weaknesses: data.evaluation.metrics ? ['Review algorithmic efficiency', 'Check edge cases'] : [],
+          improvedAnswer: data.evaluation.feedback,
+          nextQuestion: data.nextQuestion
+        });
       } else {
-        setStep("chat");
+        proceedToNext();
       }
-      
-      useInterviewStore.setState({ currentQuestionIndex: currentQuestionIndex + 1 });
     } catch (err: any) {
       console.error(err);
-      alert(err.message || "Failed to get the next question. Please check your connection and try again.");
+      toast.error(err.message || "Failed to get the next question. Please check your connection and try again.");
     } finally {
       setLoading(false);
     }
   };
 
   const handleSubmit = async () => {
-    if (!interviewId) return;
+    if (!interviewId || isSubmittingRef.current) return;
+    isSubmittingRef.current = true;
     setLoading(true);
     const token = localStorage.getItem("token");
     try {
@@ -343,7 +376,7 @@ export default function InterviewPage() {
       setStep("result");
     } catch (err: any) {
       console.error(err);
-      alert(err.message || "Failed to submit interview for evaluation. Please try again.");
+      toast.error(err.message || "Failed to submit interview for evaluation. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -553,20 +586,23 @@ export default function InterviewPage() {
                         </div>
                         <div className="space-y-4">
                            {[
-                                 { id: 'webcam', label: 'AI Proctoring', icon: Video },
-                                 { id: 'emotion', label: 'Sentiment Analysis', icon: Smile },
-                                 { id: 'realtimeFeedback', label: 'Live AI Tips', icon: Zap },
-                                 { id: 'followup', label: 'Dynamic Follow-ups', icon: MessageSquare },
-                                 { id: 'coding', label: 'Integrated IDE', icon: Code },
+                             { id: 'webcam', label: 'Webcam AI', desc: 'Tracks posture & eye contact', icon: Video },
+                             { id: 'realtimeFeedback', label: 'Live Hints', desc: 'AI whispers suggestions as you answer', icon: Zap },
+                             { id: 'followup', label: 'Follow-ups', desc: 'AI asks probing follow-on questions', icon: MessageSquare },
+                             { id: 'coding', label: 'Coding Round', desc: 'Adds a Monaco code challenge at Q3', icon: Code },
+                             { id: 'ats', label: 'ATS Context', desc: 'Tailors questions to your resume', icon: FileText },
                            ].map((feat) => (
                              <div 
                                key={feat.id}
                                onClick={() => toggleFeature(feat.id as any)}
                                className={`flex items-center justify-between p-5 rounded-2xl border cursor-pointer transition-all bg-white ${features[feat.id as keyof typeof features] ? 'border-primary bg-primary/5' : 'border-slate-100 hover:border-primary/20'}`}
                              >
-                                <div className="flex items-center gap-4">
-                                   <feat.icon className={`w-5 h-5 ${features[feat.id as keyof typeof features] ? 'text-primary' : 'text-slate-400'}`} />
-                                   <span className={`text-[10px] font-black uppercase tracking-[0.2em] ${features[feat.id as keyof typeof features] ? 'text-text-primary' : 'text-text-secondary'}`}>{feat.label}</span>
+                                <div className="flex flex-col">
+                                   <div className="flex items-center gap-4">
+                                      <feat.icon className={`w-5 h-5 ${features[feat.id as keyof typeof features] ? 'text-primary' : 'text-slate-400'}`} />
+                                      <span className={`text-[10px] font-black uppercase tracking-[0.2em] ${features[feat.id as keyof typeof features] ? 'text-text-primary' : 'text-text-secondary'}`}>{feat.label}</span>
+                                   </div>
+                                   <span className="text-[10px] text-text-secondary mt-1 ml-9">{feat.desc}</span>
                                 </div>
                                 <div className={`w-10 h-5 rounded-full transition-all relative ${features[feat.id as keyof typeof features] ? 'bg-primary' : 'bg-slate-200'}`}>
                                    <div className={`absolute top-1 w-3 h-3 bg-white rounded-full transition-all ${features[feat.id as keyof typeof features] ? 'left-6' : 'left-1'}`} />
@@ -677,7 +713,14 @@ export default function InterviewPage() {
                 </motion.div>
               )}
 
-              {step === "chat" && (
+              {step === "chat" && currentFeedback && (
+                 <FeedbackPanel 
+                   feedback={currentFeedback} 
+                   onNext={proceedToNext} 
+                   isLastStep={currentQuestionIndex >= 4} 
+                 />
+              )}
+              {step === "chat" && !currentFeedback && (
                 <motion.div 
                   key="chat"
                   initial={{ opacity: 0, scale: 0.95 }}
@@ -725,6 +768,15 @@ export default function InterviewPage() {
                           <div className="text-[10px] font-black text-primary uppercase tracking-[0.3em] mb-4 flex items-center gap-3">
                             <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
                             ROUND {currentQuestionIndex + 1} • {interviewType}
+                          </div>
+                          <div className="flex items-center gap-2 mb-4">
+                            {Array.from({ length: 5 }).map((_, i) => (
+                              <div key={i} className={`h-1.5 rounded-full transition-all ${
+                                i < currentQuestionIndex ? 'w-8 bg-primary' : 
+                                i === currentQuestionIndex ? 'w-8 bg-primary/50 animate-pulse' : 
+                                'w-4 bg-slate-200'
+                              }`} />
+                            ))}
                           </div>
                           <p className="text-2xl font-black leading-tight text-slate-800 tracking-tight min-h-[4rem]">
                             {loading ? (
@@ -905,10 +957,10 @@ export default function InterviewPage() {
                      
                      <div className="saas-card p-12 col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-10 bg-white shadow-xl shadow-slate-200/50 rounded-[48px]">
                         {[
-                          { label: "Technical Precision", value: `${evaluation?.metrics?.technical ? evaluation.metrics.technical * 10 : 85}%`, icon: Target, color: "text-emerald-600", bg: "bg-emerald-50" },
-                          { label: "Neural Clarity", value: evaluation?.metrics?.communication ? `${evaluation.metrics.communication}/10` : "8.5/10", icon: MessageSquare, color: "text-primary", bg: "bg-primary/5" },
-                          { label: "Logic Velocity", value: evaluation?.metrics?.logic ? `${evaluation.metrics.logic}/10` : "9.0/10", icon: Brain, color: "text-secondary", bg: "bg-secondary/5" },
-                          { label: "Confidence Index", value: evaluation?.metrics?.confidence ? `${evaluation.metrics.confidence * 10}%` : "78%", icon: Zap, color: "text-amber-500", bg: "bg-amber-50" },
+                          { label: "Technical Precision", value: evaluation?.metrics?.technical != null ? `${evaluation.metrics.technical * 10}%` : "N/A", icon: Target, color: "text-emerald-600", bg: "bg-emerald-50" },
+                          { label: "Neural Clarity", value: evaluation?.metrics?.communication != null ? `${evaluation.metrics.communication}/10` : "N/A", icon: MessageSquare, color: "text-primary", bg: "bg-primary/5" },
+                          { label: "Logic Velocity", value: evaluation?.metrics?.logic != null ? `${evaluation.metrics.logic}/10` : "N/A", icon: Brain, color: "text-secondary", bg: "bg-secondary/5" },
+                          { label: "Confidence Index", value: evaluation?.metrics?.confidence != null ? `${evaluation.metrics.confidence * 10}%` : "N/A", icon: Zap, color: "text-amber-500", bg: "bg-amber-50" },
                         ].map((m, i) => (
                           <div key={i} className="flex items-center gap-8 group">
                              <div className={`w-20 h-20 rounded-[28px] ${m.bg} border border-slate-50 ${m.color} flex items-center justify-center transition-all group-hover:scale-110 shadow-sm`}>

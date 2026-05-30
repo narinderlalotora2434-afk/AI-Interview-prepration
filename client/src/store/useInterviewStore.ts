@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 
 interface InterviewState {
   // Configuration
@@ -42,13 +43,14 @@ interface InterviewState {
   setInterviewData: (id: string, questions: any[]) => void;
   addQuestion: (question: any) => void;
   addAnswer: (answer: any) => void;
+  incrementQuestion: () => void;
   setListening: (val: boolean) => void;
   setAnalyzing: (val: boolean, progress?: number) => void;
   updateRealtimeFeedback: (data: Partial<InterviewState['realtimeFeedbackData']>) => void;
   reset: () => void;
 }
 
-export const useInterviewStore = create<InterviewState>((set) => ({
+const initialState = {
   role: 'Software Engineer',
   level: 'Fresher',
   interviewType: 'Technical Interview',
@@ -62,7 +64,6 @@ export const useInterviewStore = create<InterviewState>((set) => ({
     coding: false,
     ats: true,
   },
-  
   interviewId: null,
   currentQuestionIndex: 0,
   questions: [],
@@ -70,36 +71,46 @@ export const useInterviewStore = create<InterviewState>((set) => ({
   isListening: false,
   isAnalyzing: false,
   analysisProgress: 0,
-  
   realtimeFeedbackData: {
     confidence: 0,
     emotion: 'Neutral',
     suggestions: [],
-  },
+  }
+};
 
-  setRole: (role) => set({ role }),
-  setLevel: (level) => set({ level }),
-  setInterviewType: (interviewType) => set({ interviewType }),
-  setDifficulty: (difficulty) => set({ difficulty }),
-  setDuration: (duration) => set({ duration }),
-  toggleFeature: (feature) => set((state) => ({ 
-    features: { ...state.features, [feature]: !state.features[feature] } 
-  })),
-  setInterviewData: (interviewId, questions) => set({ interviewId, questions, currentQuestionIndex: 0 }),
-  addQuestion: (question) => set((state) => ({ questions: [...state.questions, question] })),
-  addAnswer: (answer) => set((state) => ({ userAnswers: [...state.userAnswers, answer] })),
-  setListening: (isListening) => set({ isListening }),
-  setAnalyzing: (isAnalyzing, analysisProgress = 0) => set({ isAnalyzing, analysisProgress }),
-  updateRealtimeFeedback: (data) => set((state) => ({ 
-    realtimeFeedbackData: { ...state.realtimeFeedbackData, ...data } 
-  })),
-  reset: () => set({
-    interviewId: null,
-    currentQuestionIndex: 0,
-    questions: [],
-    userAnswers: [],
-    isListening: false,
-    isAnalyzing: false,
-    analysisProgress: 0,
-  }),
-}));
+export const useInterviewStore = create<InterviewState>()(
+  persist(
+    (set) => ({
+      ...initialState,
+      setRole: (role) => set({ role }),
+      setLevel: (level) => set({ level }),
+      setInterviewType: (interviewType) => set({ interviewType }),
+      setDifficulty: (difficulty) => set({ difficulty }),
+      setDuration: (duration) => set({ duration }),
+      toggleFeature: (feature) => set((state) => ({ 
+        features: { ...state.features, [feature]: !state.features[feature] } 
+      })),
+      setInterviewData: (interviewId, questions) => set({ interviewId, questions, currentQuestionIndex: 0 }),
+      addQuestion: (question) => set((state) => ({ questions: [...state.questions, question] })),
+      addAnswer: (answer) => set((state) => ({ userAnswers: [...state.userAnswers, answer] })),
+      incrementQuestion: () => set((state) => ({ currentQuestionIndex: state.currentQuestionIndex + 1 })),
+      setListening: (isListening) => set({ isListening }),
+      setAnalyzing: (isAnalyzing, analysisProgress = 0) => set({ isAnalyzing, analysisProgress }),
+      updateRealtimeFeedback: (data) => set((state) => ({ 
+        realtimeFeedbackData: { ...state.realtimeFeedbackData, ...data } 
+      })),
+      reset: () => set(initialState),
+    }),
+    {
+      name: 'prepai-interview-session',
+      partialize: (state) => ({
+        interviewId: state.interviewId,
+        currentQuestionIndex: state.currentQuestionIndex,
+        questions: state.questions,
+        userAnswers: state.userAnswers,
+        role: state.role,
+        interviewType: state.interviewType,
+      })
+    }
+  )
+);

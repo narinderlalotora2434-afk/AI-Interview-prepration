@@ -3,13 +3,30 @@ import prisma from '../db';
 import { authenticateToken, AuthRequest } from '../middleware/authMiddleware';
 import { updateGamification } from '../utils/gamification';
 import { generateAIResponse } from '../utils/ai';
+import { z } from 'zod';
 
 const router = Router();
+
+const generateSchema = z.object({
+  role: z.string().min(1).max(100).optional(),
+  experienceLevel: z.string().optional(),
+  company: z.string().optional(),
+  resumeId: z.string().optional(),
+  interviewType: z.string().optional(),
+  difficulty: z.string().optional(),
+  duration: z.number().optional(),
+  features: z.any().optional(),
+});
 
 // Initialize a dynamic mock interview
 router.post('/generate', authenticateToken, async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const { role, experienceLevel, company, resumeId, interviewType, difficulty, duration, features } = req.body;
+    const parsed = generateSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: 'Invalid input', details: parsed.error.issues });
+      return;
+    }
+    const { role, experienceLevel, company, resumeId, interviewType, difficulty, duration, features } = parsed.data;
     const userId = req.user?.userId;
 
     if (!userId) {
@@ -99,11 +116,21 @@ router.post('/generate', authenticateToken, async (req: AuthRequest, res: Respon
   }
 });
 
+const nextSchema = z.object({
+  answer: z.string(),
+  currentStep: z.any().optional(),
+});
+
 // Dynamic Next Question logic
 router.post('/:id/next', authenticateToken, async (req: AuthRequest, res: Response): Promise<void> => {
   try {
+    const parsed = nextSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: 'Invalid input', details: parsed.error.issues });
+      return;
+    }
     const interviewId = String(req.params.id);
-    const { answer, currentStep } = req.body;
+    const { answer, currentStep } = parsed.data;
     const userId = req.user?.userId;
 
     if (!userId) {
@@ -277,6 +304,17 @@ router.post('/:id/next', authenticateToken, async (req: AuthRequest, res: Respon
            });
          }
 
+         const lastActiveDate = new Date(analytics.lastActive).toDateString();
+         const todayDate = new Date().toDateString();
+         let newStreak = analytics.streak;
+         if (lastActiveDate !== todayDate) {
+           const yesterday = new Date();
+           yesterday.setDate(yesterday.getDate() - 1);
+           newStreak = lastActiveDate === yesterday.toDateString()
+             ? analytics.streak + 1
+             : 1;
+         }
+
          await prisma.analytics.update({
            where: { userId },
            data: {
@@ -287,7 +325,7 @@ router.post('/:id/next', authenticateToken, async (req: AuthRequest, res: Respon
              strongTopics: JSON.stringify(strongTopics),
              roadmap,
              lastActive: new Date(),
-             streak: { increment: 1 } // Simplified streak
+             streak: newStreak
            }
          });
          
@@ -320,11 +358,23 @@ router.post('/:id/next', authenticateToken, async (req: AuthRequest, res: Respon
   }
 });
 
+const evaluateSchema = z.object({
+  answers: z.array(z.object({
+    questionId: z.string(),
+    content: z.string(),
+  })),
+});
+
 // Evaluate answers
 router.post('/:id/evaluate', authenticateToken, async (req: AuthRequest, res: Response): Promise<void> => {
   try {
+    const parsed = evaluateSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: 'Invalid input', details: parsed.error.issues });
+      return;
+    }
     const interviewId = String(req.params.id);
-    const { answers } = req.body; // Array of { questionId, content }
+    const { answers } = parsed.data; // Array of { questionId, content }
     const userId = String(req.user?.userId);
 
     if (!userId) {
@@ -399,14 +449,36 @@ router.post('/:id/evaluate', authenticateToken, async (req: AuthRequest, res: Re
           avgScore: newAvgScore,
         }
       });
-      // Reward XP
-      await updateGamification(userId, 50);
+      // Reward XP (Normalized with next endpoint)
+      await updateGamification(userId, 100);
     }
 
     res.json({ message: 'Evaluation complete', score: avgScore, evaluatedAnswers });
   } catch (error: any) {
     console.error(error);
     res.status(500).json({ error: error.message || 'Internal server error' });
+  }
+});
+
+router.get('/:id/summary', authenticateToken, async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const userId = req.user?.userId;
+    if (!userId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const interview = await prisma.interview.findUnique({
+      where: { id: String(req.params.id) },
+      include: { questions: { include: { answers: true }, orderBy: { createdAt: 'asc' } } }
+    });
+    if (!interview || interview.userId !== userId) {
+      res.status(404).json({ error: 'Not found' });
+      return;
+    }
+    res.json(interview);
+  } catch (error: any) {
+    console.error(error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 

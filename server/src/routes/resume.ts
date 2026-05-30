@@ -1,7 +1,7 @@
 import { Router, Response } from 'express';
 import multer from 'multer';
 import prisma from '../db';
-const pdf = require('pdf-parse');
+const { PDFParse } = require('pdf-parse');
 import { authenticateToken, AuthRequest } from '../middleware/authMiddleware';
 import { updateGamification } from '../utils/gamification';
 import { generateAIResponse } from '../utils/ai';
@@ -9,26 +9,20 @@ import { generateAIResponse } from '../utils/ai';
 const router = Router();
 const upload = multer({ storage: multer.memoryStorage() });
 
-// Helper to extract text from buffer
+// Helper to extract text from a PDF or plain text file buffer
 const extractText = async (file: Express.Multer.File): Promise<string> => {
   if (file.mimetype === 'application/pdf') {
     try {
-      let pdfData;
-      if (typeof pdf === 'function') {
-        pdfData = await pdf(file.buffer);
-      } else if (typeof pdf.default === 'function') {
-        pdfData = await pdf.default(file.buffer);
-      } else if (typeof pdf.PDFParse === 'function') {
-        pdfData = await pdf.PDFParse(file.buffer);
-      } else {
-        throw new Error('No valid PDF parser function found');
-      }
-      return pdfData.text;
-    } catch (err) {
-      console.error('PDF parsing failed:', err);
-      return 'Error parsing PDF content.';
+      const uint8 = new Uint8Array(file.buffer.buffer, file.buffer.byteOffset, file.buffer.byteLength);
+      const parser = new PDFParse(uint8);
+      const parsed = await parser.getText();
+      return parsed.text || '';
+    } catch (err: any) {
+      console.error('PDF parsing failed:', err.message);
+      return '';
     }
   }
+  // For .txt, .doc, .docx treated as text
   return file.buffer.toString('utf-8');
 };
 
@@ -48,56 +42,95 @@ router.post('/analyze', authenticateToken, upload.single('resume'), async (req: 
     }
 
     const fileText = await extractText(req.file);
+    const cleanText = fileText.replace(/\s+/g, ' ').trim();
+
+    if (!cleanText || cleanText.length < 10) {
+      res.status(400).json({ 
+        error: 'We could not extract readable text from your resume. This usually happens if the PDF is a scanned image, constructed with flattened graphics (like Canva/Figma without text embedding), or corrupted. Please upload a standard, text-selectable PDF (e.g. exported from Google Docs, Word, or LaTeX).'
+      });
+      return;
+    }
 
     const prompt = `You are a world-class ATS (Applicant Tracking System) and Senior Technical Recruiter.
     
-    TASK: Provide a deep, professional analysis of this student resume for the "${track}" track.
+    TASK: Provide a deep, professional analysis of this student resume for the "${track || 'Software Engineering'}" track.
     ${jobDescription ? `COMPARE AGAINST THIS JOB DESCRIPTION: "${jobDescription}"` : ''}
 
-    EVALUATE ACROSS THESE CATEGORIES:
-    1. Resume Format (Max 15) - Check for ATS-safe structure.
-    2. Skills Match (Max 25) - Depth and relevance to ${track}.
-    3. Projects Quality (Max 20) - Complexity and technical implementation.
-    4. Experience Strength (Max 20) - Quantified impact and role relevance.
-    5. Keyword Optimization (Max 10) - Presence of industry-standard terms.
-    6. Certifications & Achievements (Max 5).
-    7. Grammar & Readability (Max 5).
-
-    RETURN ONLY VALID JSON IN THIS FORMAT:
+    RETURN ONLY VALID JSON IN THE FOLLOWING EXACT FORMAT. DO NOT include markdown wrappers like \`\`\`json.
     {
-      "totalScore": number,
-      "placementReadiness": number,
-      "strength": "Strong" | "Average" | "Needs Work",
+      "totalScore": number (0-100),
+      "placementReadiness": number (0-100),
+      "strength": "Strong" | "Above Average" | "Average" | "Needs Work",
       "parsedInfo": {
         "name": "string",
         "email": "string",
         "phone": "string",
         "linkedin": "string",
         "github": "string",
-        "skills": ["string"],
-        "education": "string"
+        "portfolio": "string",
+        "location": "string",
+        "experience": "string"
       },
-      "breakdown": {
-        "format": number,
-        "skills": number,
-        "projects": number,
-        "experience": number,
-        "keywords": number,
-        "certifications": number,
-        "grammar": number
+      "missingDetails": ["string"],
+      "atsBreakdown": {
+        "compatibility": number (0-100),
+        "keywordsMatch": number (0-100),
+        "skillsCoverage": number (0-100),
+        "formatting": number (0-100),
+        "readability": number (0-100),
+        "recruiterImpact": number (0-100)
       },
-      "jdMatchScore": number (0-100, if JD provided),
-      "missingKeywords": ["string"],
-      "matchedKeywords": ["string"],
+      "radarData": [
+        { "subject": "Skills", "A": number (0-100), "fullMark": 100 },
+        { "subject": "Keywords", "A": number (0-100), "fullMark": 100 },
+        { "subject": "Experience", "A": number (0-100), "fullMark": 100 },
+        { "subject": "Projects", "A": number (0-100), "fullMark": 100 },
+        { "subject": "Education", "A": number (0-100), "fullMark": 100 },
+        { "subject": "Formatting", "A": number (0-100), "fullMark": 100 }
+      ],
+      "skillsDistribution": [
+        { "name": "Technical", "value": number, "fill": "#7C3AED" },
+        { "name": "Frameworks", "value": number, "fill": "#8B5CF6" },
+        { "name": "Tools", "value": number, "fill": "#F59E0B" },
+        { "name": "Soft Skills", "value": number, "fill": "#22C55E" }
+      ],
       "strengths": ["string"],
       "weaknesses": ["string"],
-      "suggestions": ["string"],
-      "actionVerbAnalysis": {
-         "score": number,
-         "weakPhrases": ["string"],
-         "replacements": { "weakPhrase": "strongerPhrase" }
+      "keywords": {
+        "matched": ["string"],
+        "missing": ["string"],
+        "recommended": ["string"],
+        "priority": ["string"]
       },
-      "formattingWarnings": ["string"]
+      "skillsGap": {
+        "found": ["string"],
+        "missing": ["string"],
+        "recommended": ["string"]
+      },
+      "sectionAnalysis": {
+        "experience": { "score": number (0-100), "feedback": "string" },
+        "projects": { "score": number (0-100), "feedback": "string" },
+        "education": { "score": number (0-100), "feedback": "string" }
+      },
+      "certifications": {
+        "recommended": ["string"]
+      },
+      "careerPath": {
+        "role": "string",
+        "confidence": number (0-100)
+      },
+      "recruiterFeedback": "string",
+      "aiImprovements": {
+        "summary": "string",
+        "experienceBullets": ["string"]
+      },
+      "roadmap": [
+        { "week": "Week 1", "task": "string", "status": "pending" },
+        { "week": "Week 2", "task": "string", "status": "pending" },
+        { "week": "Week 3", "task": "string", "status": "pending" },
+        { "week": "Week 4", "task": "string", "status": "pending" },
+        { "week": "Week 5", "task": "string", "status": "pending" }
+      ]
     }
     
     Resume Text:
@@ -115,24 +148,85 @@ router.post('/analyze', authenticateToken, upload.single('resume'), async (req: 
         totalScore: aiResponse.totalScore || 70,
         placementReadiness: aiResponse.placementReadiness || 65,
         strength: aiResponse.strength || "Average",
-        parsedInfo: aiResponse.parsedInfo || { name: "Extracted", email: "", skills: [] },
-        breakdown: {
-          format: aiResponse.breakdown?.format ?? 10,
-          skills: aiResponse.breakdown?.skills ?? 15,
-          projects: aiResponse.breakdown?.projects ?? 15,
-          experience: aiResponse.breakdown?.experience ?? 15,
-          keywords: aiResponse.breakdown?.keywords ?? 5,
-          certifications: aiResponse.breakdown?.certifications ?? 3,
-          grammar: aiResponse.breakdown?.grammar ?? 3
+        parsedInfo: {
+          name: aiResponse.parsedInfo?.name || "Extracted Name",
+          email: aiResponse.parsedInfo?.email || "",
+          phone: aiResponse.parsedInfo?.phone || "",
+          linkedin: aiResponse.parsedInfo?.linkedin || "",
+          github: aiResponse.parsedInfo?.github || "",
+          portfolio: aiResponse.parsedInfo?.portfolio || "",
+          location: aiResponse.parsedInfo?.location || "N/A",
+          experience: aiResponse.parsedInfo?.experience || "N/A",
+          skills: aiResponse.parsedInfo?.skills || [],
+          education: aiResponse.parsedInfo?.education || ""
         },
-        jdMatchScore: aiResponse.jdMatchScore,
-        missingKeywords: aiResponse.missingKeywords || [],
-        matchedKeywords: aiResponse.matchedKeywords || [],
-        strengths: aiResponse.strengths || [],
-        weaknesses: aiResponse.weaknesses || [],
-        suggestions: aiResponse.suggestions || [],
-        actionVerbAnalysis: aiResponse.actionVerbAnalysis || { score: 70, weakPhrases: [], replacements: {} },
-        formattingWarnings: aiResponse.formattingWarnings || []
+        missingDetails: aiResponse.missingDetails || [],
+        atsBreakdown: {
+          compatibility: aiResponse.atsBreakdown?.compatibility ?? 70,
+          keywordsMatch: aiResponse.atsBreakdown?.keywordsMatch ?? 65,
+          skillsCoverage: aiResponse.atsBreakdown?.skillsCoverage ?? 68,
+          formatting: aiResponse.atsBreakdown?.formatting ?? 80,
+          readability: aiResponse.atsBreakdown?.readability ?? 75,
+          recruiterImpact: aiResponse.atsBreakdown?.recruiterImpact ?? 65
+        },
+        radarData: aiResponse.radarData || [
+          { subject: 'Skills', A: 70, fullMark: 100 },
+          { subject: 'Keywords', A: 65, fullMark: 100 },
+          { subject: 'Experience', A: 68, fullMark: 100 },
+          { subject: 'Projects', A: 60, fullMark: 100 },
+          { subject: 'Education', A: 80, fullMark: 100 },
+          { subject: 'Formatting', A: 75, fullMark: 100 }
+        ],
+        skillsDistribution: aiResponse.skillsDistribution || [
+          { name: 'Technical', value: 40, fill: '#7C3AED' },
+          { name: 'Frameworks', value: 30, fill: '#8B5CF6' },
+          { name: 'Tools', value: 20, fill: '#F59E0B' },
+          { name: 'Soft Skills', value: 10, fill: '#22C55E' }
+        ],
+        strengths: aiResponse.strengths || ["Good potential matching"],
+        weaknesses: aiResponse.weaknesses || ["Add more detail to experience"],
+        keywords: {
+          matched: aiResponse.keywords?.matched || [],
+          missing: aiResponse.keywords?.missing || [],
+          recommended: aiResponse.keywords?.recommended || [],
+          priority: aiResponse.keywords?.priority || []
+        },
+        skillsGap: {
+          found: aiResponse.skillsGap?.found || [],
+          missing: aiResponse.skillsGap?.missing || [],
+          recommended: aiResponse.skillsGap?.recommended || []
+        },
+        sectionAnalysis: {
+          experience: {
+            score: aiResponse.sectionAnalysis?.experience?.score ?? 70,
+            feedback: aiResponse.sectionAnalysis?.experience?.feedback || "Experience matches typical expectations."
+          },
+          projects: {
+            score: aiResponse.sectionAnalysis?.projects?.score ?? 65,
+            feedback: aiResponse.sectionAnalysis?.projects?.feedback || "Relevant projects listed."
+          },
+          education: {
+            score: aiResponse.sectionAnalysis?.education?.score ?? 80,
+            feedback: aiResponse.sectionAnalysis?.education?.feedback || "Education background is solid."
+          }
+        },
+        certifications: {
+          recommended: aiResponse.certifications?.recommended || ["Relevant industry certifications"]
+        },
+        careerPath: {
+          role: aiResponse.careerPath?.role || track || "Full Stack Developer",
+          confidence: aiResponse.careerPath?.confidence ?? 75
+        },
+        recruiterFeedback: aiResponse.recruiterFeedback || "This resume demonstrates solid foundational skills. Focus on adding quantifiable impact.",
+        aiImprovements: {
+          summary: aiResponse.aiImprovements?.summary || "A motivated professional seeking to drive innovation and value.",
+          experienceBullets: aiResponse.aiImprovements?.experienceBullets || ["Led key technical features in collaborative projects."]
+        },
+        roadmap: aiResponse.roadmap || [
+          { week: 'Week 1', task: 'Optimize formatting & keywords', status: 'pending' },
+          { week: 'Week 2', task: 'Quantify achievements with business metrics', status: 'pending' },
+          { week: 'Week 3', task: 'Obtain cloud & framework certifications', status: 'pending' }
+        ]
       };
     } catch (aiError: any) {
       console.warn("AI Analysis failed, using complete fallback:", aiError.message);
@@ -140,15 +234,67 @@ router.post('/analyze', authenticateToken, upload.single('resume'), async (req: 
         totalScore: 68,
         placementReadiness: 65,
         strength: "Average",
-        parsedInfo: { name: "User", email: "user@example.com", skills: ["React", "JavaScript"] },
-        breakdown: { format: 12, skills: 18, projects: 12, experience: 14, keywords: 6, certifications: 3, grammar: 3 },
-        missingKeywords: ["TypeScript", "Unit Testing"],
-        matchedKeywords: ["React", "HTML"],
-        strengths: ["Clear contact information", "Good use of keywords"],
-        weaknesses: ["Missing quantified achievements"],
-        suggestions: ["Add metrics to your project descriptions"],
-        actionVerbAnalysis: { score: 70, weakPhrases: ["Worked on"], replacements: { "Worked on": "Developed" } },
-        formattingWarnings: []
+        parsedInfo: {
+          name: "Candidate",
+          email: "candidate@example.com",
+          phone: "Not provided",
+          linkedin: "N/A",
+          github: "N/A",
+          portfolio: "N/A",
+          location: "N/A",
+          experience: "N/A",
+          skills: ["React", "JavaScript"],
+          education: "Not provided"
+        },
+        missingDetails: ["Portfolio"],
+        atsBreakdown: { compatibility: 70, keywordsMatch: 65, skillsCoverage: 68, formatting: 80, readability: 75, recruiterImpact: 65 },
+        radarData: [
+          { subject: 'Skills', A: 70, fullMark: 100 },
+          { subject: 'Keywords', A: 65, fullMark: 100 },
+          { subject: 'Experience', A: 68, fullMark: 100 },
+          { subject: 'Projects', A: 60, fullMark: 100 },
+          { subject: 'Education', A: 80, fullMark: 100 },
+          { subject: 'Formatting', A: 75, fullMark: 100 }
+        ],
+        skillsDistribution: [
+          { name: 'Technical', value: 40, fill: '#7C3AED' },
+          { name: 'Frameworks', value: 30, fill: '#8B5CF6' },
+          { name: 'Tools', value: 20, fill: '#F59E0B' },
+          { name: 'Soft Skills', value: 10, fill: '#22C55E' }
+        ],
+        strengths: ["Clear layout", "Uses React and modern JavaScript"],
+        weaknesses: ["Missing quantified achievements", "No cloud technologies listed"],
+        keywords: {
+          matched: ["React", "JavaScript"],
+          missing: ["AWS", "Docker", "CI/CD"],
+          recommended: ["AWS", "Docker", "Jest"],
+          priority: ["AWS", "Docker"]
+        },
+        skillsGap: {
+          found: ["React", "JavaScript", "HTML", "CSS"],
+          missing: ["TypeScript", "Docker"],
+          recommended: ["Next.js", "TypeScript"]
+        },
+        sectionAnalysis: {
+          experience: { score: 70, feedback: "Ensure to focus more on quantifiable results." },
+          projects: { score: 65, feedback: "Add documentation for system architecture." },
+          education: { score: 80, feedback: "Degree matches standard criteria." }
+        },
+        certifications: { recommended: ["AWS Certified Developer"] },
+        careerPath: { role: track || "Software Developer", confidence: 75 },
+        recruiterFeedback: "This resume shows solid potential, but needs to focus more on quantifiable results and system-level tools like Docker to stand out.",
+        aiImprovements: {
+          summary: "A passionate Software Developer specialized in building robust frontend experiences and modern web workflows.",
+          experienceBullets: [
+            "Implemented responsive React views, reducing load times by 20%.",
+            "Built standard web assets and optimized asset pipeline workflows."
+          ]
+        },
+        roadmap: [
+          { week: 'Week 1', task: 'Fix ATS formatting & Add portfolio', status: 'pending' },
+          { week: 'Week 2', task: 'Incorporate metrics into descriptions', status: 'pending' },
+          { week: 'Week 3', task: 'Add AWS or Docker credentials', status: 'pending' }
+        ]
       };
     }
 

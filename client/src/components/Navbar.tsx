@@ -28,8 +28,10 @@ export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [user, setUser] = useState<{ name?: string } | null>(null);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     const handleScroll = () => {
       setScrolled(window.scrollY > 20);
     };
@@ -81,29 +83,31 @@ export default function Navbar() {
               <Github className="w-5 h-5" />
             </Link>
             
-            {user ? (
-              <Link 
-                href="/dashboard" 
-                className="btn-primary flex items-center gap-2 text-sm px-5 py-2 shadow-lg shadow-primary/20"
-              >
-                Dashboard <ArrowRight className="w-4 h-4" />
-              </Link>
-            ) : (
-              <>
+            {mounted ? (
+              user ? (
                 <Link 
-                  href="/login" 
-                  className="hidden sm:block text-sm font-semibold text-text-secondary hover:text-text-primary transition-colors"
+                  href="/dashboard" 
+                  className="btn-primary flex items-center gap-2 text-sm px-5 py-2 shadow-lg shadow-primary/20"
                 >
-                  Login
+                  Dashboard <ArrowRight className="w-4 h-4" />
                 </Link>
-                <Link 
-                  href="/signup" 
-                  className="btn-primary flex items-center gap-2 text-sm px-5 py-2"
-                >
-                  Get Started <ArrowRight className="w-4 h-4" />
-                </Link>
-              </>
-            )}
+              ) : (
+                <>
+                  <Link 
+                    href="/login" 
+                    className="hidden sm:block text-sm font-semibold text-text-secondary hover:text-text-primary transition-colors"
+                  >
+                    Login
+                  </Link>
+                  <Link 
+                    href="/signup" 
+                    className="btn-primary flex items-center gap-2 text-sm px-5 py-2"
+                  >
+                    Get Started <ArrowRight className="w-4 h-4" />
+                  </Link>
+                </>
+              )
+            ) : null}
             
             <button 
               className="md:hidden p-2 text-text-secondary hover:text-text-primary transition-colors"
@@ -135,23 +139,25 @@ export default function Navbar() {
                   </Link>
                 ))}
                 <hr className="border-border" />
-                {user ? (
-                  <Link 
-                    href="/dashboard" 
-                    onClick={() => setIsOpen(false)}
-                    className="text-lg font-bold text-primary flex items-center gap-2"
-                  >
-                    My Dashboard <ArrowRight className="w-5 h-5" />
-                  </Link>
-                ) : (
-                  <Link 
-                    href="/login" 
-                    onClick={() => setIsOpen(false)}
-                    className="text-lg font-medium text-text-secondary hover:text-primary transition-colors"
-                  >
-                    Login
-                  </Link>
-                )}
+                {mounted ? (
+                  user ? (
+                    <Link 
+                      href="/dashboard" 
+                      onClick={() => setIsOpen(false)}
+                      className="text-lg font-bold text-primary flex items-center gap-2"
+                    >
+                      My Dashboard <ArrowRight className="w-5 h-5" />
+                    </Link>
+                  ) : (
+                    <Link 
+                      href="/login" 
+                      onClick={() => setIsOpen(false)}
+                      className="text-lg font-medium text-text-secondary hover:text-primary transition-colors"
+                    >
+                      Login
+                    </Link>
+                  )
+                ) : null}
               </div>
             </motion.div>
           )}

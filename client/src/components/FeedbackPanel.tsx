@@ -34,9 +34,9 @@ const FeedbackPanel: React.FC<FeedbackPanelProps> = ({ feedback, onNext, isLastS
           <p className="text-slate-400 mt-1">Real-time AI evaluation of your last response.</p>
         </div>
         <div className="flex items-center gap-4 bg-white/5 p-4 rounded-3xl border border-white/10">
-          <Trophy className="w-8 h-8 text-yellow-500" />
+          <Trophy className={`w-8 h-8 ${feedback.score >= 8 ? 'text-emerald-500' : feedback.score >= 6 ? 'text-amber-500' : 'text-rose-500'}`} />
           <div>
-            <span className="text-4xl font-black text-white">{feedback.score}</span>
+            <span className={`text-4xl font-black ${feedback.score >= 8 ? 'text-emerald-500' : feedback.score >= 6 ? 'text-amber-500' : 'text-rose-500'}`}>{feedback.score}</span>
             <span className="text-slate-500 text-lg">/10</span>
           </div>
         </div>

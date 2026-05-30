@@ -8,11 +8,13 @@ export const WebcamAI = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [stream, setStream] = useState<MediaStream | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
   const { updateRealtimeFeedback, features } = useInterviewStore();
   const detectorRef = useRef<faceLandmarksDetection.FaceLandmarksDetector | null>(null);
 
   useEffect(() => {
     const initDetector = async () => {
+      if (detectorRef.current) return;
       await tf.setBackend('webgl');
       const model = faceLandmarksDetection.SupportedModels.MediaPipeFaceMesh;
       const detectorConfig = {
@@ -27,6 +29,7 @@ export const WebcamAI = () => {
         const mediaStream = await navigator.mediaDevices.getUserMedia({ 
           video: { width: 640, height: 480 } 
         });
+        streamRef.current = mediaStream;
         setStream(mediaStream);
         if (videoRef.current) {
           videoRef.current.srcObject = mediaStream;
@@ -42,8 +45,9 @@ export const WebcamAI = () => {
     }
 
     return () => {
-      if (stream) {
-        stream.getTracks().forEach(track => track.stop());
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+        streamRef.current = null;
       }
     };
   }, [features.webcam]);

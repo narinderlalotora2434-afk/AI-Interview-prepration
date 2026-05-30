@@ -27,18 +27,22 @@ router.post('/chat', authenticateToken, async (req: AuthRequest, res: Response):
       })
     ]);
 
+    const safeParse = (str: any) => {
+      try { return JSON.parse(str || '[]'); } catch { return []; }
+    };
+
     const context = {
       mockInterviews: analytics?.mockInterviewCount || 0,
       avgScore: analytics?.avgScore || 0,
       xp: analytics?.xp || 0,
       streak: analytics?.streak || 0,
-      strongTopics: JSON.parse(analytics?.strongTopics || '[]'),
-      weakTopics: JSON.parse(analytics?.weakTopics || '[]'),
+      strongTopics: safeParse(analytics?.strongTopics),
+      weakTopics: safeParse(analytics?.weakTopics),
       lastAtsScore: recentResume?.atsScore || 'N/A',
       recentInterviewScore: recentInterview?.score || 'N/A'
     };
 
-    const chatHistory = history.reverse().map(h => `${h.role === 'user' ? 'Student' : 'PrepAI'}: ${h.content}`).join('\n');
+    const chatHistory = [...history].reverse().map(h => `${h.role === 'user' ? 'Student' : 'PrepAI'}: ${h.content}`).join('\n');
 
     const systemPrompt = `You are "PrepAI Assistant", a premium, friendly, and highly intelligent AI placement mentor for college students. 
     Your goal is to help students get placed in top companies.
@@ -88,11 +92,11 @@ router.get('/history', authenticateToken, async (req: AuthRequest, res: Response
 
     const history = await prisma.assistantChat.findMany({
       where: { userId },
-      orderBy: { createdAt: 'asc' },
+      orderBy: { createdAt: 'desc' },
       take: 50
     });
 
-    res.json(history);
+    res.json([...history].reverse());
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }

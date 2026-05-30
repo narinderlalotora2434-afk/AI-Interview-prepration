@@ -10,11 +10,11 @@ const router = Router();
 router.get('/problems', async (req: Request, res: Response): Promise<void> => {
   try {
     const { difficulty, category } = req.query;
-    
+
     const where: Record<string, string> = {};
     if (difficulty && difficulty !== 'All') where.difficulty = String(difficulty);
     if (category && category !== 'All Topics') where.category = String(category);
-    
+
     // Status filtering would require join with UserSolvedProblem if implemented here.
     // For simplicity, returning all matching.
 
@@ -68,7 +68,7 @@ router.get('/problems/:id', async (req: Request, res: Response): Promise<void> =
 router.post('/run', authenticateToken, async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { code, language, input } = req.body;
-    
+
     // Dry run via AI judge to simulate execution securely
     const systemPrompt = "Simulate a code execution engine for this " + language + " code.";
     const userPrompt = `Input provided: ${input}\nCode:\n${code}\n\nReturn ONLY JSON with 'output' (string of printed output/returned value), 'status' ('Success', 'Runtime Error', 'Compilation Error'), and 'error' (string if any).`;
@@ -107,7 +107,7 @@ router.post('/submit', authenticateToken, async (req: AuthRequest, res: Response
     Evaluate the following ${language} code for the problem:
     Title: ${problem.title}
     Description: ${problem.description}`;
-    
+
     const userPrompt = `Code:
     ${code}
     

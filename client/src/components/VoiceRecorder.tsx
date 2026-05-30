@@ -57,9 +57,24 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({
   disabled 
 }) => {
   const [interimTranscript, setInterimTranscript] = useState('');
+  const [elapsedTime, setElapsedTime] = useState(0);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const silenceTimerRef = useRef<NodeJS.Timeout | null>(null);
   const fullTranscriptRef = useRef('');
+  const isRecordingRef = useRef(isRecording);
+
+  useEffect(() => {
+    isRecordingRef.current = isRecording;
+    let interval: NodeJS.Timeout;
+    if (isRecording) {
+      interval = setInterval(() => {
+        setElapsedTime(prev => prev + 1);
+      }, 1000);
+    } else {
+      setElapsedTime(0);
+    }
+    return () => clearInterval(interval);
+  }, [isRecording]);
 
   const stopRecording = useCallback(() => {
     if (recognitionRef.current) {
@@ -144,7 +159,7 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({
               setIsRecording(false);
               // Small delay before allowing restart or auto-restarting
               setTimeout(() => {
-                if (isRecording) startRecording();
+                if (isRecordingRef.current) startRecording();
               }, 1000);
             } else if (event.error === 'not-allowed') {
               setIsRecording(false);
@@ -166,6 +181,7 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({
     };
   }, [onTranscriptChange, setIsRecording, stopRecording]);
 
+  const wordCount = interimTranscript.trim() ? interimTranscript.trim().split(/\s+/).length : 0;
 
   return (
     <div className="flex flex-col items-center gap-6">
@@ -199,10 +215,18 @@ const VoiceRecorder: React.FC<VoiceRecorderProps> = ({
       </div>
 
       <div className="w-full max-w-2xl text-center">
-        <p className="text-sm text-slate-400 mb-2 uppercase tracking-widest font-semibold">
-          {isRecording ? "Live Transcript" : "Click to Start Answering"}
-        </p>
-        <div className="min-h-[100px] p-6 glass-card rounded-2xl text-lg text-slate-200 italic">
+        <div className="flex justify-between items-center mb-2 px-2">
+          <p className="text-sm text-slate-400 uppercase tracking-widest font-semibold">
+            {isRecording ? "Live Transcript" : "Click to Start Answering"}
+          </p>
+          {(wordCount > 0 || elapsedTime > 0) && (
+            <div className="flex items-center gap-4 text-xs font-black text-slate-500 uppercase tracking-widest">
+              <span>{Math.floor(elapsedTime / 60)}:{(elapsedTime % 60).toString().padStart(2, '0')}</span>
+              <span>{wordCount} Words</span>
+            </div>
+          )}
+        </div>
+        <div className="min-h-[100px] p-6 glass-card rounded-2xl text-lg text-slate-200 italic relative">
           {interimTranscript || "Waiting for speech..."}
         </div>
       </div>

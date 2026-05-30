@@ -43,15 +43,23 @@ router.get('/questions/:category', authenticateToken, async (req: AuthRequest, r
       finalQuestions = questions.sort(() => 0.5 - Math.random()).slice(0, Number(limit));
     }
 
-    const safeQuestions = finalQuestions.map(q => ({
-      id: q.id,
-      category: q.category,
-      difficulty: q.difficulty,
-      topic: q.topic,
-      type: q.type,
-      questionText: q.questionText,
-      options: JSON.parse(q.options)
-    }));
+    const safeQuestions = finalQuestions.map(q => {
+      let parsedOptions = [];
+      try {
+        parsedOptions = typeof q.options === 'string' ? JSON.parse(q.options) : q.options;
+      } catch (e) {
+        console.error("Failed to parse options for question", q.id);
+      }
+      return {
+        id: q.id,
+        category: q.category,
+        difficulty: q.difficulty,
+        topic: q.topic,
+        type: q.type,
+        questionText: q.questionText,
+        options: parsedOptions
+      };
+    });
 
     res.json(safeQuestions);
   } catch (error) {
@@ -209,15 +217,22 @@ router.get('/leaderboard', async (req: Request, res: Response) => {
       take: 10
     });
 
-    const leaderboard = await Promise.all(topPerformers.map(async (p) => {
-      const user = await prisma.user.findUnique({ where: { id: p.userId }, select: { name: true, profilePic: true } });
+    const userIds = topPerformers.map(p => p.userId);
+    const users = await prisma.user.findMany({
+      where: { id: { in: userIds } },
+      select: { id: true, name: true, profilePic: true }
+    });
+    const userMap = new Map(users.map(u => [u.id, u]));
+
+    const leaderboard = topPerformers.map(p => {
+      const user = userMap.get(p.userId);
       return {
         userId: p.userId,
         name: user?.name || 'Anonymous',
         profilePic: user?.profilePic,
         totalScore: p._sum.score
       };
-    }));
+    });
 
     res.json(leaderboard);
   } catch (error) {

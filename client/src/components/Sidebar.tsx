@@ -114,7 +114,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         {/* Navigation */}
         <nav className="space-y-1 flex-1 overflow-y-auto no-scrollbar">
           {menuItems.map((item) => {
-            const isActive = pathname === item.href;
+            const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
             return (
               <Link 
                 key={item.href}

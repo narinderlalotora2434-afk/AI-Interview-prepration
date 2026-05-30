@@ -56,7 +56,7 @@ router.get('/dashboard', authenticateToken, async (req: AuthRequest, res: Respon
       ...recentResumes.map(r => ({ type: 'Resume', date: r.createdAt, score: r.atsScore })),
       ...recentAptitude.map(a => ({ type: 'Aptitude', date: a.createdAt, score: a.score })),
       ...recentCoding.map(c => ({ type: 'Coding', date: c.createdAt, score: c.status === 'Accepted' ? 100 : 0 }))
-    ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 10);
 
     res.json({
       analytics: analytics || { mockInterviewCount: 0, codingRoundCount: 0, avgScore: 0, xp: 0, streak: 0, badges: "[]" },
