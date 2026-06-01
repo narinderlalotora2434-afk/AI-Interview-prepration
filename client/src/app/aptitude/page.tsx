@@ -21,7 +21,6 @@ import {
   Timer,
   Brain,
   Zap,
-  ArrowRight,
   Menu,
   CheckCircle2,
   Lock,
@@ -230,9 +229,7 @@ export default function AptitudeDashboard() {
                      </div>
                      <h2 className="text-2xl font-black tracking-tight">Performance History</h2>
                   </div>
-                  <Link href="/analytics" className="text-[10px] font-black uppercase tracking-widest text-primary flex items-center gap-2 hover:gap-3 transition-all">
-                     View All Analytics <ArrowRight className="w-4 h-4" />
-                  </Link>
+                  <span className="text-[10px] font-black uppercase tracking-widest text-text-secondary">Recent Attempts</span>
                </div>
 
                <div className="saas-card p-8 bg-white border-slate-100 shadow-xl shadow-slate-200/40">

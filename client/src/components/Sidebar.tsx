@@ -16,7 +16,6 @@ import {
   Settings,
   User,
   Mic,
-  BarChart2,
   LogOut,
   X,
   Sparkles
@@ -39,7 +38,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
     { href: "/aptitude", label: "Aptitude", icon: Brain, color: "text-accent" },
     { href: "/coding", label: "Coding Arena", icon: Code, color: "text-emerald-500" },
     { href: "/interview", label: "AI Interview", icon: MessageSquare, color: "text-primary" },
-    { href: "/analytics", label: "Performance", icon: BarChart2, color: "text-secondary" },
+
     { href: "/resume", label: "Resume Pro", icon: FileText, color: "text-primary" },
     { href: "/profile", label: "Profile", icon: User },
   ];
