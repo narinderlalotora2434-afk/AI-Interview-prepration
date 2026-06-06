@@ -266,8 +266,7 @@ router.post('/:id/next', authenticateToken, async (req: AuthRequest, res: Respon
         where: { id: interviewId },
         data: { 
           score: Math.round(avgScore),
-          metrics: JSON.stringify(performanceMetrics),
-          xpAwarded: true
+          metrics: JSON.stringify(performanceMetrics)
         }
       });
 
@@ -330,7 +329,7 @@ router.post('/:id/next', authenticateToken, async (req: AuthRequest, res: Respon
          });
          
          // Update Gamification
-         if (!interview.xpAwarded) {
+         if (interview.score === null) {
             await updateGamification(userId, 100);
          }
       }
@@ -452,12 +451,8 @@ router.post('/:id/evaluate', authenticateToken, async (req: AuthRequest, res: Re
         }
       });
       // Reward XP only if interview wasn't already finished
-      if (!interview.xpAwarded) {
+      if (interview.score === null) {
          await updateGamification(userId, 100);
-         await prisma.interview.update({
-            where: { id: interviewId },
-            data: { xpAwarded: true }
-         });
       }
     }
 
