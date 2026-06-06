@@ -1,26 +1,31 @@
+// FILE: JobAndAI.tsx | JD-aware ATS scoring system
 "use client";
 
 import React, { useState } from 'react';
-import { Target, Search, CheckCircle2, ChevronRight, Copy, Check, Sparkles } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { Target, Search, CheckCircle2, ChevronRight, Copy, Check, Sparkles, AlertCircle } from 'lucide-react';
+import { getBaseUrl } from "@/lib/api";
+import { parseJobDescription, DOMAIN_CONFIGS, JDAnalysis } from './domainConfig';
 
-export const JobDescriptionMatcher = () => {
+interface Props {
+  onJDAnalyzed: (jdText: string) => void;
+}
+
+export const JobDescriptionMatcher = ({ onJDAnalyzed }: Props) => {
   const [jd, setJd] = useState('');
   const [analyzing, setAnalyzing] = useState(false);
-  const [result, setResult] = useState<any>(null);
+  const [localResult, setLocalResult] = useState<JDAnalysis | null>(null);
 
   const handleAnalyze = () => {
     if (!jd.trim()) return;
     setAnalyzing(true);
-    // Mock analysis delay
+    
+    // Parse JD client-side immediately (no API needed)
     setTimeout(() => {
-      setResult({
-        match: 76,
-        missingSkills: ['Kubernetes', 'CI/CD Pipeline', 'GraphQL'],
-        probability: 'High'
-      });
+      const parsed = parseJobDescription(jd);
+      setLocalResult(parsed);
+      onJDAnalyzed(jd); // triggers parent score recalculation
       setAnalyzing(false);
-    }, 1500);
+    }, 800); // small delay for UX feel
   };
 
   return (
@@ -28,16 +33,21 @@ export const JobDescriptionMatcher = () => {
       <h3 className="text-lg font-bold text-slate-900 mb-2 flex items-center gap-2">
         <Target className="w-5 h-5 text-primary" /> Job Description Matcher
       </h3>
-      <p className="text-sm text-slate-500 mb-4">Paste a job description to see how well your resume matches.</p>
+      <p className="text-sm text-slate-500 mb-4">
+        Paste a job description — all scores will update to reflect your match against this specific role.
+      </p>
 
-      {!result ? (
+      {!localResult ? (
         <div className="space-y-4">
           <textarea
             value={jd}
             onChange={(e) => setJd(e.target.value)}
-            placeholder="Paste Job Description here..."
-            className="w-full h-32 p-4 rounded-xl border border-slate-200 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all resize-none text-sm"
+            placeholder="Paste the full job description here..."
+            className="w-full h-40 p-4 rounded-xl border border-slate-200 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all resize-none text-sm font-medium"
           />
+          <div className="text-xs text-slate-400 font-medium">
+            Tip: Include the full JD with requirements section for best results
+          </div>
           <button
             onClick={handleAnalyze}
             disabled={!jd.trim() || analyzing}
@@ -46,46 +56,101 @@ export const JobDescriptionMatcher = () => {
             {analyzing ? (
               <span className="flex items-center gap-2">
                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                Analyzing Match...
+                Analyzing JD...
               </span>
             ) : (
               <span className="flex items-center gap-2">
-                <Search className="w-4 h-4" /> Calculate Match Score
+                <Search className="w-4 h-4" /> Analyze & Update Scores
               </span>
             )}
           </button>
         </div>
       ) : (
-        <div className="space-y-6">
-          <div className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100">
+        <div className="space-y-5">
+          
+          {/* JD Active Notice */}
+          <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0"/>
+            <p className="text-xs font-bold text-emerald-700">
+              All ATS scores updated to reflect this job description
+            </p>
+          </div>
+
+          {/* Domain detected */}
+          <div className="flex items-center gap-3">
+            <span className="text-2xl">
+              {DOMAIN_CONFIGS[localResult.detectedDomain].icon}
+            </span>
             <div>
-              <p className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-1">Match Score</p>
-              <p className="text-3xl font-black text-slate-900">{result.match}%</p>
-            </div>
-            <div className="text-right">
-              <p className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-1">ATS Probability</p>
-              <p className="text-xl font-bold text-emerald-600">{result.probability}</p>
+              <p className="text-xs text-slate-500 font-medium">
+                Role Domain Detected
+              </p>
+              <p className="font-bold text-slate-800">
+                {DOMAIN_CONFIGS[localResult.detectedDomain].label}
+              </p>
             </div>
           </div>
 
-          <div>
-            <h4 className="text-sm font-bold text-slate-700 mb-3 flex items-center gap-1.5">
-              Missing Required Skills
-            </h4>
-            <div className="flex flex-wrap gap-2">
-              {result.missingSkills.map((skill: string, i: number) => (
-                <span key={i} className="px-3 py-1 bg-rose-50 border border-rose-100 text-rose-700 rounded-lg text-sm font-medium">
-                  {skill}
-                </span>
-              ))}
+          {/* Requirements */}
+          <div className="grid grid-cols-2 gap-3 p-3 bg-slate-50 rounded-xl border border-slate-100">
+            <div>
+              <p className="text-xs text-slate-500 font-bold uppercase tracking-wider mb-1">
+                Experience
+              </p>
+              <p className="text-sm font-bold text-slate-800">
+                {localResult.experienceRequired}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-slate-500 font-bold uppercase tracking-wider mb-1">
+                Education
+              </p>
+              <p className="text-sm font-bold text-slate-800">
+                {localResult.educationRequired}
+              </p>
             </div>
           </div>
+
+          {/* Required Skills from JD */}
+          {localResult.requiredSkills.length > 0 && (
+            <div>
+              <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2 flex items-center gap-1">
+                <span className="w-2 h-2 rounded-full bg-rose-500" />
+                Required Skills in JD ({localResult.requiredSkills.length})
+              </h4>
+              <div className="flex flex-wrap gap-1.5">
+                {localResult.requiredSkills.map((s, i) => (
+                  <span key={i} className="px-2 py-1 bg-rose-50 border border-rose-100 text-rose-700 rounded-lg text-xs font-semibold">
+                    {s}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Preferred Skills from JD */}
+          {localResult.preferredSkills.length > 0 && (
+            <div>
+              <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2 flex items-center gap-1">
+                <span className="w-2 h-2 rounded-full bg-amber-500" />
+                Preferred Skills in JD ({localResult.preferredSkills.length})
+              </h4>
+              <div className="flex flex-wrap gap-1.5">
+                {localResult.preferredSkills.map((s, i) => (
+                  <span key={i} className="px-2 py-1 bg-amber-50 border border-amber-100 text-amber-700 rounded-lg text-xs font-semibold">
+                    {s}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
 
           <button 
-            onClick={() => {setResult(null); setJd('');}}
+            onClick={() => { setLocalResult(null); setJd(''); }}
             className="text-sm font-bold text-primary hover:text-indigo-700 flex items-center gap-1"
           >
-            Try another job description <ChevronRight className="w-4 h-4" />
+            Try a different job description 
+            <ChevronRight className="w-4 h-4" />
           </button>
         </div>
       )}
@@ -127,7 +192,7 @@ export const AIImprovements = ({ data }: { data: any }) => {
         <div>
           <h4 className="text-sm font-bold text-slate-700 mb-3">Better Experience Bullet Points</h4>
           <div className="space-y-3">
-            {data.experienceBullets.map((bullet: string, i: number) => (
+            {data.experienceBullets?.map((bullet: string, i: number) => (
               <div key={i} className="relative group flex items-start gap-3">
                 <CheckCircle2 className="w-4 h-4 text-emerald-500 mt-1 shrink-0" />
                 <div className="p-3 bg-slate-50 border border-slate-100 rounded-xl text-slate-700 text-sm leading-relaxed flex-1 pr-12">

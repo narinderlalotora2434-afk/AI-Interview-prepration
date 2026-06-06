@@ -1,3 +1,7 @@
+// ============================================
+// FILE: HeroSection.tsx
+// Changes: Added header comment
+// ============================================
 "use client";
 
 import React from 'react';

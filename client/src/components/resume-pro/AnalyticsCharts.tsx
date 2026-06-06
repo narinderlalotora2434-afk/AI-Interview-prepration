@@ -1,13 +1,28 @@
+// ============================================
+// FILE: AnalyticsCharts.tsx
+// Changes: Added RadarDataPoint and SkillDataPoint interfaces
+// ============================================
 "use client";
 
 import React from 'react';
 import { 
   Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer,
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Cell
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Cell
 } from 'recharts';
 import { Activity, PieChart as PieChartIcon } from 'lucide-react';
 
-export const RadarChartComp = ({ data }: { data: any[] }) => {
+interface RadarDataPoint {
+  subject: string;
+  A: number;
+}
+
+interface SkillDataPoint {
+  name: string;
+  value: number;
+  fill: string;
+}
+
+export const RadarChartComp = ({ data }: { data: RadarDataPoint[] }) => {
   return (
     <div className="bg-white/80 backdrop-blur-xl border border-slate-200 p-6 rounded-3xl shadow-sm h-full">
       <h3 className="text-lg font-bold text-slate-900 mb-6 flex items-center gap-2">
@@ -30,7 +45,7 @@ export const RadarChartComp = ({ data }: { data: any[] }) => {
   );
 };
 
-export const SkillDistributionChart = ({ data }: { data: any[] }) => {
+export const SkillDistributionChart = ({ data }: { data: SkillDataPoint[] }) => {
   return (
     <div className="bg-white/80 backdrop-blur-xl border border-slate-200 p-6 rounded-3xl shadow-sm h-full">
       <h3 className="text-lg font-bold text-slate-900 mb-6 flex items-center gap-2">

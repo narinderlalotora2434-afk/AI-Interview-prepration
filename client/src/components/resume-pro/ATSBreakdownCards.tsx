@@ -1,10 +1,23 @@
+// ============================================
+// FILE: ATSBreakdownCards.tsx
+// Changes: Added ATSBreakdown interface and trend labels
+// ============================================
 "use client";
 
 import React from 'react';
 import { motion } from 'framer-motion';
 import { CheckCircle2, Search, Target, Layout, BookOpen, Users } from 'lucide-react';
 
-export const ATSBreakdownCards = ({ data }: { data: any }) => {
+interface ATSBreakdown {
+  compatibility: number;
+  keywordsMatch: number;
+  skillsCoverage: number;
+  formatting: number;
+  readability: number;
+  recruiterImpact: number;
+}
+
+export const ATSBreakdownCards = ({ data }: { data: ATSBreakdown }) => {
   const cards = [
     { label: 'Compatibility', value: data.compatibility, icon: <CheckCircle2 className="w-5 h-5" />, color: 'emerald' },
     { label: 'Keywords', value: data.keywordsMatch, icon: <Search className="w-5 h-5" />, color: 'primary' },
@@ -51,9 +64,13 @@ export const ATSBreakdownCards = ({ data }: { data: any }) => {
               className={`h-full rounded-full ${c.value >= 80 ? 'bg-emerald-500' : c.value >= 60 ? 'bg-amber-500' : 'bg-rose-500'}`}
             />
           </div>
+          <p className={`text-[10px] font-black uppercase tracking-widest mt-2
+            ${c.value >= 80 ? 'text-emerald-500' : 
+              c.value >= 60 ? 'text-amber-500' : 'text-rose-500'}`}>
+            {c.value >= 80 ? 'Excellent' : c.value >= 60 ? 'Good' : 'Needs Work'}
+          </p>
         </motion.div>
       ))}
     </div>
   );
 };
-

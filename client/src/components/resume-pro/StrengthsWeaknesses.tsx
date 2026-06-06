@@ -1,3 +1,7 @@
+// ============================================
+// FILE: StrengthsWeaknesses.tsx
+// Changes: Added priority indicators for each item
+// ============================================
 "use client";
 
 import React from 'react';
@@ -13,9 +17,11 @@ export const StrengthsWeaknesses = ({ strengths, weaknesses }: { strengths: stri
         </h3>
         <ul className="space-y-4">
           {strengths.map((s, i) => (
-            <li key={i} className="flex gap-3 text-emerald-800 text-sm font-medium leading-relaxed">
-              <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0" />
-              {s}
+            <li key={i} className="flex gap-3 text-emerald-800 text-sm font-medium leading-relaxed items-start">
+              <span className="shrink-0 mt-0.5 px-2 py-0.5 bg-emerald-200/50 text-emerald-700 text-[10px] font-black rounded-md">
+                {i === 0 ? "TOP" : i + 1}
+              </span>
+              <span>{s}</span>
             </li>
           ))}
         </ul>
@@ -28,9 +34,11 @@ export const StrengthsWeaknesses = ({ strengths, weaknesses }: { strengths: stri
         </h3>
         <ul className="space-y-4">
           {weaknesses.map((w, i) => (
-            <li key={i} className="flex gap-3 text-rose-800 text-sm font-medium leading-relaxed">
-              <AlertTriangle className="w-5 h-5 text-rose-500 shrink-0" />
-              {w}
+            <li key={i} className="flex gap-3 text-rose-800 text-sm font-medium leading-relaxed items-start">
+              <span className="shrink-0 mt-0.5 px-2 py-0.5 bg-rose-200/50 text-rose-700 text-[10px] font-black rounded-md">
+                {i === 0 ? "TOP" : i + 1}
+              </span>
+              <span>{w}</span>
             </li>
           ))}
         </ul>

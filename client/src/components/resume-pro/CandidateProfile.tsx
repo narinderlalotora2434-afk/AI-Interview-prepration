@@ -1,16 +1,24 @@
+// ============================================
+// FILE: CandidateProfile.tsx
+// Changes: Fixed LinkedIn/GitHub icons and added completeness score
+// ============================================
 "use client";
 
 import React from 'react';
-import { User, Mail, Phone, MapPin, Briefcase, AlertTriangle } from 'lucide-react';
+import { User, Mail, Phone, MapPin, Briefcase, AlertTriangle, Globe, Code } from 'lucide-react';
 
 export const CandidateProfile = ({ info, missing }: { info: any, missing: string[] }) => {
+  const fields = ['name', 'email', 'phone', 'location', 'experience', 'linkedin', 'github'];
+  const filled = fields.filter(f => info[f] && info[f] !== 'Not found' && info[f] !== 'N/A').length;
+  const completeness = Math.round((filled / fields.length) * 100);
+
   return (
-    <div className="bg-white/80 backdrop-blur-xl border border-slate-200 p-6 rounded-3xl shadow-sm h-full">
+    <div className="bg-white/80 backdrop-blur-xl border border-slate-200 p-6 rounded-3xl shadow-sm h-full flex flex-col">
       <h3 className="text-lg font-bold text-slate-900 mb-6 flex items-center gap-2">
         <User className="w-5 h-5 text-primary" /> Candidate Information
       </h3>
       
-      <div className="space-y-4">
+      <div className="space-y-4 flex-1">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
             <User className="w-5 h-5 text-primary" />
@@ -43,20 +51,32 @@ export const CandidateProfile = ({ info, missing }: { info: any, missing: string
 
         <div className="grid grid-cols-2 gap-4 pt-4 border-t border-slate-100">
           <div className="flex items-center gap-2">
-            <MapPin className="w-4 h-4 text-slate-400" />
-            <span className="text-sm font-medium text-slate-700 truncate">{info.location || 'N/A'}</span>
+            <MapPin className="w-4 h-4 text-slate-400 shrink-0" />
+            <div className="min-w-0">
+              <p className="text-sm font-medium text-slate-700 truncate">{info.location || 'N/A'}</p>
+              <p className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">Location</p>
+            </div>
           </div>
           <div className="flex items-center gap-2">
-            <Briefcase className="w-4 h-4 text-slate-400" />
-            <span className="text-sm font-medium text-slate-700 truncate">{info.experience || 'N/A'}</span>
+            <Briefcase className="w-4 h-4 text-slate-400 shrink-0" />
+            <div className="min-w-0">
+              <p className="text-sm font-medium text-slate-700 truncate">{info.experience || 'N/A'}</p>
+              <p className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">Experience</p>
+            </div>
           </div>
           <div className="flex items-center gap-2">
-            <MapPin className="w-4 h-4 text-slate-400" />
-            <span className="text-sm font-medium text-slate-700 truncate">{info.linkedin || 'N/A'}</span>
+            <Globe className="w-4 h-4 text-blue-600 shrink-0" />
+            <div className="min-w-0">
+              <p className="text-sm font-medium text-slate-700 truncate">{info.linkedin || 'N/A'}</p>
+              <p className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">LinkedIn</p>
+            </div>
           </div>
           <div className="flex items-center gap-2">
-            <MapPin className="w-4 h-4 text-slate-400" />
-            <span className="text-sm font-medium text-slate-700 truncate">{info.github || 'N/A'}</span>
+            <Code className="w-4 h-4 text-slate-700 shrink-0" />
+            <div className="min-w-0">
+              <p className="text-sm font-medium text-slate-700 truncate">{info.github || 'N/A'}</p>
+              <p className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">GitHub</p>
+            </div>
           </div>
         </div>
 
@@ -74,6 +94,21 @@ export const CandidateProfile = ({ info, missing }: { info: any, missing: string
             </div>
           </div>
         )}
+
+        <div className="mt-4 pt-4 border-t border-slate-100 mt-auto">
+          <div className="flex justify-between text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
+            <span>Profile Completeness</span>
+            <span>{completeness}%</span>
+          </div>
+          <div className="w-full bg-slate-100 h-1.5 rounded-full">
+            <div 
+              className={`h-full rounded-full ${
+                completeness >= 80 ? 'bg-emerald-500' : 
+                completeness >= 50 ? 'bg-amber-500' : 'bg-rose-500'}`}
+              style={{ width: `${completeness}%` }}
+            />
+          </div>
+        </div>
       </div>
     </div>
   );

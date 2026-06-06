@@ -1,10 +1,19 @@
+// ============================================
+// FILE: CareerPathDetector.tsx
+// Changes: Added CareerPath interface
+// ============================================
 "use client";
 
 import React from 'react';
 import { Compass, Users, Sparkles } from 'lucide-react';
 import { motion } from 'framer-motion';
 
-export const CareerPathDetector = ({ path }: { path: any }) => {
+interface CareerPath {
+  role: string;
+  confidence: number;
+}
+
+export const CareerPathDetector = ({ path }: { path: CareerPath }) => {
   return (
     <div className="bg-gradient-to-br from-indigo-900 to-purple-900 border border-indigo-800 p-6 rounded-3xl shadow-lg relative overflow-hidden group">
       <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">

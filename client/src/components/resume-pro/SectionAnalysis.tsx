@@ -1,10 +1,29 @@
+// ============================================
+// FILE: SectionAnalysis.tsx
+// Changes: Added types for section analysis and certifications
+// ============================================
 "use client";
 
 import React from 'react';
 import { Briefcase, FolderGit2, GraduationCap, Award } from 'lucide-react';
 import { motion } from 'framer-motion';
 
-export const SectionAnalysis = ({ data, certifications }: { data: any, certifications: any }) => {
+interface SectionScore {
+  score: number;
+  feedback: string;
+}
+
+interface SectionData {
+  experience: SectionScore;
+  projects: SectionScore;
+  education: SectionScore;
+}
+
+interface Certifications {
+  recommended: string[];
+}
+
+export const SectionAnalysis = ({ data, certifications }: { data: SectionData, certifications: Certifications }) => {
   const sections = [
     { title: 'Experience', icon: <Briefcase className="w-5 h-5" />, score: data.experience.score, feedback: data.experience.feedback, color: 'blue' },
     { title: 'Projects', icon: <FolderGit2 className="w-5 h-5" />, score: data.projects.score, feedback: data.projects.feedback, color: 'purple' },
