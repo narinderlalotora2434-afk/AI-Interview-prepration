@@ -7,6 +7,7 @@ COPY package*.json ./
 COPY prisma ./prisma/
 
 # Install dependencies
+RUN apk add --no-cache openssl
 RUN npm install --include=dev
 
 # Copy source code
