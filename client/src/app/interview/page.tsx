@@ -50,8 +50,8 @@ import {
 import { useSpeech } from "@/lib/useSpeech";
 import { getBaseUrl } from "@/lib/api";
 import { useInterviewStore } from "@/store/useInterviewStore";
-import { WebcamAI } from "@/components/WebcamAI";
 import dynamic from 'next/dynamic';
+const WebcamAI = dynamic(() => import('@/components/WebcamAI').then(mod => mod.WebcamAI), { ssr: false });
 import Sidebar from "@/components/Sidebar";
 import toast from 'react-hot-toast';
 import { useRef } from 'react';
