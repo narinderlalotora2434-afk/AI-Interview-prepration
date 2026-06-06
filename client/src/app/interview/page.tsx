@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
@@ -113,6 +113,7 @@ export default function InterviewPage() {
 
   const [step, setStep] = useState<"setup" | "resume-analysis" | "chat" | "result" | "coding">("setup");
   const [company, setCompany] = useState("");
+  const companies = ["Google", "Amazon", "Microsoft", "Meta", "Apple", "Netflix", "NVIDIA", "Tesla", "Uber", "Airbnb"];
   const [resumes, setResumes] = useState<Resume[]>([]);
   const [selectedResumeId, setSelectedResumeId] = useState("");
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
@@ -122,12 +123,22 @@ export default function InterviewPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [timeLeft, setTimeLeft] = useState(duration * 60);
   const [code, setCode] = useState("// Write your code here\n");
+  const [language, setLanguage] = useState("javascript");
+  const languages = ["javascript", "typescript", "python", "java", "cpp", "go", "rust"];
   
   const [aiState, setAiState] = useState<"idle" | "listening" | "thinking" | "generating">("idle");
   const [currentFeedback, setCurrentFeedback] = useState<any>(null);
   const isSubmittingRef = useRef(false);
   const handleSubmitRef = useRef<() => Promise<void>>();
+  const abortControllerRef = useRef<AbortController | null>(null);
   
+  useEffect(() => {
+    abortControllerRef.current = new AbortController();
+    return () => {
+      abortControllerRef.current?.abort();
+    };
+  }, []);
+
   const router = useRouter();
 
   const { 
@@ -146,6 +157,16 @@ export default function InterviewPage() {
 
   // Timer Logic
   useEffect(() => {
+    setTimeLeft(duration * 60);
+  }, [duration]);
+
+  useEffect(() => {
+    if (timeLeft === 60) {
+      toast.error("Warning: 60 seconds remaining!", { icon: "⏳" });
+    }
+  }, [timeLeft]);
+
+  useEffect(() => {
     let timer: NodeJS.Timeout;
     if (step === "chat" || step === "coding") {
       timer = setInterval(() => {
@@ -163,10 +184,10 @@ export default function InterviewPage() {
   }, [step]);
 
   useEffect(() => {
-    if (isListening) {
+    if (isSpeechListening) {
       setCurrentAnswer(transcript);
     }
-  }, [transcript, isListening]);
+  }, [transcript, isSpeechListening]);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -233,7 +254,8 @@ export default function InterviewPage() {
                 headers: { 'Authorization': `Bearer ${token}` },
                 body: formData
              });
-             const data = await res.json();
+             const data = await res.json().catch(() => ({}));
+             if (!res.ok) throw new Error(data.error || "Failed to analyze resume");
              currentResumeId = data.resumeId;
              setSelectedResumeId(data.resumeId);
           } catch (err) {
@@ -280,6 +302,7 @@ export default function InterviewPage() {
       } else {
         toast.error(err.message || "Failed to start the interview. Please try again.");
       }
+      setStep("setup");
     } finally {
       setLoading(false);
     }
@@ -300,7 +323,15 @@ export default function InterviewPage() {
   };
 
   const handleNext = async () => {
-    if ((step === "chat" && !currentAnswer.trim()) || !interviewId) return;
+    if (!interviewId) return;
+    if (step === "chat" && !currentAnswer.trim()) {
+      toast.error("Please provide an answer before continuing.");
+      return;
+    }
+    if (step === "coding" && !code.trim()) {
+      toast.error("Please write some code before continuing.");
+      return;
+    }
     
     setLoading(true);
     const token = localStorage.getItem("token");
@@ -322,7 +353,10 @@ export default function InterviewPage() {
       if (!res.ok) throw new Error(data.error || "Failed to progress");
 
       if (data.isFinished) {
-         await handleSubmit();
+         await handleSubmit({
+            score: data.score,
+            evaluatedAnswers: data.evaluatedAnswers
+         });
          return;
       }
 
@@ -351,21 +385,31 @@ export default function InterviewPage() {
     }
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = useCallback(async (prefetchedData?: any) => {
     if (!interviewId || isSubmittingRef.current) return;
     isSubmittingRef.current = true;
     setLoading(true);
+
+    if (prefetchedData && prefetchedData.evaluatedAnswers) {
+       setEvaluation({
+          score: (prefetchedData.score || 0) / 10,
+          evaluatedAnswers: prefetchedData.evaluatedAnswers || []
+       });
+       setStep("result");
+       setLoading(false);
+       return;
+    }
+
     const token = localStorage.getItem("token");
     try {
-      const res = await fetch(`${getBaseUrl()}/api/user/dashboard`, {
+      const res = await fetch(`${getBaseUrl()}/api/interview/${interviewId}/summary`, {
           headers: { "Authorization": `Bearer ${token}` }
       });
-      const dashData = await res.json();
-      const lastInterview = dashData.recentInterviews?.[0] || { id: interviewId };
+      const interviewData = await res.json();
       
       setEvaluation({
-         score: (lastInterview.score || 80) / 10,
-         evaluatedAnswers: lastInterview.questions?.map((q: any) => ({
+         score: (interviewData.score || 0) / 10,
+         evaluatedAnswers: interviewData.questions?.map((q: any) => ({
             questionId: q.id,
             content: q.answers?.[0]?.content || "No answer recorded",
             score: q.answers?.[0]?.score || 0,
@@ -380,7 +424,11 @@ export default function InterviewPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [interviewId]);
+
+  useEffect(() => {
+    handleSubmitRef.current = () => handleSubmit();
+  }, [handleSubmit]);
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] text-text-primary selection:bg-primary/10 flex">
@@ -403,10 +451,16 @@ export default function InterviewPage() {
                     <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                     Live Session Active
                   </div>
-                  <div className="px-4 py-2 rounded-full bg-primary/5 border border-primary/10 text-primary text-[10px] font-black uppercase tracking-[0.2em] flex items-center gap-2">
+                  <div className={`px-4 py-2 rounded-full border text-[10px] font-black uppercase tracking-[0.2em] flex items-center gap-2 ${timeLeft < 60 ? 'bg-rose-50 border-rose-100 text-rose-600 animate-pulse' : 'bg-primary/5 border-primary/10 text-primary'}`}>
                     <Clock className="w-4 h-4" />
                     {Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, '0')}
                   </div>
+                  <button 
+                     onClick={() => handleSubmitRef.current && handleSubmitRef.current()}
+                     className="px-4 py-2 rounded-full bg-rose-50 border border-rose-100 text-rose-600 hover:bg-rose-100 hover:text-rose-700 transition-colors text-[10px] font-black uppercase tracking-[0.2em]"
+                  >
+                     End Session
+                  </button>
                </div>
             ) : (
                <div className="px-5 py-2 rounded-full bg-primary/5 border border-primary/10 text-primary text-[10px] font-black uppercase tracking-[0.2em] hidden sm:flex items-center gap-2">
@@ -446,6 +500,50 @@ export default function InterviewPage() {
 
                   <div className="grid lg:grid-cols-3 gap-12">
                     <div className="lg:col-span-2 space-y-12">
+                      {/* Experience Level */}
+                      <section className="saas-card p-6 md:p-12 space-y-8 bg-white shadow-xl shadow-slate-200/50">
+                        <div className="flex items-center gap-4">
+                           <div className="w-12 h-12 rounded-2xl bg-amber-50 flex items-center justify-center text-amber-500 border border-amber-100">
+                              <History className="w-6 h-6" />
+                           </div>
+                           <h3 className="text-2xl font-black tracking-tight">Experience Level</h3>
+                        </div>
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                           {["Fresher", "Junior", "Mid-Level", "Senior"].map((lvl) => (
+                             <button
+                               key={lvl}
+                               onClick={() => setLevel(lvl)}
+                               className={`p-4 rounded-[24px] border text-center transition-all group relative overflow-hidden bg-white ${level === lvl ? 'border-amber-500 shadow-lg shadow-amber-500/10 bg-amber-50' : 'border-slate-100 hover:border-amber-500/20'}`}
+                             >
+                               <p className={`font-black text-xs uppercase tracking-widest ${level === lvl ? 'text-amber-600' : 'text-text-secondary'}`}>{lvl}</p>
+                             </button>
+                           ))}
+                        </div>
+                      </section>
+
+                      {/* Target Company */}
+                      <section className="saas-card p-6 md:p-12 space-y-8 bg-white shadow-xl shadow-slate-200/50">
+                        <div className="flex items-center gap-4">
+                           <div className="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-500 border border-blue-100">
+                              <Target className="w-6 h-6" />
+                           </div>
+                           <h3 className="text-2xl font-black tracking-tight">Target Company</h3>
+                        </div>
+                        <div>
+                           <input 
+                             type="text" 
+                             value={company}
+                             onChange={(e) => setCompany(e.target.value)}
+                             placeholder="e.g. Google, Amazon, NVIDIA..."
+                             className="w-full bg-slate-50 border border-slate-100 rounded-[24px] p-6 focus:outline-none focus:border-blue-500/50 focus:bg-white transition-all text-lg font-medium text-slate-800 placeholder:text-slate-300"
+                             list="company-list"
+                           />
+                           <datalist id="company-list">
+                             {companies.map(c => <option key={c} value={c} />)}
+                           </datalist>
+                        </div>
+                      </section>
+
                       {/* Role Selection */}
                       <section className="saas-card p-6 md:p-12 space-y-8 bg-white shadow-xl shadow-slate-200/50">
                         <div className="flex items-center gap-4">
@@ -536,7 +634,19 @@ export default function InterviewPage() {
                                 id="resume-upload" 
                                 className="hidden" 
                                 accept=".pdf,.docx" 
-                                onChange={(e) => setUploadedFile(e.target.files?.[0] || null)}
+                                onChange={(e) => {
+                                  const file = e.target.files?.[0];
+                                  if (!file) return;
+                                  if (file.type !== "application/pdf" && !file.name.endsWith(".docx")) {
+                                    toast.error("Please upload a PDF or DOCX file.");
+                                    return;
+                                  }
+                                  if (file.size > 5 * 1024 * 1024) {
+                                    toast.error("File size must be less than 5MB.");
+                                    return;
+                                  }
+                                  setUploadedFile(file);
+                                }}
                               />
                               <div className="relative z-10 space-y-4">
                                  <div className={`w-16 h-16 rounded-2xl mx-auto flex items-center justify-center transition-all ${uploadedFile ? 'bg-primary text-white shadow-xl shadow-primary/20' : 'bg-slate-100 text-slate-400 group-hover:scale-110'}`}>
@@ -544,7 +654,15 @@ export default function InterviewPage() {
                                  </div>
                                  <div>
                                     <p className="font-black text-sm text-text-primary uppercase tracking-widest">{uploadedFile ? uploadedFile.name : "Inject New Resume"}</p>
-                                    <p className="text-[10px] text-text-secondary font-black uppercase tracking-widest mt-1">PDF / DOCX (MAX 5MB)</p>
+                                    {uploadedFile && (
+                                       <button 
+                                          onClick={(e) => { e.stopPropagation(); setUploadedFile(null); }}
+                                          className="text-[10px] text-rose-500 font-black uppercase tracking-widest mt-1 hover:underline"
+                                       >
+                                          Remove
+                                       </button>
+                                    )}
+                                    {!uploadedFile && <p className="text-[10px] text-text-secondary font-black uppercase tracking-widest mt-1">PDF / DOCX (MAX 5MB)</p>}
                                  </div>
                               </div>
                            </div>
@@ -555,7 +673,7 @@ export default function InterviewPage() {
                                  {resumes.length > 0 ? resumes.map((res) => (
                                    <button
                                      key={res.id}
-                                     onClick={() => setSelectedResumeId(res.id)}
+                                     onClick={() => setSelectedResumeId(prev => prev === res.id ? "" : res.id)}
                                      className={`w-full p-5 rounded-2xl border text-left transition-all flex items-center justify-between group ${selectedResumeId === res.id ? 'border-emerald-500 bg-emerald-50 shadow-sm' : 'border-slate-100 bg-white hover:border-emerald-200'}`}
                                    >
                                       <div className="flex items-center gap-4">
@@ -595,7 +713,11 @@ export default function InterviewPage() {
                              <div 
                                key={feat.id}
                                onClick={() => toggleFeature(feat.id as any)}
-                               className={`flex items-center justify-between p-5 rounded-2xl border cursor-pointer transition-all bg-white ${features[feat.id as keyof typeof features] ? 'border-primary bg-primary/5' : 'border-slate-100 hover:border-primary/20'}`}
+                               role="switch"
+                               tabIndex={0}
+                               aria-checked={features[feat.id as keyof typeof features]}
+                               onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleFeature(feat.id as any); } }}
+                               className={`flex items-center justify-between p-5 rounded-2xl border cursor-pointer transition-all bg-white ${features[feat.id as keyof typeof features] ? 'border-primary bg-primary/5' : 'border-slate-100 hover:border-primary/20 focus:outline-none focus:ring-2 focus:ring-primary/50'}`}
                              >
                                 <div className="flex flex-col">
                                    <div className="flex items-center gap-4">
@@ -647,11 +769,17 @@ export default function InterviewPage() {
                         </div>
                       </section>
 
-                      <button 
-                        onClick={handleStart}
-                        disabled={loading}
-                        className="w-full btn-primary py-8 text-base flex items-center justify-center gap-4 group relative overflow-hidden rounded-[32px] shadow-2xl shadow-primary/30"
-                      >
+                      <div className="space-y-4">
+                        {(!role || !interviewType) && (
+                          <div className="text-center text-rose-500 text-sm font-black uppercase tracking-widest">
+                            Please select a Role and Assessment Type
+                          </div>
+                        )}
+                        <button 
+                          onClick={handleStart}
+                          disabled={loading || !role || !interviewType}
+                          className="w-full btn-primary py-8 text-base flex items-center justify-center gap-4 group relative overflow-hidden rounded-[32px] shadow-2xl shadow-primary/30 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
                          {loading ? (
                            <Loader2 className="w-8 h-8 animate-spin" />
                          ) : (
@@ -662,6 +790,7 @@ export default function InterviewPage() {
                          )}
                       </button>
                     </div>
+                  </div>
                   </div>
                 </motion.div>
               )}

@@ -117,7 +117,7 @@ router.post('/generate', authenticateToken, async (req: AuthRequest, res: Respon
 });
 
 const nextSchema = z.object({
-  answer: z.string(),
+  answer: z.string().min(1, "Answer cannot be empty"),
   currentStep: z.any().optional(),
 });
 
@@ -210,8 +210,7 @@ router.post('/:id/next', authenticateToken, async (req: AuthRequest, res: Respon
         }
       },
       "nextQuestion": "string",
-      "expectedAnswer": "string",
-      "isFinished": boolean
+      "expectedAnswer": "string"
     }`;
 
     const response = await generateAIResponse({
@@ -259,15 +258,16 @@ router.post('/:id/next', authenticateToken, async (req: AuthRequest, res: Respon
       const performanceMetrics = {
         accuracy: (allAnswers.filter(a => (a.score || 0) >= 7).length / totalAnswers) * 100,
         avgComplexity: "Optimized",
-        communication: 8.5, // AI could provide this per session
-        confidence: 9.0
+        communication: Math.min(10, Math.round((avgScore / 10) + 1)), // Derived
+        confidence: Math.min(10, Math.round((avgScore / 10) + 1.5))
       };
 
       await prisma.interview.update({
         where: { id: interviewId },
         data: { 
           score: Math.round(avgScore),
-          metrics: JSON.stringify(performanceMetrics)
+          metrics: JSON.stringify(performanceMetrics),
+          xpAwarded: true
         }
       });
 
@@ -330,10 +330,12 @@ router.post('/:id/next', authenticateToken, async (req: AuthRequest, res: Respon
          });
          
          // Update Gamification
-         await updateGamification(userId, 100);
+         if (!interview.xpAwarded) {
+            await updateGamification(userId, 100);
+         }
       }
 
-      res.json({ isFinished: true, score: avgScore, metrics: performanceMetrics });
+      res.json({ isFinished: true, score: avgScore, metrics: performanceMetrics, evaluatedAnswers: allAnswers });
     } else {
       // Add next question to DB
       const nextQ = await prisma.question.create({
@@ -430,7 +432,7 @@ router.post('/:id/evaluate', authenticateToken, async (req: AuthRequest, res: Re
     const totalScore = validResults.reduce((sum, r) => sum + r.score, 0);
     const evaluatedAnswers = validResults.map(r => r.answer);
 
-    const avgScore = (totalScore / answers.length) * 10; // Convert to percentage
+    const avgScore = validResults.length > 0 ? (totalScore / validResults.length) * 10 : 0; // Convert to percentage
 
     await prisma.interview.update({
       where: { id: interviewId },
@@ -449,8 +451,14 @@ router.post('/:id/evaluate', authenticateToken, async (req: AuthRequest, res: Re
           avgScore: newAvgScore,
         }
       });
-      // Reward XP (Normalized with next endpoint)
-      await updateGamification(userId, 100);
+      // Reward XP only if interview wasn't already finished
+      if (!interview.xpAwarded) {
+         await updateGamification(userId, 100);
+         await prisma.interview.update({
+            where: { id: interviewId },
+            data: { xpAwarded: true }
+         });
+      }
     }
 
     res.json({ message: 'Evaluation complete', score: avgScore, evaluatedAnswers });
